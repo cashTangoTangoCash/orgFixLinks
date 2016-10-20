@@ -1,0 +1,177 @@
+* machine-generated indices;  READ ONLY
+** list of links
+*** outgoing links to org files
+**** [[file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160920TestRadioTargets.org][20160920TestRadioTargets.org]]
+**** [[file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/OrgModeFileCrawlerMain.org::*sqlite3%20terminal%20programming%20notes][OrgModeFileCrawlerMain.org]]
+#LinkUniqueID2016-05-19_17-15-59-9812
+*** incoming links from org files
+**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/OrgModeFileCrawlerMain.org
+*** links to local non-org files
+**** [[file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py][20160908ExceptionTest.py]]
+**** /home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py
+**** /home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py
+**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py
+**** file:/made/up/filename.junk    :broken_link:
+**** /home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py
+**** [[/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py][20160908ExceptionTest.py]]
+**** [[/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py][20160908ExceptionTest.py]]
+**** [[/made/up/filename.junk][filename.junk]]    :broken_link:
+**** [[/home/dad84/Documents/madeupname.junk][madeupname.junk]]    :broken_link:
+**** [[file+sys:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160807PuzzleOverProgramLogic.xoj][20160807PuzzleOverProgramLogic.xoj]]
+**** file+sys:/
+**** [[file+emacs:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160807PuzzleOverProgramLogic.xoj][20160807PuzzleOverProgramLogic.xoj]]
+**** docview:/home/dad84/Documents/Computer/Software/PythonNotes/PythonForInformaticsSeverance/PythonForInformaticsSeverance009d2.pdf::32
+**** /home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py
+**** [[/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/fsljiwen sdfsdf][fsljiwen sdfsdf]]    :broken_link:
+**** [[/home/dad84/sdlfkwf fwun ofi][sdlfkwf fwun ofi]]    :broken_link:
+**** [[/sdfj sdfjk sdffweh8874y9][sdfj sdfjk sdffweh8874y9]]    :broken_link:
+**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908Exception    :broken_link:
+**** [[file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908Exception Test.py][20160908Exception Test.py]]    :broken_link:
+**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py
+**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/PythonScriptOldVersions
+**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler
+**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler
+**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/a    :broken_link:
+**** [[file:a][a]]    :broken_link:
+**** file:/
+**** /home/dad84/20160908ExceptionTest.py    :broken_link:
+** sets of links
+*** outgoing links to org files
+**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160920TestRadioTargets.org
+**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/OrgModeFileCrawlerMain.org
+*** incoming links from org files
+**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/OrgModeFileCrawlerMain.org
+*** links to local non-org files
+**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/PythonScriptOldVersions
+**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160807PuzzleOverProgramLogic.xoj
+**** file:/home/dad84/Documents/Computer/Software/PythonNotes/PythonForInformaticsSeverance/PythonForInformaticsSeverance009d2.pdf
+**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/fsljiwen sdfsdf
+**** file:/made/up/filename.junk
+**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908Exception Test.py
+**** file:/sdfj sdfjk sdffweh8874y9
+**** file:/
+**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler
+**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908Exception
+**** file:/home/dad84/sdlfkwf fwun ofi
+**** file:/home/dad84/20160908ExceptionTest.py
+**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/a
+**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py
+**** file:/home/dad84/Documents/madeupname.junk
+** list of tags
+** set of tags
+* status   
+#MyUniqueID2016-10-02_13-36-15-3938  
+* menu: Org:Hyperlinks:Literal Links   
+** emacs/org goofs this up when you have multiple frames (C-x-5-2)   
+*** have to toggle it a few times and it can end up on correct setting   
+* ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((   
+* separate these into internal links vs external links?   
+* http://orgmode.org/manual/External-links.html#External-links <<org external links>>   
+* http://orgmode.org/manual/Internal-links.html#Internal-links  <<org internal links>>   
+** tried out radio targets in    [[file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160920TestRadioTargets.org][20160920TestRadioTargets.org]]      
+* ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((   
+*    [[nothing to find]]      
+*** behaves like    [[org internal links]]      
+* ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((   
+* if I create a link via ctrl-u-c-l, I end up with    [[file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py][20160908ExceptionTest.py]]      
+** [2016-09-20 Tue] I have always done it that way, so my past assumption of file: being in a link to a file has looked right   
+   
+* type the name of a file in current working directory; does it automatically turn into a link?   
+** 20160908ExceptionTest.py   
+*** looks like no   
+** /home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py   
+*** still looks like no   
+** /home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py   
+*** still looks like no   
+** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py   
+*** OK, if I first type file: and then paste in the rest, org mode automatically turns it into a link, with no brackets   
+** file:/made/up/filename.junk   
+*** typing this: org mode turned it into a clickable link automatically; no brackets   
+** what if you paste it instead of type it?   
+*** /home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py   
+**** still looks like no   
+* if I put square brackets, what happens to those?   
+**    [[20160908ExceptionTest.py]]      
+*** behaves like    [[org internal links]]      
+**    [[/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py][20160908ExceptionTest.py]]      
+*** behaves like    [[org external links]]      
+**    [[/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py][20160908ExceptionTest.py]]      
+*** behaves like    [[org external links]]      
+**    [[PythonScriptOldVersions/20160526]]      
+*** behaves like    [[org internal links]]      
+*** kind of a surprise   
+**** this is a valid relative path filename in current working directory   
+**** created it via C-u-c-l and then deleted the file: and whatever else   
+   
+** what about    [[/made/up/filename.junk][filename.junk]]      
+*** behaves like    [[org external links]]      
+*** org offers to make these folders; should lack OS permission to do it in this case   
+** what about    [[/home/dad84/Documents/madeupname.junk][madeupname.junk]]        
+*** behaves like    [[org external links]]      
+* ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((   
+* if you paste a hyperlink from google chrome (link to a webpage) into org mode, it becomes a clickable link   
+** with no brackets   
+*** can verify this via Org menu then Hyperlinks then literal links   
+* ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((   
+*    [[file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/OrgModeFileCrawlerMain.org::*sqlite3%20terminal%20programming%20notes][OrgModeFileCrawlerMain.org]]      
+** can't seem to get this one to work; it will open file but fail to find desired heading   
+** space or no space after asterisk: doesn't seem to matter   
+* ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((   
+*    [[file+sys:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160807PuzzleOverProgramLogic.xoj][20160807PuzzleOverProgramLogic.xoj]]      
+** open via OS, like double-click   
+** [2016-09-21 Wed] just gives me binary data in a buffer; clearly does not work unless my OS doesn't know how to open this file?   
+** would be hard to find a file on disk with a type that emacs does not know how to open; how would you know if emacs didn't open it normally?   
+** double-clicked on a file in nautilus and a new instance of emacs came up which was unresponsive and could very slowly be shut down   
+* file+sys:/    need more than root of filesystem to get a link without brackets   
+*    [[file+emacs:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160807PuzzleOverProgramLogic.xoj][20160807PuzzleOverProgramLogic.xoj]]      
+** force open via emacs   
+** get binary data in a buffer, which I guess is correct result?   
+*** I thought my .emacs was set up so that .xoj files opened in xournal?   
+* docview:/home/dad84/Documents/Computer/Software/PythonNotes/PythonForInformaticsSeverance/PythonForInformaticsSeverance009d2.pdf::32   
+** evince opened the right document but on page 69, not 32   
+*    [[id:B7423F4D]]      
+** needs brackets to become a link   
+** why is this in list of external links?  is it searching all my org files?  seems doubtful   
+* doi:10.100/182  does not need brackets   
+*    [[shell:ls *.org]]      
+** end up with results in minibuffer and in another new file   
+* /myself@some.where:papers/last.pdf  needs brackets   
+* #my-custom-id     
+*    [[20160908ExceptionTest.py::23  ]]      
+* OrgModeFileCrawlerMain.org::what about   
+* news:comp.emacs   
+* elist:org-agenda   
+* elisp:(find-file-other-frame "Elisp.org")   
+* vm:folder   
+* vm:folder#id   
+* vm://myself@somewhere.org/folder#id   
+* vm-imap:account:folder   
+* vm-imap:account:folder#id   
+* wl:folder   
+* wl:folder#id   
+* /home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py   
+* ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((   
+* what is and is not a link to a file according to org mode?   
+*    [[/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/fsljiwen sdfsdf][fsljiwen sdfsdf]]      
+** [2016-09-23 Fri] org thinks this is a file on disk   
+*    [[/home/dad84/sdlfkwf fwun ofi][sdlfkwf fwun ofi]]      
+** [2016-09-23 Fri] org thinks this is a file on disk   
+*    [[/sdfj sdfjk sdffweh8874y9][sdfj sdfjk sdffweh8874y9]]      
+** [2016-09-23 Fri] org thinks this is a file on disk   
+* file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908Exception Test.py   
+*    [[file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908Exception Test.py][20160908Exception Test.py]]      
+* file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py   
+*    [[20160908ExceptionTest.py]]     org treats this as internal link   
+* file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/PythonScriptOldVersions     
+*    [[./]]    this goes to dired   
+* file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler   
+* file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler   
+** weird how org does not make this clickable even though it begins with file:   
+** if your script repaired this broken link, it would become clickable in org mode, even without brackets   
+* file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/a   
+** if your script repaired this broken link, it would become clickable in org mode, even without brackets   
+*    [[file:a][a]]      
+*    [[/]]      
+* file:/   
+** it's weird how this is a valid link to root of filesystem (works when in brackets)   
+* /home/dad84/20160908ExceptionTest.py     
