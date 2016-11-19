@@ -4505,6 +4505,11 @@ maxFailedRepairAttempts=10  #setting
 maxLinesInANodeToAnalyze=100  #setting  idea is that sometimes you paste large blocks of text in node blurb, and script can hang forever trying to make sense of long chunks of text that do not look like org file material
 # if set too small, will not be able to get uniqueIDs in header when header contains many links
 secondsSinceFullyAnalyzedCutoff=2*86400  #setting elapsed seconds since org file last fully analyzed; cutoff to be considered recently analyzed  24 hr/day * 60 min/hr * 60 sec/min
+#head
+if __name__ <> "__main__":
+    #want to be able to import things from this module for testing, without logging taking place
+    logging.disable(logging.CRITICAL)  #disables all logging messages; see sweigart
+
 #head MAIN
 if __name__=="__main__":
 
