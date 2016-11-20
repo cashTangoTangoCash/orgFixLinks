@@ -3582,10 +3582,11 @@ def user_chooses_element_from_list_or_rejects_all(aList,nameOfElementInList='ele
 #head
 def get_past_interactive_repairs_dict():
     '''
-    use shelve module to store a dictionary of past successful interactive repairs of broken links to files on disk
-    OOPS shelve module is failing; change to csv file data storage
+    when a user carries out an interactive repair of a broken link, repair data is stored on local disk.
+    this function reads past repair data from local disk into a dictionary.
     this dictionary maps filenameAP of missing file to filenameAP of found file
     '''
+    #oops: shelve module is failing; change to csv file data storage
     # shelfFile=shelve.open('pastInteractiveRepairs.shelve')
 
     # #get the dictionary out of the shelved file, or else get an empty dictionary
@@ -4502,9 +4503,10 @@ regexOrderedList.extend([LinkToOrgFile.linkRegexes[2],LinkToOrgFile.linkRegexes[
 regexDict=make_regex_dict()
 
 maxFailedRepairAttempts=10  #setting
-maxLinesInANodeToAnalyze=100  #setting  idea is that sometimes you paste large blocks of text in node blurb, and script can hang forever trying to make sense of long chunks of text that do not look like org file material
+maxLinesInANodeToAnalyze=100  #setting  idea is that sometimes a user will paste large blocks of text in a node blurb, and script can hang forever trying to make sense of long chunks of text that do not look like org file material
+# only purpose is to avoid errors where this script reacts improperly to a line of text.
 # if set too small, will not be able to get uniqueIDs in header when header contains many links
-secondsSinceFullyAnalyzedCutoff=2*86400  #setting elapsed seconds since org file last fully analyzed; cutoff to be considered recently analyzed  24 hr/day * 60 min/hr * 60 sec/min
+secondsSinceFullyAnalyzedCutoff=2*24*60*60  #setting elapsed seconds since org file last fully analyzed; cutoff to be considered recently analyzed  24 hr/day * 60 min/hr * 60 sec/min
 #head
 if __name__ <> "__main__":
     #want to be able to import things from this module for testing, without logging taking place
@@ -4548,11 +4550,11 @@ if __name__=="__main__":
         elif opt in ("-d","--debug"):
             runDebugger=True
             hitReturnToStop=False
-            logging.debug('Command line flag said to run the debugger (pudb) so turning off feature to hit return to stop spidering')
+            # logging.debug('Command line flag said to run the debugger (pudb) so turning off feature to hit return to stop spidering')
 
         elif opt in ("-D","--dryRun"):
             isDryRun=True
-            #dry run: no change made to any org file on disk
+            #dry run: after script finishes, all org files on disk remain unchanged
             #dry run: a copy of database is made and changes are made to the copy, not to the original
             #of limited usefulness since can't keep a test sequence going; just use it at a point where script is known to crash; I guess you can alternate between dry run and full run and step forward that way
 
@@ -4561,8 +4563,7 @@ if __name__=="__main__":
             showLog=True
 
         elif opt in ("-b","--noBackup"):
-            #before modifying org file on disk, copy it to .bak
-            #this flag suppresses making these backups
+            #keepBackup=True means: before modifying an org file on disk, copy it to .bak
             keepBackup=False
 
         elif opt in ("-q","--quickMode"):
@@ -4582,17 +4583,23 @@ if __name__=="__main__":
             try:
                 maxN=int(arg)
             except:
-                usage()
+                print 'Quitting: command line input %s for maxFilesToSpider does not evaluate to an integer.\n' % arg
+                sys.exit()
+
+            if maxN<1:
+                print 'Quitting: command line input %s for maxFilesToSpider is not a positive integer.\n' % arg
                 sys.exit()
 
         elif opt in ("-t","--maxTimeToSpider"):
             #user selects max time to spend spidering
             try:
                 maxTime=float(arg)
-                if maxTime<=0:
-                    raise Exception()
             except:
-                usage()
+                print 'Quitting: command line input %s for maxTimeToSpider does not evaluate to a floating point number.\n' % arg
+                sys.exit()
+
+            if maxTime<=0:
+                print 'Quitting: command line input %s for maxTimeToSpider is not a positive number.\n' % arg
                 sys.exit()
 
     # ---------------------------------------------------------
