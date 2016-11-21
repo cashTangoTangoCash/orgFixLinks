@@ -2813,9 +2813,6 @@ class OrgFile(LocalFile):
 
         self.uniqueID=None
 
-        #TODO this appears to need a rewrite; what about when there is a full representation and there is no status node?  this situation comes up
-        #TODO want to require that line with unique ID follows a status line
-
         if self.fullRepresentation:
             if self.statusNode:
                 self.statusNode.findUniqueID(OrgFile.myUniqueIDRegex)

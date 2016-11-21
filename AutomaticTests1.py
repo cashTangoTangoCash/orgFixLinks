@@ -6,6 +6,8 @@ import os
 import shutil
 import pudb
 
+#TODO need to depersonalize this since already put it on github
+
 def operate_on_fileA_w(filename,runDebugger=False,isDryRun=False,showLog=False,runWPauses=True):
     '''operate on file A wrapper'''
     OFL.db1=OFL.set_up_database()
@@ -72,7 +74,6 @@ def test01(runDebuggerOnlyInRepairStep=False,runDebuggerInEveryStep=False,runWit
     #####################################################
     
     origFolder=os.path.split(fileA.filenameAP)[0]
-    anotherFolder='/home/dad84/Documents/Ebay/PackingAndShipping/JunkFolder'
     
     #move fileB but keep basename the same
     os.rename(filenameB,os.path.join(anotherFolder,filenameB))
@@ -181,7 +182,6 @@ def test02(runDebuggerOnlyInRepairStep=False,runDebuggerInEveryStep=False,runWit
     #####################################################
 
     origFolder=os.path.split(fileA.filenameAP)[0]
-    anotherFolder='/home/dad84/Documents/Ebay/PackingAndShipping/JunkFolder'
     
     #move fileB but keep basename the same
     os.rename(filenameB,os.path.join(anotherFolder,filenameB))
@@ -313,7 +313,6 @@ def test03(runDebuggerOnlyInRepairStep=False,runDebuggerInEveryStep=False,runWit
     #####################################################
 
     origFolder=os.path.split(fileA.filenameAP)[0]
-    anotherFolder='/home/dad84/Documents/Ebay/PackingAndShipping/JunkFolder'
     
     #move fileB but keep basename the same
     os.rename(filenameB,os.path.join(anotherFolder,filenameB))
@@ -448,7 +447,6 @@ def test04(runDebuggerOnlyInRepairStep=False,runDebuggerInEveryStep=False,runWit
     #####################################################
 
     origFolder=os.path.split(fileA.filenameAP)[0]
-    anotherFolder='/home/dad84/Documents/Ebay/PackingAndShipping/JunkFolder'
     
     #move fileB but keep basename the same
     os.rename(filenameB,os.path.join(anotherFolder,filenameB))
@@ -588,7 +586,6 @@ def test05(runDebuggerOnlyInRepairStep=False,runDebuggerInEveryStep=False,runWit
     #####################################################
 
     origFolder=os.path.split(fileA.filenameAP)[0]
-    anotherFolder='/home/dad84/Documents/Ebay/PackingAndShipping/JunkFolder'
     
     #move fileB but keep basename the same
     os.rename(filenameB,os.path.join(anotherFolder,filenameB))
@@ -725,7 +722,6 @@ def test06(runDebuggerOnlyInRepairStep=False,runDebuggerInEveryStep=False,runWit
     #####################################################
 
     origFolder=os.path.split(fileA.filenameAP)[0]
-    anotherFolder='/home/dad84/Documents/Ebay/PackingAndShipping/JunkFolder'
     
     #move fileB but keep basename the same
     # os.rename(filenameB,os.path.join(anotherFolder,filenameB))
@@ -835,7 +831,6 @@ def test07(runDebuggerOnlyInRepairStep=False,runDebuggerInEveryStep=False,runWit
     #####################################################
 
     origFolder=os.path.split(fileA.filenameAP)[0]
-    anotherFolder='/home/dad84/Documents/Ebay/PackingAndShipping/JunkFolder'
     
     #move and rename fileB
     newNameB=os.path.join(anotherFolder,'NoName.org')
@@ -965,7 +960,6 @@ def test08(runDebuggerOnlyInRepairStep=False,runDebuggerInEveryStep=False,runWit
     #####################################################
 
     origFolder=os.path.split(fileA.filenameAP)[0]
-    anotherFolder='/home/dad84/Documents/Ebay/PackingAndShipping/JunkFolder'
     
     #move and rename fileB
     newNameB=os.path.join(anotherFolder,'NoName.org')
@@ -1077,7 +1071,6 @@ def test09(runDebuggerOnlyInRepairStep=False,runDebuggerInEveryStep=False,runWit
     #####################################################
 
     origFolder=os.path.split(fileA.filenameAP)[0]
-    anotherFolder='/home/dad84/Documents/Ebay/PackingAndShipping/JunkFolder'
     
     #move and rename fileB
     newNameB=os.path.join(anotherFolder,'NoName.org')
@@ -1214,7 +1207,6 @@ def test10(runDebuggerOnlyInRepairStep=False,runDebuggerInEveryStep=False,runWit
     #####################################################
 
     origFolder=os.path.split(fileA.filenameAP)[0]
-    anotherFolder='/home/dad84/Documents/Ebay/PackingAndShipping/JunkFolder'
     
     #move and rename fileB
     newNameB=os.path.join(anotherFolder,'NoName.org')
@@ -1333,7 +1325,6 @@ def test11(runDebuggerOnlyInRepairStep=False,runDebuggerInEveryStep=False,runWit
     #####################################################
 
     origFolder=os.path.split(fileA.filenameAP)[0]
-    anotherFolder='/home/dad84/Documents/Ebay/PackingAndShipping/JunkFolder'
     
     #move and rename fileB
     newNameB=os.path.join(anotherFolder,'NoName.org')
@@ -1493,7 +1484,6 @@ def test12(runDebuggerOnlyInRepairStep=False,runDebuggerInEveryStep=False,runWit
     #####################################################
 
     origFolder=os.path.split(fileA.filenameAP)[0]
-    anotherFolder='/home/dad84/Documents/Ebay/PackingAndShipping/JunkFolder'
     
     #move and rename fileB
     newNameB=os.path.join(anotherFolder,'NoName.org')
@@ -1642,7 +1632,6 @@ def test01B(runDebuggerOnlyInRepairStep=False,runDebuggerInEveryStep=False,runWi
     #####################################################
     
     origFolder=os.path.split(fileA.filenameAP)[0]
-    anotherFolder='/home/dad84/Documents/Ebay/PackingAndShipping/JunkFolder'
     
     #move fileB but keep basename the same
     os.rename(filenameB,os.path.join(anotherFolder,filenameB))
@@ -1741,7 +1730,6 @@ def test02B(runDebuggerOnlyInRepairStep=False,runDebuggerInEveryStep=False,runWi
     #####################################################
     
     origFolder=os.path.split(fileA.filenameAP)[0]
-    anotherFolder='/home/dad84/Documents/Ebay/PackingAndShipping/JunkFolder'
     
     #move fileB but keep basename the same
     os.rename(filenameB,os.path.join(anotherFolder,filenameB))
@@ -1845,7 +1833,6 @@ def test03B(runDebuggerOnlyInRepairStep=False,runDebuggerInEveryStep=False,runWi
     #####################################################
 
     origFolder=os.path.split(fileA.filenameAP)[0]
-    anotherFolder='/home/dad84/Documents/Ebay/PackingAndShipping/JunkFolder'
     
     #move fileB but keep basename the same
     # os.rename(filenameB,os.path.join(anotherFolder,filenameB))
@@ -1952,7 +1939,6 @@ def test04B(runDebuggerOnlyInRepairStep=False,runDebuggerInEveryStep=False,runWi
 #     #####################################################
 
 #     origFolder=os.path.split(fileA.filenameAP)[0]
-#     anotherFolder='/home/dad84/Documents/Ebay/PackingAndShipping/JunkFolder'
     
 #     #move and rename fileB
 #     newNameB=os.path.join(anotherFolder,'NoName.txt')
@@ -2174,6 +2160,12 @@ filename3='20160825TestFile.org'
 filename4='20160825TestFileLinkTarget.txt'
 filename3Orig='20160825TestFile.org.original'  #these are never to be overwritten
 filename4Orig='20160825TestFileLinkTarget.txt.original'
+#head set up a test folder (a place to move certain test files to as part of test)
+DocumentsFolderAP=os.path.join(os.path.expanduser('~'),'Documents')
+assert os.path.exists(DocumentsFolderAP), 'Cannot proceed since assuming the folder %s exists' % DocumentsFolderAP
+anotherFolder=os.path.join(DocumentsFolderAP,'TempOFLTests1','TempOFLTests2','TempOFLTests3')
+if not os.path.exists(anotherFolder):
+    os.makedirs(anotherFolder)
 #head
 for file1 in [filename1,filename2,filename1Orig,filename2Orig,filename3,filename4,filename3Orig,filename4Orig]:
     assert os.path.exists(file1), 'file %s does not exist on disk' % file1

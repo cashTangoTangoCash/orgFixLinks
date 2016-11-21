@@ -1,35 +1,3 @@
-* machine-generated indices;  READ ONLY
-** list of links
-*** outgoing links to org files
-**** [[file:/home/dad84/Documents/Computer/Software/SoftwareMain.org][good link with no symlinks]]
-**** [[file:/home/dad84/Documents/Computer/Software/LearnCoding/LearnCodingMain.org][good link with symlinks]]
-**** [[file:/home/dad84/Documents/Computer/bozo.org][fake file and path exists]]    :broken_link:
-**** [[file:/home/dad84/Documents/martians/bozo2.org][fake file inside a fake folder]]    :broken_link:
-**** [[file:/home/dad84/Documents/JunkMe.org][file was moved]]    :broken_link:
-**** [[file:/home/dad84/Documents/JunkMe.org][a broken symlink whose target has been moved]]    :broken_link:
-**** [[file:/home/dad84/Documents/JunkFolder/JunkMe2.org][a broken symlink with broken symlinks in path and target has been moved]]    :broken_link:
-**** [[file:/home/dad84/Documents/Ebay/PackingAndShipping/JunkFolder/FakeFile.org][a broken symlink whose target does not exist]]    :broken_link:
-**** [[file:/home/dad84/Documents/Ebay/PackingAndShipping/FakeFolder/FakeFile.org][a broken symlink whose target does not exist and is inside a bogus folder]]    :broken_link:
-*** links to websites
-*** links to local non-org files
-** sets of links
-*** outgoing links to org files
-**** /home/dad84/Documents/Ebay/PackingAndShipping/JunkFolder/FakeFile.org
-**** /home/dad84/Documents/Computer/Software/LearnCoding/LearnCodingMain.org
-**** /home/dad84/Documents/JunkFolder/JunkMe2.org
-**** /home/dad84/Documents/martians/bozo2.org
-**** /home/dad84/Documents/Ebay/PackingAndShipping/FakeFolder/FakeFile.org
-**** /home/dad84/Documents/Computer/Software/SoftwareMain.org
-**** /home/dad84/Documents/Computer/bozo.org
-**** /home/dad84/Documents/JunkMe.org
-*** links to websites
-*** links to local non-org files
-** list of tags
-**** tag1
-**** tag2
-** set of tags
-**** tag1
-**** tag2
 * Related Files
 * incoming search terms
 * status
