@@ -2466,7 +2466,7 @@ class Node():
 class LocalFile():
     def __init__(self,filename1,inHeader,myFilesTable,symlinksTable,previousFilenamesTable):
         '''LocalFile Class
-        this is a parent class; only use NonOrgFile, OrgFile in script
+        this is a parent class; script is expected to use only the child classes NonOrgFile, OrgFile
         '''
 
         self.originalFilename=filename1
@@ -2475,6 +2475,7 @@ class LocalFile():
         self.symlinksTable=symlinksTable
         self.previousFilenamesTable=previousFilenamesTable
 
+        #TODO want to turn off logging for files in header, but need to test that this code is actually working; is commented out for now
         if self.inHeader:
             pass
             #turn_off_logging()
@@ -2483,9 +2484,9 @@ class LocalFile():
             #turn_logging_back_on_at_initial_level()
 
         logging.debug('original filename is %s' % self.originalFilename)
-        self.changedFromSymlinkToNonSymlink=False
+        self.changedFromSymlinkToNonSymlink=False #initialize
 
-        #having problems in ipython with ~ character and filenames
+        #seeing problems in ipython with ~ character and filenames
         # http://stackoverflow.com/questions/2313053/python-how-to-access-linux-paths
         if filename1.startswith('~'):
             filename1=os.path.expanduser(filename1)
@@ -2500,7 +2501,7 @@ class LocalFile():
         # os.chdir(folder1)
 
         #the following deals with: self.exists, self.isSymlink, self.targetFilenameAP, self.targetExists, self.orgLinkToMeWouldWork
-        #self.isBrokenSymlink
+        #and self.isBrokenSymlink
         self.testIfExistsSymlinkVersion()
 
         self.originalTargetFilenameAP=self.targetFilenameAP
@@ -2516,7 +2517,7 @@ class LocalFile():
         self.repairedVia=None  #name of method used to repair broken link to this file; string or None
         self.numFailedRepairsFromDatabase=None
 
-        self.addedToDatabase=False  #did I just add this file to the database?
+        self.addedToDatabase=False  #did script just add this file to the database?
         self.myFilesTableID=None
         self.simpleClickableLink='file:'+self.filenameAP  #simple clickable link in org mode
 
@@ -2553,6 +2554,7 @@ class LocalFile():
 
         logging.debug('Carrying out LocalFile.testIfExistsSymlinkVersion on %s' % self.filenameAP)
 
+        #initialize:
         self.targetFilenameAP=None
         self.targetExists=None  #None for a Boolean means unknown or not applicable
         self.isSymlink=None  #None for a Boolean means unknown or not applicable
@@ -2686,10 +2688,11 @@ class OrgFile(LocalFile):
     def __init__(self,filename1,inHeader):
         '''
         OrgFile Class
-        initialize this object with minimal attributes; use method createFullRepresentation for a more complete data structure
+        initialize this object with minimal attributes
+        for certain org files, use method createFullRepresentation for a more complete data structure
         '''
 
-        logging.debug('Creating OrgFile instance with filename %s' % filename1)
+        # logging.debug('Creating OrgFile instance with filename %s' % filename1)
 
         LocalFile.__init__(self,filename1,inHeader,db1.myOrgFilesTable,db1.symlinksOrgTable,db1.previousFilenamesOrgTable)
 
@@ -2810,31 +2813,21 @@ class OrgFile(LocalFile):
 
         self.uniqueID=None
 
-        if self.fullRepresentation and self.statusNode:
-            self.statusNode.findUniqueID(OrgFile.myUniqueIDRegex)
-            if self.statusNode.uniqueID:
-                self.uniqueID=self.statusNode.uniqueID
-                logging.debug('inspected status node of %s using full representation data structure and detected unique ID %s' % (self.filenameAP,self.uniqueID))
+        #TODO this appears to need a rewrite; what about when there is a full representation and there is no status node?  this situation comes up
+        #TODO want to require that line with unique ID follows a status line
+
+        if self.fullRepresentation:
+            if self.statusNode:
+                self.statusNode.findUniqueID(OrgFile.myUniqueIDRegex)
+                if self.statusNode.uniqueID:
+                    self.uniqueID=self.statusNode.uniqueID
+                    logging.debug('inspected status node of %s using full representation data structure and detected unique ID %s' % (self.filenameAP,self.uniqueID))
+                else:
+                    logging.debug('inspected status node of %s using full representation data structure and did not detect a unique ID' % self.filenameAP)
             else:
-                logging.debug('inspected status node of %s using full representation data structure and did not detect a unique ID' % self.filenameAP)
+                logging.debug('%s does not have a status node; no unique ID found' % self.filenameAP)
         else:
-            logging.debug('a full representation of %s has not been made' % self.filenameAP)
-            logging.debug('step through every line of %s looking for unique ID' % self.filenameAP)
-
-            inFile1=open(self.filenameAP,'r')
-
-            #unique ID for file is different in format than unique ID in machine-generated header for links, so there should be no mistaking one for the other
-            for line1 in inFile1:
-                b=OrgFile.myUniqueIDRegex.search(line1)
-                if b:
-                    self.uniqueID=b.group('uniqueID')
-                    break
-            inFile1.close()
-
-        if self.uniqueID:
-            logging.debug('found unique ID %s of %s via searching line by line' % (self.uniqueID,self.filenameAP))
-        else:
-            logging.debug('searched each line of %s but did not detect unique ID' % self.filenameAP)
+            self.uniqueID=find_unique_id_inside_org_file(self.filenameAP)
 
         self.lookedInsideForUniqueID=True
 
@@ -3522,7 +3515,7 @@ def find_all_name_matches_via_bash_for_directories(textToMatch):
 def set_up_database():
     global db1
 
-    if os.path.exists(databaseName):
+    if os.path.exists(databaseName):  #if real database file exists
         shutil.copyfile(databaseName,dryRunDatabaseName)
         logging.debug('Initializing dry run database to actual database: %s copied to %s' % (databaseName,dryRunDatabaseName))
     elif os.path.exists(dryRunDatabaseName): 
@@ -3542,6 +3535,7 @@ def backup_main_database_file():
         logging.info('Dry run: database file %s copied to %s' % (databaseName,databaseName+'.bak'))
     else:
         logging.info('Cannot back up database file %s because it does not exist' % databaseName)
+
 def restore_main_database_file():
     if os.path.exists(databaseName+'.bak'):
         os.rename(databaseName+'.bak',databaseName)
@@ -3634,6 +3628,38 @@ def print_and_log_traceback():
     [logging.error(a) for a in traceback.format_exc().strip().split('\n')]  #send traceback to log file, with each line logged separately so you can grep for them
 
 #head
+def find_unique_id_inside_org_file(filenameAP):
+    '''go line by line through an org file and look for its unique ID'''
+    
+    inFile1=open(filenameAP,'r')
+
+    logging.debug('a full representation of %s has not been made' % filenameAP)
+    logging.debug('so, now stepping through every line of %s looking for unique ID' % filenameAP)
+
+    foundStatusLine=False
+    for line1 in inFile1:
+        if foundStatusLine:
+            b=OrgFile.myUniqueIDRegex.search(line1)
+            inFile1.close()
+            if b:
+                logging.debug('found unique ID %s inside %s' % (b.group('uniqueID'),filenameAP))
+                return b.group('uniqueID')
+            else:
+                logging.debug('%s has status node, but no unique ID' % filenameAP)
+                return None
+
+        if line1.startswith('* status'):
+            foundStatusLine=True
+
+    if foundStatusLine:
+        logging.debug('%s has status node, but no unique ID' % filenameAP)
+    else:
+        logging.debug('%s has no status node' % filenameAP)
+
+    inFile1.close()
+    return None
+
+#head
 def clean_up_on_error_in_operate_on_fileA(fileA,err1,deleteOldLogs,isDryRun,showLog):
     '''
     goes with operate_on_fileA
@@ -3676,6 +3702,7 @@ def operate_on_fileA(filename,userFixesLinksManually=False,runDebugger=False,deb
     if not debuggerAlreadyRunning:
         if runDebugger:
             pudb.set_trace()
+            debuggerAlreadyRunning=True
 
     try:
         fileA=OrgFile(filename,inHeader=False)
@@ -4198,17 +4225,17 @@ def clean_up_before_ending_spidering_run(isDryRun,messg1=None):
 
 def spider_starting_w_fileA(filename,maxTime=None,maxN=None,hitReturnToStop=True,userFixesLinksManually=False,runDebugger=False,debuggerAlreadyRunning=False,isDryRun=False,showLog=False,repairLinks=True,keepBackup=True,deleteOldLogs=True,skipIfRecentlySpidered=False):
     '''
+    start spidering org files on local disk, beginning with filename.
     filename needs to be absolute path
     '''
 
-    if runDebugger and not debuggerAlreadyRunning:
-        pudb.set_trace()
+    if runDebugger:
+        hitReturnToStop=False
+        if not debuggerAlreadyRunning:
+            pudb.set_trace()
+            debuggerAlreadyRunning=True
 
     filesSpidered=[]
-
-    if hitReturnToStop and runDebugger:
-        runDebugger=False
-        logging.warning('In spidering, you have enabled feature: hit return to stop spidering.  You also turned on debugger.  Debugger pudb cannot handle multithreading, so it cannot be turned on')
 
     if os.path.exists(databaseName+'.bak'):
         os.remove(databaseName+'.bak')
@@ -4299,7 +4326,7 @@ def spider_starting_w_fileA(filename,maxTime=None,maxN=None,hitReturnToStop=True
 
             logging.warning('Choosing to continue spidering despite error in analyzing %s' % filename)
             print 'Warning: choosing to continue spidering despite error in analyzing %s' % filename
-            fileA=OrgFile(filename,False)
+            fileA=OrgFile(filename,inHeader=False)
 
         filesSpidered.append(fileA)
         filesToSpider.pop(0) #remove the first item in the list
@@ -4611,7 +4638,7 @@ if __name__=="__main__":
 
     db1=set_up_database()
 
-    if fileA1:
+    if fileA1:  #user has supplied a file to start spidering with via command line
         spider_starting_w_fileA(filename=fileA1,maxTime=maxTime,maxN=maxN,hitReturnToStop=hitReturnToStop,userFixesLinksManually=userFixesLinksManually,runDebugger=runDebugger,debuggerAlreadyRunning=runDebugger,isDryRun=isDryRun,showLog=showLog,keepBackup=keepBackup,skipIfRecentlySpidered=skipIfRecentlySpidered)
         db1.cur.close()
 
