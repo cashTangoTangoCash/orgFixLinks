@@ -2494,6 +2494,7 @@ class LocalFile():
         # path1=os.path.split(filename1)[0]
         # folder1=os.getcwd()
         # os.chdir(path1)
+
         #caution this command wrecks filename if current working directory is not the folder where file is
         self.filenameAP=os.path.abspath(filename1)
         self.originalFilenameAP=self.filenameAP
