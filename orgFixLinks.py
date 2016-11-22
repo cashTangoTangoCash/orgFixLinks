@@ -3511,35 +3511,37 @@ def find_all_name_matches_via_bash_for_directories(textToMatch):
 
 #head
 def set_up_database():
-    global db1
-
-    if os.path.exists(databaseName):  #if real database file exists
+    if os.path.exists(databaseName):  #if real run (not dry run) database file exists
         shutil.copyfile(databaseName,dryRunDatabaseName)
         logging.debug('Initializing dry run database to actual database: %s copied to %s' % (databaseName,dryRunDatabaseName))
     elif os.path.exists(dryRunDatabaseName): 
         os.remove(dryRunDatabaseName)
-        logging.debug('Starting with blank dry run database: %s deleted' % dryRunDatabaseName)
+        logging.debug('Starting with blank dry run database because no real run database file has been found: %s deleted' % dryRunDatabaseName)
 
-    db1=Database1(dryRunDatabaseName)  #always starting with dry run database and only copy to real database if no errors
+    db1=Database1(dryRunDatabaseName)  #always starting with dry run database and only copy to real database if script completes with no errors
     logging.debug('Database set up; database file in use is %s' % dryRunDatabaseName)
     db1.setUpOrgTables()
     db1.setUpNonOrgTables()
 
-    return db1
-
+#head these have to do with a .bak copy of real run database file
 def backup_main_database_file():
     if os.path.exists(databaseName):
         shutil.copy2(databaseName,databaseName+'.bak')
+        databaseBackedUp=True
         logging.info('Dry run: database file %s copied to %s' % (databaseName,databaseName+'.bak'))
     else:
         logging.info('Cannot back up database file %s because it does not exist' % databaseName)
 
 def restore_main_database_file():
-    if os.path.exists(databaseName+'.bak'):
-        os.rename(databaseName+'.bak',databaseName)
-        logging.info('Dry run: restored database from backup: moved %s to %s' % (databaseName+'.bak',databaseName))
+    if databaseBackedUp: #fresh backup was made this script run
+        if os.path.exists(databaseName+'.bak'):
+            os.rename(databaseName+'.bak',databaseName)
+            logging.info('Restored database from backup: moved %s to %s' % (databaseName+'.bak',databaseName))
+        else:
+            logging.error('Script attempted to copy %s to %s, but %s is missing',(databaseName+'.bak',databaseName,databaseName+'.bak'))
     else:
-        logging.info('Dry run: cannot restore database from backup since %s does not exist' % (databaseName+'.bak'))
+        logging.error('Script attempted to copy %s to %s, but %s was not generated this session',(databaseName+'.bak',databaseName,databaseName+'.bak'))
+
 #head
 def user_chooses_element_from_list_or_rejects_all(aList,nameOfElementInList='element',doubleSpaced=False):
     '''
@@ -4218,6 +4220,7 @@ def clean_up_before_ending_spidering_run(isDryRun,messg1=None):
 
     store_past_interactive_repairs()
 
+    #TODO is this necessary given that even in a real run, database in use is the dry run database?
     if isDryRun:
         restore_main_database_file()
 
@@ -4253,6 +4256,9 @@ def spider_starting_w_fileA(filename,maxTime=None,maxN=None,hitReturnToStop=True
 
             clean_up_before_ending_spidering_run(isDryRun,messg1=messg1)
 
+            #TODO where is the step where dry run database file is copied to real run database file?
+            #TODO even if user quit during processing of filename, there could be valid changes to database?  so dry run database should be copied to real run database?
+            #LEFT OFF LEFTOFF
             return 'Quit'
 
     except Exception as err:
@@ -4516,6 +4522,7 @@ def usage():
 #head module-level stuff that will always execute even when this module is imported by another script/module
 databaseName=os.path.join(os.getcwd(),'orgFiles.sqlite')
 dryRunDatabaseName=os.path.join(os.getcwd(),'orgFilesDryRunCopy.sqlite')
+databaseBackedUp=False #backup copy is databaseName+'.bak'
 globalStartTime=time.time()
 keyboardInputLock=threading.Lock()
 origFolder=os.getcwd()
@@ -4532,6 +4539,8 @@ maxLinesInANodeToAnalyze=100  #setting  idea is that sometimes a user will paste
 # only purpose is to avoid errors where this script reacts improperly to a line of text.
 # if set too small, will not be able to get uniqueIDs in header when header contains many links
 secondsSinceFullyAnalyzedCutoff=2*24*60*60  #setting elapsed seconds since org file last fully analyzed; cutoff to be considered recently analyzed  24 hr/day * 60 min/hr * 60 sec/min
+
+db1=set_up_database()
 #head
 if __name__ <> "__main__":
     #want to be able to import things from this module for testing, without logging taking place
@@ -4545,6 +4554,7 @@ if __name__=="__main__":
     isDryRun=False
     showLog=False
     runDebugger=False
+    debuggerAlreadyRunning=False
     loggingLevel=None  #log at all levels by default
     maxN=10000
     maxTime=100000.0
@@ -4631,16 +4641,17 @@ if __name__=="__main__":
 
     if runDebugger:
         pudb.set_trace()
+        debuggerAlreadyRunning=True
 
     set_up_logging(loggingLevel)
 
-    db1=set_up_database()
-
     if fileA1:  #user has supplied a file to start spidering with via command line
-        spider_starting_w_fileA(filename=fileA1,maxTime=maxTime,maxN=maxN,hitReturnToStop=hitReturnToStop,userFixesLinksManually=userFixesLinksManually,runDebugger=runDebugger,debuggerAlreadyRunning=runDebugger,isDryRun=isDryRun,showLog=showLog,keepBackup=keepBackup,skipIfRecentlySpidered=skipIfRecentlySpidered)
-        db1.cur.close()
+        spider_starting_w_fileA(filename=fileA1,maxTime=maxTime,maxN=maxN,hitReturnToStop=hitReturnToStop,userFixesLinksManually=userFixesLinksManually,runDebugger=runDebugger,debuggerAlreadyRunning=debuggerAlreadyRunning,isDryRun=isDryRun,showLog=showLog,keepBackup=keepBackup,skipIfRecentlySpidered=skipIfRecentlySpidered)
 
         print 'Run completed: log file %s contains %s errors and %s warnings\n' % (logFilename,logging.error.counter,logging.warning.counter)
-
     else: #user did not specify a file to start with; just walk all org files
-        operate_on_all_org_files(maxTime=maxTime,maxN=maxN,hitReturnToStop=hitReturnToStop,userFixesLinksManually=userFixesLinksManually,runDebugger=runDebugger,debuggerAlreadyRunning=runDebugger,isDryRun=isDryRun,showLog=showLog,keepBackup=keepBackup,skipIfRecentlySpidered=skipIfRecentlySpidered)
+        operate_on_all_org_files(maxTime=maxTime,maxN=maxN,hitReturnToStop=hitReturnToStop,userFixesLinksManually=userFixesLinksManually,runDebugger=runDebugger,debuggerAlreadyRunning=debuggerAlreadyRunning,isDryRun=isDryRun,showLog=showLog,keepBackup=keepBackup,skipIfRecentlySpidered=skipIfRecentlySpidered)
+    db1.cur.close()
+    #TODO where is the step that copies dry run database file to real run database file?
+#head
+

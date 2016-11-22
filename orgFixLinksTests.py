@@ -13,6 +13,9 @@ import os
 
 #TODO test converting a line into list of objects, than back into the same line (catch bug that is adding spaces)
 
+#TODO trying to change orgFixLinks.py so that can import from it and test things, but look out for .bak backing up of key files!
+
+
 #head test standalone functions
 class TestGetAsteriskLevel(unittest.TestCase):
     def testGetAsteriskLevel(self):
