@@ -2166,6 +2166,7 @@ assert os.path.exists(DocumentsFolderAP), 'Cannot proceed since assuming the fol
 anotherFolder=os.path.join(DocumentsFolderAP,'TempOFLTests1','TempOFLTests2','TempOFLTests3')
 if not os.path.exists(anotherFolder):
     os.makedirs(anotherFolder)
+assert os.path.exists(anotherFolder), 'Cannot proceed since assuming the folder %s exists' % anotherFolder
 #head
 for file1 in [filename1,filename2,filename1Orig,filename2Orig,filename3,filename4,filename3Orig,filename4Orig]:
     assert os.path.exists(file1), 'file %s does not exist on disk' % file1
