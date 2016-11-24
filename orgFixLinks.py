@@ -2464,9 +2464,10 @@ class Node():
 
 #head  Classes for files on local disk
 class LocalFile():
-    def __init__(self,filename1,inHeader,myFilesTable,symlinksTable,previousFilenamesTable):
+    def __init__(self,filename1,inHeader,myFilesTable,symlinksTable,previousFilenamesTable,leaveAsSymlink=False):
         '''LocalFile Class
         this is a parent class; script is expected to use only the child classes NonOrgFile, OrgFile
+        input leaveAsSymlink is for test purposes only
         '''
 
         self.originalFilename=filename1
@@ -2474,6 +2475,7 @@ class LocalFile():
         self.myFilesTable=myFilesTable
         self.symlinksTable=symlinksTable
         self.previousFilenamesTable=previousFilenamesTable
+        self.leaveAsSymlink=leaveAsSymlink
 
         #TODO want to turn off logging for files in header, but need to test that this code is actually working; is commented out for now
         if self.inHeader:
@@ -2508,11 +2510,13 @@ class LocalFile():
         self.originalTargetFilenameAP=self.targetFilenameAP
         logging.debug('original targetFilenameAP is %s' % self.targetFilenameAP)  
 
-        #to simplify this script, ignore symlink and work on target instead
-        self.changeFromSymlinkToNonSymlink()
-        self.filenameAP=os.path.realpath(self.filenameAP)
-        self.testIfExists()
+        if not leaveAsSymlink:
+            #to simplify this script, ignore symlink and work on target instead
+            self.changeFromSymlinkToNonSymlink()
 
+        self.simpleClickableLink='file:'+self.filenameAP  #simple clickable link in org mode
+
+        #initialize:
         self.triedAndFailedToRepair=False  #this flag says all repairs have been attempted
         self.repaired=False  #repair was attempted and succeeded
         self.repairedVia=None  #name of method used to repair broken link to this file; string or None
@@ -2520,7 +2524,6 @@ class LocalFile():
 
         self.addedToDatabase=False  #did script just add this file to the database?
         self.myFilesTableID=None
-        self.simpleClickableLink='file:'+self.filenameAP  #simple clickable link in org mode
 
     def testIfExists(self):
         '''LocalFile Class
@@ -2555,10 +2558,10 @@ class LocalFile():
 
         logging.debug('Carrying out LocalFile.testIfExistsSymlinkVersion on %s' % self.filenameAP)
 
-        #initialize:
+        #initialize; None means unknown or not applicable
         self.targetFilenameAP=None
-        self.targetExists=None  #None for a Boolean means unknown or not applicable
-        self.isSymlink=None  #None for a Boolean means unknown or not applicable
+        self.targetExists=None
+        self.isSymlink=None
         self.isBrokenSymlink=None
 
         if os.path.exists(self.filenameAP):
@@ -2613,17 +2616,25 @@ class LocalFile():
     def changeFromSymlinkToNonSymlink(self):
         '''LocalFile Class'''
 
+        if self.leaveAsSymlink:
+            logging.warning('Changing from symlink to non symlink despite self.leaveAsSymlink being set to True')
+
         if self.inHeader:
             #turn_off_logging()
             pass
 
         if self.exists and self.isSymlink:  #cannot tell if a missing file is a symlink or not
             logging.debug('changing %s from symlink to non-symlink' % self.filenameAP)
-            self.filenameAP=os.path.realpath(self.targetFilenameAP)  #want to be able to use the same code for all cases
+            self.filenameAP=os.path.realpath(self.targetFilenameAP)  #want to be able to use the same code for all cases; TODO what if file was a symlink pointing to a symlink?
             logging.debug('self.filenameAP becomes %s, which was the symlink target' % self.filenameAP)
             self.changedFromSymlinkToNonSymlink=True
 
-            self.isSymlink=False
+            self.isSymlink=False  #TODO what if file was a symlink pointing to a symlink?
+
+            #TODO what if file was a symlink pointing to a symlink?
+            # self.isBrokenSymlink=False #file is not a symlink; was changed to its target
+            # self.targetFilenameAP=None  #a non-symlink has no target; inapplicable
+            # self.targetExists=None  #a non-symlink has no target; inapplicable
             del self.isBrokenSymlink
             del self.targetFilenameAP
             del self.targetExists
@@ -2638,6 +2649,8 @@ class LocalFile():
         '''LocalFile Class'''
         #TODO go back to file as a symlink
         #see accompanying org file for this project
+
+        #TODO assert not self.leaveAsSymlink
 
         assert self.changedFromSymlinkToNonSymlink, 'file was not changed from symlink to non symlink'
 
@@ -2671,9 +2684,9 @@ class LocalFile():
             return False
 
 class NonOrgFile(LocalFile):
-    def __init__(self,filename1,inHeader):
-
-        LocalFile.__init__(self,filename1,inHeader,db1.myNonOrgFilesTable,db1.symlinksNonOrgTable,db1.previousFilenamesNonOrgTable)
+    def __init__(self,filename1,inHeader,leaveAsSymlink=False):
+        '''input leaveAsSymlink is for test purposes only'''
+        LocalFile.__init__(self,filename1,inHeader,db1.myNonOrgFilesTable,db1.symlinksNonOrgTable,db1.previousFilenamesNonOrgTable,leaveAsSymlink=leaveAsSymlink)
 
         if not self.inHeader:
             db1.addFilenameToThreeNonOrgTables(self.filenameAP)
@@ -2681,21 +2694,23 @@ class NonOrgFile(LocalFile):
             db1.addFilenameToThreeNonOrgTables(self.originalTargetFilenameAP)
 
         #turn_logging_back_on_at_initial_level()
+
 class OrgFile(LocalFile):
     #regex for finding unique ID in an org file; uses group named uniqueID
     #this unique ID is found only in blurb of mainline node having text status and level of 1 (one asterisk)
     myUniqueIDRegex=re.compile(r'#MyUniqueID(?P<uniqueID>\d{4}-((0[1-9])|(1[0-2]))-((0[1-9])|([1-2][0-9])|(3[0-1]))_((0[1-9])|(1[0-9])|(2[0-4]))-((0[0-9])|([1-5][0-9]))-((0[0-9])|([1-5][0-9]))-\d{4})')
 
-    def __init__(self,filename1,inHeader):
+    def __init__(self,filename1,inHeader,leaveAsSymlink=False):
         '''
         OrgFile Class
         initialize this object with minimal attributes
         for certain org files, use method createFullRepresentation for a more complete data structure
+        input leaveAsSymlink is for test purposes only
         '''
 
         # logging.debug('Creating OrgFile instance with filename %s' % filename1)
 
-        LocalFile.__init__(self,filename1,inHeader,db1.myOrgFilesTable,db1.symlinksOrgTable,db1.previousFilenamesOrgTable)
+        LocalFile.__init__(self,filename1,inHeader,db1.myOrgFilesTable,db1.symlinksOrgTable,db1.previousFilenamesOrgTable,leaveAsSymlink=leaveAsSymlink)
 
         if not self.inHeader:
             db1.addFilenameToThreeOrgTables(self.filenameAP)
@@ -2731,8 +2746,8 @@ class OrgFile(LocalFile):
         '''
         OrgFile Class
         represent org file as list of Node objects
-        this function is called once.  do not use it again.  it is not used for making changes.
-        Need a full representation of the org file being rewritten.
+        this function is called once for a particular OrgFile instance.  do not use it more than once.
+        Need a full representation of an org file being rewritten/revised.
         Do not necessarily need a full representation of org files being linked to but not rewritten.         
         '''
 
