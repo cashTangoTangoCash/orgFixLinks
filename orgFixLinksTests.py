@@ -230,7 +230,7 @@ class TestOrgFileMethods(unittest.TestCase):
     #head TODO test useDatabaseToGetOutwardLinks
     #head TODO test createFullRepresentation; expecting this to be not easy
 #head test standalone functions
-class TestGetAsteriskLevelFunction(unittest.TestCase):
+class TestGetAsteriskLevel(unittest.TestCase):
     def test1(self):
         '''test get_asterisk_level'''
         line='* junk text\n'
@@ -251,7 +251,38 @@ class TestGetAsteriskLevelFunction(unittest.TestCase):
         line='junk *** text ***\n'
         self.assertEqual(OFL.get_asterisk_level(line),0)
 
-class TestFindUniqueIDInsideFileFunction(unittest.TestCase):
+class TestGetBaseAsteriskLevel(unittest.TestCase):
+    def test1(self):
+        '''test get_base_asterisk_level'''
+        lines=['line1\n','line2\n','line3\n']
+        self.assertEqual(OFL.get_base_asterisk_level(lines),0)
+
+    def test2(self):
+        '''test get_base_asterisk_level'''
+        lines=['* line1\n','line2\n','line3\n']
+        self.assertEqual(OFL.get_base_asterisk_level(lines),1)
+
+    def test3(self):
+        '''test get_base_asterisk_level'''
+        lines=['* line1\n','** line2\n','*** line3\n']
+        self.assertEqual(OFL.get_base_asterisk_level(lines),1)
+
+    def test4(self):
+        '''test get_base_asterisk_level'''
+        lines=['*** line1\n','** line2\n','* line3\n']
+        self.assertEqual(OFL.get_base_asterisk_level(lines),1)
+
+    def test5(self):
+        '''test get_base_asterisk_level'''
+        lines=['*** line1\n','line2\n','** line3\n','line4\n','* line5\n','line6\n']
+        self.assertEqual(OFL.get_base_asterisk_level(lines),1)
+
+    def test6(self):
+        '''test get_base_asterisk_level'''
+        lines=['***   line1\n','**   line2\n','**   line3\n']  #extra spaces after leading asterisks
+        self.assertEqual(OFL.get_base_asterisk_level(lines),2)
+
+class TestFindUniqueIDInsideFile(unittest.TestCase):
     '''these are all tests of OFL.find_unique_id_inside_org_file
     which is a function that goes line by line inside an org file
     it's used when script has not made a full representation of that org file
@@ -331,7 +362,12 @@ class TestFindUniqueIDInsideFileFunction(unittest.TestCase):
 
 class TestListOfChildNodesFromLines(unittest.TestCase):
     def test1(self):
-        pass
+        '''test list_of_child_nodes_from_lines: no line starts with asterisk'''
+        lines=['first\n','second\n','third\n']
+        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
+        self.assertEqual([],childNodeList)
+
+    #TODO fill in more tests; first review Node.__init__
 #head
 DocumentsFolderAP=os.path.join(os.path.expanduser('~'),'Documents')
 assert os.path.exists(DocumentsFolderAP), 'Cannot proceed since assuming the folder %s exists' % DocumentsFolderAP

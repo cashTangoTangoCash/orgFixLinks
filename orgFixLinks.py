@@ -3176,6 +3176,20 @@ def get_asterisk_level(line):
         #zero means there is no leading asterisk
         return 0
 
+def get_base_asterisk_level(lines):
+    '''given a list of lines, return the base asterisk level'''
+    asteriskLevels=map(get_asterisk_level,lines)
+    nonzeroAsteriskLevels=[a for a in asteriskLevels if a>0]
+    if nonzeroAsteriskLevels:
+        nonzeroAsteriskLevels.sort()
+        return nonzeroAsteriskLevels[0]
+    else:
+        return 0
+
+    # #now nonzeroAsteriskLevels is out of original order, so regen it
+    # del nonzeroAsteriskLevels
+    # nonzeroAsteriskLevels=[a for a in asteriskLevels if a>0]
+
 #must develop stuff like this in ipython
 def separate_parent_lines_descendant_lines(lines):
     '''given a list of lines, return a tuple
@@ -3205,22 +3219,15 @@ def list_of_child_nodes_from_lines(lines,sourceFile,parent=None):
     if isinstance(parent,Node):
         pass
     else:
+        logging.error('Misusing input parent of list_of_child_nodes_from_lines; parent is not of type Node')
         parent=None
 
     childNodeList=[]
 
-    asteriskLevels=map(get_asterisk_level,lines)
-    nonzeroAsteriskLevels=[a for a in asteriskLevels if a>0]
-    if nonzeroAsteriskLevels:
-        nonzeroAsteriskLevels.sort()
-        childNodeAsteriskLevel=nonzeroAsteriskLevels[0]
-    else:
+    childNodeAsteriskLevel=get_base_asterisk_level(lines)
+    if childNodeAsteriskLevel==0:
         #no child nodes were found
         return []
-
-    #now nonzeroAsteriskLevels is out of original order, so regen it
-    del nonzeroAsteriskLevels
-    nonzeroAsteriskLevels=[a for a in asteriskLevels if a>0]
 
     #use slicing to break the list of lines into a list of Node objects
 
