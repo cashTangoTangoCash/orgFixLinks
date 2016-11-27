@@ -1281,9 +1281,14 @@ class Link():
         self.originalLink=self.link
         self.originalDescription=self.description
 
-        assert isinstance(sourceFile,OrgFile),'sourceFile is not of class OrgFile'
+        if sourceFile<>None:  #need to be able to tolerate None in order to do unit testing?
+            assert isinstance(sourceFile,OrgFile),'sourceFile is not of class OrgFile'
 
         self.targetObjList=[]  #list of target objects a link gets over its repair process, most recent last
+
+        #initialize
+        self.nodeWhereFound=None
+        self.targetObj=None
 
     def associateWNode(self,Node):
         '''
@@ -2264,11 +2269,11 @@ class Node():
 
     headerText1='* machine-generated indices;  READ ONLY'
 
-    def __init__(self,lines1,sourceFile,parent=None):
+    def __init__(self,lines,sourceFile,parent=None):
         '''Node Class'''
 
-        #lines1 is the list of lines for this node and its descendants; this sets up a recursive scheme
-        self.lines1=lines1
+        #lines is the list of lines for this node and its descendants; this sets up a recursive scheme
+        self.lines=lines  #see self.myLines below
         self.sourceFile=sourceFile
 
         assert parent==None or isinstance(parent,Node), 'parent of Node must be either None or a Node'
@@ -2280,23 +2285,22 @@ class Node():
         if parent and parent.inHeader:
             self.inHeader=True
         else:
-            if lines1[0].startswith(Node.headerText1):
+            if lines[0].startswith(Node.headerText1):
                 self.inHeader=True
 
-        #self.level is the number of asterisks at start of node
+        #self.level is the number of asterisks at start of first line of a node
 
-        self.level=get_asterisk_level(lines1[0])
+        self.level=get_asterisk_level(lines[0])
         assert self.level >= 1, 'a node must begin with at least one asterisk'
 
-        self.myLines,self.descendantLines=separate_parent_lines_descendant_lines(lines1)
+        self.myLines,self.descendantLines=separate_parent_lines_descendant_lines(lines)
 
-        #sometimes I goof up with tab completion and make a link to a .org~ file instead of a .org
+        #sometimes I goof up with tab completion in emacs org mode, and make a link to a .org~ file instead of a .org
         self.myLines=[line.replace('.org~','.org') for line in self.myLines]
 
         #recursive scheme in action
         if self.descendantLines:
-            #second input arg here is the parent, which is self
-            self.childNodeList=list_of_child_nodes_from_lines(self.descendantLines,self.sourceFile,self)
+            self.childNodeList=list_of_child_nodes_from_lines(lines=self.descendantLines,sourceFile=self.sourceFile,parent=self)
         else:
             self.childNodeList=[]
 
@@ -2313,8 +2317,8 @@ class Node():
         self.linksToOrgFiles=[]
         self.linksToNonOrgFiles=[]
 
-        #make a dictionary to connect link regexes to lists of links
-        #would look cleaner to have class as key instead of link regex, but quick google search suggests more trouble than worth?
+        #make a dictionary d1 to connect link regexes to lists of links
+        #TODO would look cleaner to have class as key instead of link regex, but quick google search suggests more trouble than worth?
         d1={a:self.linksToOrgFiles for a in LinkToOrgFile.linkRegexes}  #dictionary comprehension
         d2={a:self.linksToNonOrgFiles for a in LinkToNonOrgFile.linkRegexes}  #dictionary comprehension
         d1.update(d2)
@@ -2322,21 +2326,21 @@ class Node():
         self.lineLists=[]  #a list for each line in self.myLines
         count=0
         for line in self.myLines:
-            logging.debug('Node.__init__: processing line %s' % line)
+            # logging.debug('Node.__init__: processing line %s' % line)
             if count>maxLinesInANodeToAnalyze:
-                # do not want script hanging forever on very long blurbs where I pasted in raw text that can really confuse this script and make it hang
-                # do not want to split line on ' ' since that could mess up tabs or other stuff?
+                # do not want script hanging forever on very long blurbs where author of org file has pasted in arbitrary raw text that might confuse this script and make it hang
+                # TODO do not want to split line on ' ' since that could mess up tabs or other stuff?
                 self.lineLists.append([line])
                 count+=1
                 continue
-            lineList1=Link.orgLinkWBracketsRegexNC.split(line.strip('\n'))  # ['some text','[[a link with brackets]]','more text','[[another link with brackets][description]]','.']
+
+            lineList1=lineToList1(line)  # ['some text ','[[a link with brackets]]',' more text ','[[another link with brackets][description]]','.']; see orgFixLinksTests.py
+
             lineList2=[]
             for piece in lineList1:
                 if Link.orgLinkWBracketsRegexNC.match(piece):  #piece is [[link]] or [[link][description]]
-                    matchObj1=Link.orgLinkWBracketsRegex.match(piece)
-                    link=matchObj1.group('link')
-                    assert link, 'link cannot be empty'
-                    description=matchObj1.group('description')
+                    link,description=textToLinkAndDescriptionDoubleBrackets(piece)
+
                     #based on which regex matches link, create a link object and add it to lineList2
                     matches1=[(a,a.match(link)) for a in regexOrderedList] #list of tuples: (regex,match object)
                     matches2=[z for z in matches1 if z[1]] #the tuples from matches1 where there is a match
@@ -2429,7 +2433,7 @@ class Node():
         assert not self.inHeader, 'unwanted method call on node from link found in machine-generated header'
 
         self.blurb.insert(0,uniqueIDLine)
-        self.lines1.insert(1,uniqueIDLine)
+        self.lines.insert(1,uniqueIDLine)
         self.myLines.insert(1,uniqueIDLine)
         self.lineLists.insert(1,uniqueIDLine.split(' '))
 
@@ -2457,9 +2461,9 @@ class Node():
         # I don't think self.descendantLines is getting regenerated from self.linelists
         # for my current purposes it's not needed to solve this?
         if self.descendantLines:
-            self.lines1=self.myLines+self.descendantLines
+            self.lines=self.myLines+self.descendantLines
         else:
-            self.lines1=self.myLines
+            self.lines=self.myLines
         self.blurb=self.myLines[1:]
 
 #head  Classes for files on local disk
@@ -3164,7 +3168,6 @@ def rand_int_as_string(N=4):
     list2=map(str,list1)
     return ''.join(list2)
 
-
 #head
 def get_asterisk_level(line):
     '''given a line, return the nunber of leading asterisks (org mode headline level)'''
@@ -3216,10 +3219,8 @@ def list_of_child_nodes_from_lines(lines,sourceFile,parent=None):
     return a list of Node objects which are the direct child Nodes of parent Node
     '''
 
-    if isinstance(parent,Node):
-        pass
-    else:
-        logging.error('Misusing input parent of list_of_child_nodes_from_lines; parent is not of type Node')
+    if (parent<>None) and (not isinstance(parent,Node)):
+        logging.error('Misusing input parent of list_of_child_nodes_from_lines; parent is neither None nor of type Node')
         parent=None
 
     childNodeList=[]
@@ -3240,6 +3241,28 @@ def list_of_child_nodes_from_lines(lines,sourceFile,parent=None):
     childNodeList.append(Node(lines[nodeStarts[-1]:],sourceFile,parent))
 
     return childNodeList
+
+#head
+def lineToList1(line):
+    '''Generate a list from a line
+    input:  'some text [[a link with brackets]] more text [[another link with brackets][description]].'
+    output:  ['some text','[[a link with brackets]]','more text','[[another link with brackets][description]]','.']
+    this short operation is put in a function to facilitate unit testing
+    '''
+
+    return Link.orgLinkWBracketsRegexNC.split(line.strip('\n'))
+
+def textToLinkAndDescriptionDoubleBrackets(text):
+    '''text is [[link]] or [[link][description]]
+    return link,description
+    if no description, return link,None
+    '''
+    matchObj1=Link.orgLinkWBracketsRegex.match(text)
+    assert matchObj1, 'misusing testToLinkAndDescription: %s does not match format [[link]] or [[link][description]]' % text
+    link=matchObj1.group('link')
+    assert link, 'link cannot be empty'
+    description=matchObj1.group('description')
+    return link,description
 
 #head
 def make_list_of(someThing):

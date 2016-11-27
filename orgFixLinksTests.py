@@ -230,6 +230,17 @@ class TestOrgFileMethods(unittest.TestCase):
     #head TODO test useDatabaseToGetOutwardLinks
     #head TODO test createFullRepresentation; expecting this to be not easy
 #head test standalone functions
+class TestAllUpperToAllLowercase(unittest.TestCase):
+    def test1(self):
+        someText='I AM ALL UPPER CASE'
+        result='i am all upper case'
+        self.assertEqual(OFL.all_upper_to_all_lowercase(someText),result)
+
+    def test2(self):
+        someText='I AM not ALL UPPER CASE'
+        result=someText
+        self.assertEqual(OFL.all_upper_to_all_lowercase(someText),result)
+
 class TestGetAsteriskLevel(unittest.TestCase):
     def test1(self):
         '''test get_asterisk_level'''
@@ -360,6 +371,35 @@ class TestFindUniqueIDInsideFile(unittest.TestCase):
         os.remove(testFilename)
 
 
+class TestSeparateParentLinesDescendantLines(unittest.TestCase):
+    def test1(self):
+        '''test separate_parent_lines_descendant_lines'''
+        lines=['* line1','** line2','*** line3']
+        parentLines,descendantLines=OFL.separate_parent_lines_descendant_lines(lines)
+        self.assertEqual(parentLines,['* line1'])
+        self.assertEqual(descendantLines,['** line2','*** line3'])
+
+    def test2(self):
+        '''test separate_parent_lines_descendant_lines'''
+        lines=['line1','line2','line3']
+        parentLines,descendantLines=OFL.separate_parent_lines_descendant_lines(lines)
+        self.assertEqual(parentLines,lines)
+        self.assertEqual(descendantLines,None)
+
+    def test3(self):
+        '''test separate_parent_lines_descendant_lines'''
+        lines=['* line1','line2','line3']
+        parentLines,descendantLines=OFL.separate_parent_lines_descendant_lines(lines)
+        self.assertEqual(parentLines,lines)
+        self.assertEqual(descendantLines,None)
+
+    def test4(self):
+        '''test separate_parent_lines_descendant_lines'''
+        lines=['* line1','line2','** line3','line 4']
+        parentLines,descendantLines=OFL.separate_parent_lines_descendant_lines(lines)
+        self.assertEqual(parentLines,['* line1','line2'])
+        self.assertEqual(descendantLines,['** line3','line 4'])
+
 class TestListOfChildNodesFromLines(unittest.TestCase):
     def test1(self):
         '''test list_of_child_nodes_from_lines: no line starts with asterisk'''
@@ -368,6 +408,36 @@ class TestListOfChildNodesFromLines(unittest.TestCase):
         self.assertEqual([],childNodeList)
 
     #TODO fill in more tests; first review Node.__init__
+
+class TestLineToList1(unittest.TestCase):
+    def test1(self):
+        line='some text [[a link with brackets]] more text [[another link with brackets][description]].'
+        outputList=['some text ','[[a link with brackets]]',' more text ','[[another link with brackets][description]]','.']  #note the spaces
+        self.assertEqual(OFL.lineToList1(line),outputList)
+
+    def test2(self):
+        line='some text [[a link with brackets]] more text [[another link with brackets][description]].\n'
+        outputList=['some text ','[[a link with brackets]]',' more text ','[[another link with brackets][description]]','.']  #note the spaces, and \n is gone
+        self.assertEqual(OFL.lineToList1(line),outputList)
+
+    def test3(self):
+        line='some text [[a link with brackets]] more text [[another link with brackets][description]].  \n'
+        outputList=['some text ','[[a link with brackets]]',' more text ','[[another link with brackets][description]]','.  ']  #note the spaces, and \n is gone
+        self.assertEqual(OFL.lineToList1(line),outputList)
+
+class TestTextToLinkAndDescriptionDoubleBrackets(unittest.TestCase):
+    def test1(self):
+        someText='[[link link]]'
+        link,description=OFL.textToLinkAndDescriptionDoubleBrackets(someText)
+        self.assertEqual('link link',link)
+        self.assertEqual(None,description)
+
+    def test2(self):
+        someText='[[ link link ][ descr descr ]]'
+        link,description=OFL.textToLinkAndDescriptionDoubleBrackets(someText)
+        self.assertEqual(' link link ',link)
+        self.assertEqual(' descr descr ',description)
+
 #head
 DocumentsFolderAP=os.path.join(os.path.expanduser('~'),'Documents')
 assert os.path.exists(DocumentsFolderAP), 'Cannot proceed since assuming the folder %s exists' % DocumentsFolderAP
