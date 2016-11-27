@@ -1387,7 +1387,7 @@ class LinkToLocalFile(Link):
         i.e. if you clicked on it in org mode, would it bring up the target
         '''
 
-        if self.targetObj.testIfExists():
+        if self.targetObj.testIfExists():  #TODO this assumes all symlinks have been replaced with their targets
             return True
         else:
             return False
@@ -2334,19 +2334,17 @@ class Node():
                 count+=1
                 continue
 
-            lineList1=lineToList1(line)  # ['some text ','[[a link with brackets]]',' more text ','[[another link with brackets][description]]','.']; see orgFixLinksTests.py
+            lineList1=line_to_list1(line)  # ['some text ','[[a link with brackets]]',' more text ','[[another link with brackets][description]]','.']; see orgFixLinksTests.py
 
             lineList2=[]
             for piece in lineList1:
                 if Link.orgLinkWBracketsRegexNC.match(piece):  #piece is [[link]] or [[link][description]]
-                    link,description=textToLinkAndDescriptionDoubleBrackets(piece)
+                    link,description=text_to_link_and_description_double_brackets(piece)
 
                     #based on which regex matches link, create a link object and add it to lineList2
-                    matches1=[(a,a.match(link)) for a in regexOrderedList] #list of tuples: (regex,match object)
-                    matches2=[z for z in matches1 if z[1]] #the tuples from matches1 where there is a match
-                    if matches2:  #if there are any matches
-                        matchingRegex,matchObj=matches2[0]
-                        matchingClass=regexDict[matchingRegex]
+                    matchingRegex,matchObj,matchingClass=find_best_regex_match_for_text(link)
+
+                    if matchingRegex: #if there is a match
                         lineList2.append(matchingClass(text=piece,inHeader=self.inHeader,sourceFile=self.sourceFile,hasBrackets=True,regexForLink=matchingRegex))  #creating instance of e.g. LinkToOrgFile
                         lineList2[-1].associateWNode(self)
                         d1[matchingRegex].append(lineList2[-1])  #d1[matchingRegex] is the appropriate self.listOfLinks
@@ -2357,15 +2355,13 @@ class Node():
                     else:
                         lineList2.append(piece)  #since link does not match any regex, leave this piece as text 
                         continue  #go to next piece in line
-                else:  #piece is not [[link]] or [[link][description]]
+                else:  #piece is not [[link]] or [[link][description]], but might be a link without brackets
                     pieceList=piece.split(' ')  #choose space as separator
                     pieceList2=[a.strip() for a in pieceList]  #had trouble with tabs
                     for each1 in pieceList2:  #here we are looking for links without brackets
-                        matches1=[(a,a.match(each1)) for a in regexOrderedList] #list of tuples: (regex,match object)
-                        matches2=[z for z in matches1 if z[1]] #the tuples where there is a match
-                        if matches2:  #if there are any matches
-                            matchingRegex,matchObj=matches2[0]
-                            matchingClass=regexDict[matchingRegex]
+                        matchingRegex,matchObj,matchingClass=find_best_regex_match_for_text(each1)
+
+                        if matchingRegex: #if there is a match
                             foundLink=matchingClass(text=each1,inHeader=self.inHeader,sourceFile=self.sourceFile,hasBrackets=False,regexForLink=matchingRegex)
                             lineList2.append(foundLink)
                             foundLink.associateWNode(self)  # assuming this will update the object in lineList2
@@ -3243,7 +3239,7 @@ def list_of_child_nodes_from_lines(lines,sourceFile,parent=None):
     return childNodeList
 
 #head
-def lineToList1(line):
+def line_to_list1(line):
     '''Generate a list from a line
     input:  'some text [[a link with brackets]] more text [[another link with brackets][description]].'
     output:  ['some text','[[a link with brackets]]','more text','[[another link with brackets][description]]','.']
@@ -3252,7 +3248,7 @@ def lineToList1(line):
 
     return Link.orgLinkWBracketsRegexNC.split(line.strip('\n'))
 
-def textToLinkAndDescriptionDoubleBrackets(text):
+def text_to_link_and_description_double_brackets(text):
     '''text is [[link]] or [[link][description]]
     return link,description
     if no description, return link,None
@@ -3263,6 +3259,20 @@ def textToLinkAndDescriptionDoubleBrackets(text):
     assert link, 'link cannot be empty'
     description=matchObj1.group('description')
     return link,description
+
+def find_best_regex_match_for_text(text):
+    '''function that permits Node to match a piece of text to a link class'''
+    matchingRegex=None
+    matchObj=None
+    matchingClass=None
+
+    matches1=[(a,a.match(text)) for a in regexOrderedList] #list of tuples: (regex,match object)
+    matches2=[z for z in matches1 if z[1]] #the tuples from matches1 where there is a match
+    if matches2:  #if there are any matches
+        matchingRegex,matchObj=matches2[0]  #the first match should be the desired one, according to ordering in regexOrderedList
+        matchingClass=regexDict[matchingRegex]
+
+    return matchingRegex,matchObj,matchingClass
 
 #head
 def make_list_of(someThing):

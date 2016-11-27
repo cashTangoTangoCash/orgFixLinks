@@ -20,6 +20,23 @@ import os
 #TODO test the many sqlite database operations
 
 #head test functions inside classes
+class TestLinkMethods(unittest.TestCase):
+    def test1(self):
+        pass
+
+class TestLinkToLocalFileMethods(unittest.TestCase):
+    def test1(self):
+        pass
+
+class TestLinkToNonOrgFileMethods(unittest.TestCase):
+    def test1(self):
+        pass
+
+class TestLinkToOrgFileMethods(unittest.TestCase):
+    def test1(self):
+        pass
+
+#head
 class TestNodeMethods(unittest.TestCase):
     def test1_findUniqueID(self):
         '''test Node.findUniqueID (uniqueIDRegexObj is set to OrgFile.myUniqueIDRegex)'''
@@ -38,6 +55,8 @@ class TestNodeMethods(unittest.TestCase):
         node1.findUniqueID(OFL.OrgFile.myUniqueIDRegex)
         self.failIf(node1.uniqueID)
 
+    #head TODO could init a node with some tags, some org file links, some non org file links, and then test the lists came out right
+#head
 class TestLocalFileMethods(unittest.TestCase):
     #head TODO is there anything to test in LocalFile.__init__?  seems like no.
     #head test LocalFile.testIfExists
@@ -413,31 +432,83 @@ class TestLineToList1(unittest.TestCase):
     def test1(self):
         line='some text [[a link with brackets]] more text [[another link with brackets][description]].'
         outputList=['some text ','[[a link with brackets]]',' more text ','[[another link with brackets][description]]','.']  #note the spaces
-        self.assertEqual(OFL.lineToList1(line),outputList)
+        self.assertEqual(OFL.line_to_list1(line),outputList)
 
     def test2(self):
         line='some text [[a link with brackets]] more text [[another link with brackets][description]].\n'
         outputList=['some text ','[[a link with brackets]]',' more text ','[[another link with brackets][description]]','.']  #note the spaces, and \n is gone
-        self.assertEqual(OFL.lineToList1(line),outputList)
+        self.assertEqual(OFL.line_to_list1(line),outputList)
 
     def test3(self):
         line='some text [[a link with brackets]] more text [[another link with brackets][description]].  \n'
         outputList=['some text ','[[a link with brackets]]',' more text ','[[another link with brackets][description]]','.  ']  #note the spaces, and \n is gone
-        self.assertEqual(OFL.lineToList1(line),outputList)
+        self.assertEqual(OFL.line_to_list1(line),outputList)
 
 class TestTextToLinkAndDescriptionDoubleBrackets(unittest.TestCase):
     def test1(self):
         someText='[[link link]]'
-        link,description=OFL.textToLinkAndDescriptionDoubleBrackets(someText)
+        link,description=OFL.text_to_link_and_description_double_brackets(someText)
         self.assertEqual('link link',link)
         self.assertEqual(None,description)
 
     def test2(self):
         someText='[[ link link ][ descr descr ]]'
-        link,description=OFL.textToLinkAndDescriptionDoubleBrackets(someText)
+        link,description=OFL.text_to_link_and_description_double_brackets(someText)
         self.assertEqual(' link link ',link)
         self.assertEqual(' descr descr ',description)
 
+class TestFindBestRegexMatchForText(unittest.TestCase):
+    #head this is where you test if your regexes can correctly identify links
+    #head TODO many tests to write here; see your file of links?
+    #head see regexForVariousLinksInOrgMode1.py
+    def test1(self):
+        someText='not_link_text' #at this point, there would not be the link bracket pattern.  there would be no spaces.
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(someText)
+        self.failIf(matchingRegex)
+        self.failIf(matchObj)
+        self.failIf(matchingClass)
+
+    def test2(self):
+        '''an internal link'''
+        someText='#my-custom-id'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(someText)
+        self.failIf(matchingRegex)
+        self.failIf(matchObj)
+        self.failIf(matchingClass)
+
+    def test3(self):
+        '''an internal link'''
+        someText='id:B7423F4D-2E8A-471B-8810-C40F074717E9'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(someText)
+        self.failIf(matchingRegex)
+        self.failIf(matchObj)
+        self.failIf(matchingClass)
+
+    def test4(self):
+        '''a web link'''
+        someText='http://www.astro.uva.nl/~dominik'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(someText)
+        self.failIf(matchingRegex)
+        self.failIf(matchObj)
+        self.failIf(matchingClass)
+
+    def test5(self):
+        '''think this is called a document identifier'''
+        someText='doi:10.1000/182'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(someText)
+        self.failIf(matchingRegex)
+        self.failIf(matchObj)
+        self.failIf(matchingClass)
+
+    def test6(self):
+        '''org will not detect this as a clickable link without brackets'''
+        link1='file:OrgModeFileCrawlerMain.org'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+        self.assertEqual(matchingRegex,OFL.OrgFile)
+        self.failIf(matchObj)
+        self.failIf(matchingClass)
+
+#head do not see a test for make_regex_dict
 #head
 DocumentsFolderAP=os.path.join(os.path.expanduser('~'),'Documents')
 assert os.path.exists(DocumentsFolderAP), 'Cannot proceed since assuming the folder %s exists' % DocumentsFolderAP
