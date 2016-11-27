@@ -1937,15 +1937,11 @@ class LinkToNonOrgFile(LinkToLocalFile):
     a link in an org file, to another file (which is not org) on local disk
     '''
 
-    linkRegexes=[]  # list of compiled regex objects; link is [[link][description]]
-    # file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything
-    linkRegexes.append(re.compile(r'^(?P<preFilename>(?:file(?:(?:[+]sys)|(?:[+]emacs))?:)|(?:docview:))(?P<filename>[^@*]+?)(?P<postFilename>::.+)$'))
-    # /anyFilename::anything  or  ./anyFilename::anything  or  ~/anyFilename::anything
-    linkRegexes.append(re.compile(r'^(?P<preFilename>)(?P<filename>[.~]?[/][^@*]+?)(?P<postFilename>::.+)$'))
-    # file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename
-    linkRegexes.append(re.compile(r'^(?P<preFilename>(?:file(?:(?:[+]sys)|(?:[+]emacs))?:)|(?:docview:))(?P<filename>[^@*]+$)(?P<postFilename>)'))
-    # /anyFilename  or  ./anyFilename  or  ~/anyFilename
-    linkRegexes.append(re.compile(r'^(?P<preFilename>)(?P<filename>[.~]?[/][^@*]+$)(?P<postFilename>)'))
+    # a dictionary of compiled regex objects; link is [[link][description]]
+    linkRegexes={'file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything':re.compile(r'^(?P<preFilename>(?:file(?:(?:[+]sys)|(?:[+]emacs))?:)|(?:docview:))(?P<filename>[^@*]+?)(?P<postFilename>::.+)$')}
+    linkRegexes['/anyFilename::anything  or  ./anyFilename::anything  or  ~/anyFilename::anything']=re.compile(r'^(?P<preFilename>)(?P<filename>[.~]?[/][^@*]+?)(?P<postFilename>::.+)$')
+    linkRegexes['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename']=re.compile(r'^(?P<preFilename>(?:file(?:(?:[+]sys)|(?:[+]emacs))?:)|(?:docview:))(?P<filename>[^@*]+$)(?P<postFilename>)')
+    linkRegexes['/anyFilename  or  ./anyFilename  or  ~/anyFilename']re.compile(r'^(?P<preFilename>)(?P<filename>[.~]?[/][^@*]+$)(?P<postFilename>)')
 
     def __init__(self,text,inHeader,sourceFile,hasBrackets,regexForLink):
         '''
@@ -1997,19 +1993,13 @@ class LinkToNonOrgFile(LinkToLocalFile):
 class LinkToOrgFile(LinkToLocalFile):
     '''a link in an org file, to another org file on local disk'''
 
-    linkRegexes=[]  # list of compiled regex objects; link is [[link][description]]
-
-    #these are in order of precedence for identifying a link
-
-    # file:anyFilename.org::anything or file+sys:anyFilename.org::anything or file+emacs:anyFilename.org::anything or docview:anyFilename.org::anything
-    linkRegexes.append(re.compile(r'^(?P<preFilename>(?:file(?:(?:[+]sys)|(?:[+]emacs))?:)|(?:docview:))(?P<filename>[^@*]+?[.]org)(?P<postFilename>::.+)$'))
-    # /anyFilename.org::anything  or  ./anyFilename.org::anything  or  ~/anyFilename.org::anything
-    linkRegexes.append(re.compile(r'^(?P<preFilename>)(?P<filename>[.~]?[/][^@*]+?[.]org)(?P<postFilename>::.+)$'))
-
-    # file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org
-    linkRegexes.append(re.compile(r'^(?P<preFilename>(?:file(?:(?:[+]sys)|(?:[+]emacs))?:)|(?:docview:))(?P<filename>[^@*]+?[.]org$)(?P<postFilename>)'))
-    # /anyFilename.org  or  ./anyFilename.org  or  ~/anyFilename.org
-    linkRegexes.append(re.compile(r'^(?P<preFilename>)(?P<filename>[.~]?[/][^@*]+?[.]org$)(?P<postFilename>)'))
+    # a dictionary of compiled regex objects; link is [[link][description]]
+    #using dictionary instead of list to make code easier to maintain
+    #key is really long string but is descriptive
+    linkRegexes={'file:anyFilename.org::anything or file+sys:anyFilename.org::anything or file+emacs:anyFilename.org::anything or docview:anyFilename.org::anything':re.compile(r'^(?P<preFilename>(?:file(?:(?:[+]sys)|(?:[+]emacs))?:)|(?:docview:))(?P<filename>[^@*]+?[.]org)(?P<postFilename>::.+)$')}
+    linkRegexes['/anyFilename.org::anything  or  ./anyFilename.org::anything  or  ~/anyFilename.org::anything']=re.compile(r'^(?P<preFilename>)(?P<filename>[.~]?[/][^@*]+?[.]org)(?P<postFilename>::.+)$')
+    linkRegexes['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org']=re.compile(r'^(?P<preFilename>(?:file(?:(?:[+]sys)|(?:[+]emacs))?:)|(?:docview:))(?P<filename>[^@*]+?[.]org$)(?P<postFilename>)')
+    linkRegexes['/anyFilename.org  or  ./anyFilename.org  or  ~/anyFilename.org']=re.compile(r'^(?P<preFilename>)(?P<filename>[.~]?[/][^@*]+?[.]org$)(?P<postFilename>)')
 
     #unique ID in header of self.sourceFile pertaining to this link is written differently than unique ID in status section of self.sourceFile
     #this makes it easy to find unique ID of an org file without making a full representation of it in this script
@@ -2319,8 +2309,8 @@ class Node():
 
         #make a dictionary d1 to connect link regexes to lists of links
         #TODO would look cleaner to have class as key instead of link regex, but quick google search suggests more trouble than worth?
-        d1={a:self.linksToOrgFiles for a in LinkToOrgFile.linkRegexes}  #dictionary comprehension
-        d2={a:self.linksToNonOrgFiles for a in LinkToNonOrgFile.linkRegexes}  #dictionary comprehension
+        d1={a:self.linksToOrgFiles for a in LinkToOrgFile.linkRegexes.values()}  #dictionary comprehension
+        d2={a:self.linksToNonOrgFiles for a in LinkToNonOrgFile.linkRegexes.values()}  #dictionary comprehension
         d1.update(d2)
 
         self.lineLists=[]  #a list for each line in self.myLines
@@ -3132,8 +3122,9 @@ class OrgFile(LocalFile):
         nonOrgFilesILinkTo=db1.linksToNonOrgTable.makeListOfFilesAFileLinksTo(self)  #list of OrgFile objects
 
         #turn these OrgFile, NonOrgFile instances into Link instances
+        linkRegexesKey='file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org'
         if orgFilesILinkTo:
-            self.linksToOrgFilesList=[LinkToOrgFile(text='file:'+a.filenameAP,inHeader=False,sourceFile=self,hasBrackets=False,regexForLink=LinkToOrgFile.linkRegexes[2]) for a in orgFilesILinkTo]
+            self.linksToOrgFilesList=[LinkToOrgFile(text='file:'+a.filenameAP,inHeader=False,sourceFile=self,hasBrackets=False,regexForLink=LinkToOrgFile.linkRegexes[linkRegexesKey]) for a in orgFilesILinkTo]
 
             for link1 in self.linksToOrgFilesList:
                 link1.initTargetFile()
@@ -3141,8 +3132,9 @@ class OrgFile(LocalFile):
         else:
             self.linksToOrgFilesList=[]
 
+        linkRegexesKey='file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'
         if nonOrgFilesILinkTo:
-            self.linksToNonOrgFilesList=[LinkToNonOrgFile(text='file:'+a.filenameAP,inHeader=False,sourceFile=self,hasBrackets=False,regexForLink=LinkToNonOrgFile.linkRegexes[2]) for a in nonOrgFilesILinkTo]
+            self.linksToNonOrgFilesList=[LinkToNonOrgFile(text='file:'+a.filenameAP,inHeader=False,sourceFile=self,hasBrackets=False,regexForLink=LinkToNonOrgFile.linkRegexes[linkRegexesKey]) for a in nonOrgFilesILinkTo]
 
             for link1 in self.linksToNonOrgFilesList:
                 link1.initTargetFile()
@@ -4494,8 +4486,8 @@ def make_regex_dict():
     regexDict is a dictionary where key is compiled regex and value is class that compiled regex pertains to
     purpose: matching link in [[link][description]] to class
     '''
-    regexDict1={a:LinkToOrgFile for a in LinkToOrgFile.linkRegexes}  #dictionary comprehension
-    regexDict2={a:LinkToNonOrgFile for a in LinkToNonOrgFile.linkRegexes}
+    regexDict1={a:LinkToOrgFile for a in LinkToOrgFile.linkRegexes.values()}  #dictionary comprehension
+    regexDict2={a:LinkToNonOrgFile for a in LinkToNonOrgFile.linkRegexes.values()}
     #http://stackoverflow.com/questions/38987/how-to-merge-two-python-dictionaries-in-a-single-expression
     regexDict1.update(regexDict2)
 
@@ -4537,8 +4529,17 @@ origFolder=os.getcwd()
 pastInteractiveRepairs=get_past_interactive_repairs_dict()  # a dictionary for storing past interactive repairs of broken links
 asteriskRegex=re.compile('(?P<asterisks>^\*+) ')
 #list of compiled regex for identifying class of link; has particular order for identifying link in [[link][description]]
-regexOrderedList=[LinkToOrgFile.linkRegexes[0],LinkToOrgFile.linkRegexes[1],LinkToNonOrgFile.linkRegexes[0],LinkToNonOrgFile.linkRegexes[1]]
-regexOrderedList.extend([LinkToOrgFile.linkRegexes[2],LinkToOrgFile.linkRegexes[3],LinkToNonOrgFile.linkRegexes[2],LinkToNonOrgFile.linkRegexes[3]])
+
+regexOrderedList=[LinkToOrgFile.linkRegexes['file:anyFilename.org::anything or file+sys:anyFilename.org::anything or file+emacs:anyFilename.org::anything or docview:anyFilename.org::anything']]
+regexOrderedList.append(LinkToOrgFile.linkRegexes['/anyFilename.org::anything  or  ./anyFilename.org::anything  or  ~/anyFilename.org::anything'])
+regexOrderedList.append(LinkToNonOrgFile.linkRegexes['file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything'])
+regexOrderedList.append(LinkToNonOrgFile.linkRegexes['/anyFilename::anything  or  ./anyFilename::anything  or  ~/anyFilename::anything'])
+
+regexOrderedList.append(LinkToOrgFile.linkRegexes['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org'])
+regexOrderedList.append(LinkToOrgFile.linkRegexes['/anyFilename.org  or  ./anyFilename.org  or  ~/anyFilename.org'])
+regexOrderedList.append(LinkToNonOrgFile.linkRegexes['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
+regexOrderedList.append(LinkToNonOrgFile.linkRegexes['/anyFilename  or  ./anyFilename  or  ~/anyFilename'])
+
 #dictionary that matches compiled regex in regexOrderedList to class it came from
 regexDict=make_regex_dict()
 

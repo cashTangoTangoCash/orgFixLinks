@@ -502,11 +502,157 @@ class TestFindBestRegexMatchForText(unittest.TestCase):
 
     def test6(self):
         '''org will not detect this as a clickable link without brackets'''
+        link1='OrgModeFileCrawlerMain.org'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+        self.failIf(matchingRegex)
+
+    def test7(self):
         link1='file:OrgModeFileCrawlerMain.org'
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
-        self.assertEqual(matchingRegex,OFL.OrgFile)
-        self.failIf(matchObj)
-        self.failIf(matchingClass)
+        self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexes['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org'])
+        self.assertEqual(matchingClass,OFL.LinkToOrgFile)
+        #test other things when testing Link classes
+
+    def test8(self):
+        link1='/OrgModeFileCrawlerMain.org'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+        self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexes['/anyFilename.org  or  ./anyFilename.org  or  ~/anyFilename.org'])
+        self.assertEqual(matchingClass,OFL.LinkToOrgFile)
+
+    def test9(self):
+        link1='file:/OrgModeFileCrawlerMain.org'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+        self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexes['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org'])
+        self.assertEqual(matchingClass,OFL.LinkToOrgFile)
+
+    def test10(self):
+        link1='~/OrgModeFileCrawlerMain.org'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+        self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexes['/anyFilename.org  or  ./anyFilename.org  or  ~/anyFilename.org'])
+        self.assertEqual(matchingClass,OFL.LinkToOrgFile)
+
+    def test11(self):
+        link1='file:~/OrgModeFileCrawlerMain.org'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+        self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexes['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org'])
+        self.assertEqual(matchingClass,OFL.LinkToOrgFile)
+
+    def test12(self):
+        '''org will not detect this as a clickable link without brackets'''
+        link1='OrgModeFileCrawlerMain.org::what about' #without brackets, there could be no spaces in search term, and org won't see link as clickable.  with brackets, org sees link as an internal link
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+        self.failIf(matchingRegex)
+
+    def test13(self):
+        link1='file:OrgModeFileCrawlerMain.org::what about' #with file in front, link will be clickable in org without brackets.  without brackets, search term cannot have spaces.
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+        self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexes['file:anyFilename.org::anything or file+sys:anyFilename.org::anything or file+emacs:anyFilename.org::anything or docview:anyFilename.org::anything'])
+        self.assertEqual(matchingClass,OFL.LinkToOrgFile)
+
+    def test14(self):
+        link1=os.path.join(os.path.expanduser('~'),'Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py')
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexes['/anyFilename  or  ./anyFilename  or  ~/anyFilename'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test15(self):
+        link1='file:'+os.path.join(os.path.expanduser('~'),'Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py')
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexes['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test16(self):
+        link1='./20160908ExceptionTest.py' #without brackets, this link would not be clickable in org
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexes['/anyFilename  or  ./anyFilename  or  ~/anyFilename'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test17(self):
+        link1='file:./20160908ExceptionTest.py'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexes['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test18(self):
+        link1='./20160908Exception Test.py' #without brackets, this link would not be clickable in org
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexes['/anyFilename  or  ./anyFilename  or  ~/anyFilename'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test19(self):
+        link1='file:./20160908Exception Test.py'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexes['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test20(self):
+        link1='~/20160908ExceptionTest.py' #without brackets, this link would not be clickable in org
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexes['/anyFilename  or  ./anyFilename  or  ~/anyFilename'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test21(self):
+        link1='file:~/20160908ExceptionTest.py'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexes['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test22(self):
+        link1='20160908ExceptionTest.py' #without brackets, this link would not be clickable in org.  with brackets, org sees it as a clickable link.
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+        self.failIf(matchingRegex)
+
+    def test23(self):
+        link1='file:20160908ExceptionTest.py'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexes['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test24(self):
+        link1='PythonScriptOldVersions' #without brackets, this link would not be clickable in org.  with brackets, org sees it as a clickable link.
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+        self.failIf(matchingRegex)
+
+    def test25(self):
+        link1='file:PythonScriptOldVersions'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexes['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test26(self):
+        link1='/myself@some.where:papers/last.pdf' #do not want my script to detect this link to a file on a remote machine
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+        self.failIf(matchingRegex)
+
+    def test27(self):
+        link1='file:/myself@some.where:papers/last.pdf' #do not want my script to detect this link to a file on a remote machine
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+        self.failIf(matchingRegex)
+
+    def test28(self):
+        link1='20160908ExceptionTest.py::23' #if no brackets, org does not detect it as clickable link.  with brackets, org detects it as internal link.
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+        self.failIf(matchingRegex)
+
+    def test29(self):
+        link1='file:20160908ExceptionTest.py::23'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexes['file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test30(self):
+        link1=os.path.join(os.path.expanduser('~'),'Documents/Computer/Software/PythonNotes/SeverancePythonForInformatics/PythonForInformaticsSeverance009d2.pdf')+'::32'  #not clickable in org without brackets
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexes['/anyFilename::anything  or  ./anyFilename::anything  or  ~/anyFilename::anything'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test31(self):
+        link1='file:'+os.path.join(os.path.expanduser('~'),'Documents/Computer/Software/PythonNotes/SeverancePythonForInformatics/PythonForInformaticsSeverance009d2.pdf')+'::32'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexes['file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    #TODO left off at get_external_link_examples_part_5 in regexForVariousLinksInOrgMode1.py
 
 #head do not see a test for make_regex_dict
 #head
