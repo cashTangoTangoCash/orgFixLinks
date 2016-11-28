@@ -5,19 +5,15 @@ import os
 
 #TODO merge this with previous test file?  no, that file seems too specialized
 
-#TODO test regexOrderedList, or part of larger test?
-#TODO test regexDict, or part of larger test?
-#TODO test OrgFile.myUniqueIDRegex, or part of larger test?
-
 #TODO test that unique ID generator makes unique IDs that are detected by appropriate regex
 
 #TODO test converting a line into list of objects, than back into the same line (catch bug that is adding spaces)
 
-#TODO because of the way the script under test is written, it seems difficult to write true unit tests
-
 #TODO test lookInsideForUniqueID when there is a full representation of an org file
 
 #TODO test the many sqlite database operations
+
+#TODO test init a node then getting back the identical lines from data structure of node (sanity check)
 
 #head test functions inside classes
 class TestLinkMethods(unittest.TestCase):
@@ -38,6 +34,20 @@ class TestLinkToOrgFileMethods(unittest.TestCase):
 
 #head
 class TestNodeMethods(unittest.TestCase):
+    def test1(self):
+        '''OFL.Node.__init__ has many things going on'''
+        lines=['* tags\t\t:tag1:tag2:\n','blurb 1\n','** tags \t\t:tag3:tag4:\n','blurb\t2\n']
+        aNode=OFL.Node(lines,sourceFile=None)
+        self.failIf(aNode.inHeader)
+        self.failUnless(aNode.level==1)
+        self.assertEqual(aNode.myLines,lines[0:2])
+        self.assertEqual(aNode.descendantLines,lines[2:])
+        self.assertEqual(len(aNode.childNodeList),1)
+        self.assertEqual(aNode.tags,['tag1','tag2'])
+        self.assertEqual(aNode.blurb,[lines[1]])  #blurb is a list of lines
+        self.failIf(aNode.linksToOrgFiles)
+        self.failIf(aNode.linksToNonOrgFiles)
+
     def test1_findUniqueID(self):
         '''test Node.findUniqueID (uniqueIDRegexObj is set to OrgFile.myUniqueIDRegex)'''
 
@@ -55,7 +65,6 @@ class TestNodeMethods(unittest.TestCase):
         node1.findUniqueID(OFL.OrgFile.myUniqueIDRegex)
         self.failIf(node1.uniqueID)
 
-    #head TODO could init a node with some tags, some org file links, some non org file links, and then test the lists came out right
 #head
 class TestLocalFileMethods(unittest.TestCase):
     #head TODO is there anything to test in LocalFile.__init__?  seems like no.
@@ -456,6 +465,14 @@ class TestTextToLinkAndDescriptionDoubleBrackets(unittest.TestCase):
         link,description=OFL.text_to_link_and_description_double_brackets(someText)
         self.assertEqual(' link link ',link)
         self.assertEqual(' descr descr ',description)
+
+class TestSplitOnNonWhitespaceKeepEverything(unittest.TestCase):
+    def test1(self):
+        line='how now  brown   cow\tand.  \n'
+        list=OFL.split_on_non_whitespace_keep_everything(line)
+        expectedList=['how',' ','now','  ','brown','   ','cow','\t','and.','  \n','']
+        self.assertEqual(line,''.join(list))
+        self.assertEqual(list,expectedList)
 
 class TestFindBestRegexMatchForText(unittest.TestCase):
     #head this is where you test if your regexes can correctly identify links

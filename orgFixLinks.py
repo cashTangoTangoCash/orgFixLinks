@@ -2338,17 +2338,15 @@ class Node():
                         lineList2.append(matchingClass(text=piece,inHeader=self.inHeader,sourceFile=self.sourceFile,hasBrackets=True,regexForLink=matchingRegex))  #creating instance of e.g. LinkToOrgFile
                         lineList2[-1].associateWNode(self)
                         d1[matchingRegex].append(lineList2[-1])  #d1[matchingRegex] is the appropriate self.listOfLinks
-                        if matchingClass in [LinkToOrgFile,LinkToNonOrgFile]:
-                            lineList2[-1].initTargetFile()  #create instance of target of this link
-                            lineList2[-1].testIfWorking()
+                        lineList2[-1].initTargetFile()  #create instance of target of this link
+                        lineList2[-1].testIfWorking()
                         continue  #go to next piece in line
                     else:
                         lineList2.append(piece)  #since link does not match any regex, leave this piece as text 
                         continue  #go to next piece in line
-                else:  #piece is not [[link]] or [[link][description]], but might be a link without brackets
-                    pieceList=piece.split(' ')  #choose space as separator
-                    pieceList2=[a.strip() for a in pieceList]  #had trouble with tabs
-                    for each1 in pieceList2:  #here we are looking for links without brackets
+                else:  #piece does not include [[link]] or [[link][description]], but might include a link without brackets
+                    pieceList=split_on_non_whitespace_keep_everything(piece)
+                    for each1 in pieceList:  #here we are looking for links without brackets
                         matchingRegex,matchObj,matchingClass=find_best_regex_match_for_text(each1)
 
                         if matchingRegex: #if there is a match
@@ -2356,12 +2354,11 @@ class Node():
                             lineList2.append(foundLink)
                             foundLink.associateWNode(self)  # assuming this will update the object in lineList2
                             d1[matchingRegex].append(foundLink)  #d1[matchingRegex] is the appropriate self.listOfLinks
-                            if matchingClass in [LinkToOrgFile,LinkToNonOrgFile]:
-                                foundLink.initTargetFile()  #create instance of target of this link
-                                foundLink.testIfWorking()
+                            foundLink.initTargetFile()  #create instance of target of this link
+                            foundLink.testIfWorking()
                         else:
                             lineList2.append(each1)
-            self.lineLists.append(lineList2+['\n'])
+            self.lineLists.append(lineList2)
             count+=1
     #head
     def makeTagList(self):
@@ -2442,9 +2439,9 @@ class Node():
                     list1.append(item.text)
             listOfStringsForEachLine.append(list1)
 
-        self.myLines=[" ".join(a) for a in listOfStringsForEachLine]  #self.myLines is regenerated
+        self.myLines=[''.join(a) for a in listOfStringsForEachLine]  #self.myLines is regenerated
 
-        # I don't think self.descendantLines is getting regenerated from self.linelists
+        # TODO I don't think self.descendantLines is getting regenerated from self.linelists
         # for my current purposes it's not needed to solve this?
         if self.descendantLines:
             self.lines=self.myLines+self.descendantLines
@@ -3251,6 +3248,10 @@ def text_to_link_and_description_double_brackets(text):
     assert link, 'link cannot be empty'
     description=matchObj1.group('description')
     return link,description
+
+def split_on_non_whitespace_keep_everything(text):
+    p4=re.compile(r'(\s+)')
+    return p4.split(text)
 
 def find_best_regex_match_for_text(text):
     '''function that permits Node to match a piece of text to a link class'''
