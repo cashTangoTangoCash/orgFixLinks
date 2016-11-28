@@ -1941,7 +1941,7 @@ class LinkToNonOrgFile(LinkToLocalFile):
     linkRegexes={'file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything':re.compile(r'^(?P<preFilename>(?:file(?:(?:[+]sys)|(?:[+]emacs))?:)|(?:docview:))(?P<filename>[^@*]+?)(?P<postFilename>::.+)$')}
     linkRegexes['/anyFilename::anything  or  ./anyFilename::anything  or  ~/anyFilename::anything']=re.compile(r'^(?P<preFilename>)(?P<filename>[.~]?[/][^@*]+?)(?P<postFilename>::.+)$')
     linkRegexes['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename']=re.compile(r'^(?P<preFilename>(?:file(?:(?:[+]sys)|(?:[+]emacs))?:)|(?:docview:))(?P<filename>[^@*]+$)(?P<postFilename>)')
-    linkRegexes['/anyFilename  or  ./anyFilename  or  ~/anyFilename']re.compile(r'^(?P<preFilename>)(?P<filename>[.~]?[/][^@*]+$)(?P<postFilename>)')
+    linkRegexes['/anyFilename  or  ./anyFilename  or  ~/anyFilename']=re.compile(r'^(?P<preFilename>)(?P<filename>[.~]?[/][^@*]+$)(?P<postFilename>)')
 
     def __init__(self,text,inHeader,sourceFile,hasBrackets,regexForLink):
         '''
