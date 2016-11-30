@@ -34,9 +34,9 @@ class TestLinkToOrgFileMethods(unittest.TestCase):
 
 #head
 class TestNodeMethods(unittest.TestCase):
-    def test1(self):
-        '''OFL.Node.__init__ has many things going on'''
-        lines=['* tags\t\t:tag1:tag2:\n','blurb 1\n','** tags \t\t:tag3:tag4:\n','blurb\t2\n']
+    def test1_NodeInit(self):
+        '''test OFL.Node.__init__ for a node with tags and one child node'''
+        lines=['* tags \t\t:tag1:tag2:\n','blurb 1\n','** tags  \t\t :tag3:tag4:\n','blurb\t2\n']
         aNode=OFL.Node(lines,sourceFile=None)
         self.failIf(aNode.inHeader)
         self.failUnless(aNode.level==1)
@@ -47,8 +47,31 @@ class TestNodeMethods(unittest.TestCase):
         self.assertEqual(aNode.blurb,[lines[1]])  #blurb is a list of lines
         self.failIf(aNode.linksToOrgFiles)
         self.failIf(aNode.linksToNonOrgFiles)
+        self.assertEqual(aNode.lineLists,[['*',' ','tags',' \t\t',':tag1:tag2:','\n',''],['blurb',' ','1','\n','']])
 
-    def test1_findUniqueID(self):
+    def test2_NodeInit(self):
+        '''test OFL.Node.__init__ for a node with links'''
+        #TODO wait till have written tests for Links?
+        # link1Text='[[][]]'
+        # link2Text='[[][]]'
+        # link3Text='[[][]]'
+        # lines=['* links [[][]] \t\t\n','blurb 1 [[][]] another link \n','** tags  \t\t :tag3:tag4:\n','blurb\t2\n']
+        # aNode=OFL.Node(lines,sourceFile=None)
+        # self.failIf(aNode.inHeader)
+        # self.failUnless(aNode.level==1)
+        # self.assertEqual(aNode.myLines,lines[0:2])
+        # self.assertEqual(aNode.descendantLines,lines[2:])
+        # self.assertEqual(len(aNode.childNodeList),1)
+        # self.assertEqual(aNode.tags,['tag1','tag2'])
+        # self.assertEqual(aNode.blurb,[lines[1]])  #blurb is a list of lines
+        # self.failIf(aNode.linksToOrgFiles)
+        # self.failIf(aNode.linksToNonOrgFiles)
+        # self.assertEqual(aNode.lineLists,[['*',' ','tags',' \t\t',':tag1:tag2:','\n',''],['blurb',' ','1','\n','']])
+        pass
+
+    #head
+    #head OFL.Node.makeTagList is tested as part of testing __init__
+    def test1_NodeFindUniqueID(self):
         '''test Node.findUniqueID (uniqueIDRegexObj is set to OrgFile.myUniqueIDRegex)'''
 
         testLines1=['* status\n','#MyUniqueID2016-05-19_17-15-59-9812   \n']
@@ -57,13 +80,41 @@ class TestNodeMethods(unittest.TestCase):
         self.failUnless(node1.uniqueID)
         self.assertEqual(node1.uniqueID,'2016-05-19_17-15-59-9812')
 
-    def test2_findUniqueID(self):
+    def test2_NodeFindUniqueID(self):
         '''test Node.findUniqueID (uniqueIDRegexObj set to OrgFile.myUniqueIDRegex)'''
 
         testLines1=['* status\n','** #MyUniqueID2016-05-19_17-15-59-9812   \n']
         node1=OFL.Node(testLines1,sourceFile=None)
         node1.findUniqueID(OFL.OrgFile.myUniqueIDRegex)
         self.failIf(node1.uniqueID)
+
+    #head
+    def test1_NodeAddUniqueID(self):
+        #TODO fill in
+        #TODO code there looks unfamiliar and sketchy; need to review
+        pass
+
+    #head
+    def test1_NodeRegenAfterLinkUpdates(self):
+        '''OFL.Node.regenAfterLinkUpdates'''
+        lines=['* tags \t\t:tag1:tag2:\n','blurb 1\n','** tags  \t\t :tag3:tag4:\n','blurb\t2\n']
+        linesInNode1=lines[0:2]
+
+        node1=OFL.Node(lines,sourceFile=None)
+        node1.regenAfterLinkUpdates()
+        self.assertEqual(linesInNode1,node1.myLines)
+
+    def test2_NodeRegenAfterLinkUpdates(self):
+        '''OFL.Node.regenAfterLinkUpdates'''
+        lines=['* tags \t\t:tag1:tag2:\n','blurb 1\n','** tags  \t\t :tag3:tag4:\n','blurb\t2\n']
+
+        node1=OFL.Node(lines,sourceFile=None)
+        node2=node1.childNodeList[0]
+
+        node1.regenAfterLinkUpdates()
+        node2.regenAfterLinkUpdates()
+
+        self.assertEqual(lines,[node1.myLines[0],node1.myLines[1],node2.myLines[0],node2.myLines[1]])
 
 #head
 class TestLocalFileMethods(unittest.TestCase):
@@ -257,6 +308,7 @@ class TestOrgFileMethods(unittest.TestCase):
 
     #head TODO test useDatabaseToGetOutwardLinks
     #head TODO test createFullRepresentation; expecting this to be not easy
+#head
 #head test standalone functions
 class TestAllUpperToAllLowercase(unittest.TestCase):
     def test1(self):
@@ -269,6 +321,7 @@ class TestAllUpperToAllLowercase(unittest.TestCase):
         result=someText
         self.assertEqual(OFL.all_upper_to_all_lowercase(someText),result)
 
+#head figure out how to test rand_int_as_string
 class TestGetAsteriskLevel(unittest.TestCase):
     def test1(self):
         '''test get_asterisk_level'''
@@ -321,84 +374,6 @@ class TestGetBaseAsteriskLevel(unittest.TestCase):
         lines=['***   line1\n','**   line2\n','**   line3\n']  #extra spaces after leading asterisks
         self.assertEqual(OFL.get_base_asterisk_level(lines),2)
 
-class TestFindUniqueIDInsideFile(unittest.TestCase):
-    '''these are all tests of OFL.find_unique_id_inside_org_file
-    which is a function that goes line by line inside an org file
-    it's used when script has not made a full representation of that org file
-    '''
-    def test1(self):
-        '''test find_unique_id_inside_file: file contains status node but does not contain unique ID'''
-        
-        testFileLines=['* status\n']
-        testFileLines.append('blurb\n')
-        testFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org')
-        testFile=open(testFilename,'w')
-        testFile.writelines(testFileLines)
-        testFile.close()
-
-        uniqueID=OFL.find_unique_id_inside_org_file(testFilename)
-        self.failIf(uniqueID)
-        os.remove(testFilename)
-
-    def test2(self):
-        '''test find_unique_id_inside_file: file contains status node but does not contain unique ID'''
-        
-        testFileLines=['* status\n']
-        testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9812   \n')
-        testFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org')
-        testFile=open(testFilename,'w')
-        testFile.writelines(testFileLines)
-        testFile.close()
-
-        uniqueID=OFL.find_unique_id_inside_org_file(testFilename)
-        self.assertEqual(uniqueID,'2016-05-19_17-15-59-9812')
-        os.remove(testFilename)
-
-    def test3(self):
-        '''test find_unique_id_inside_file: file contains status node but does not contain unique ID'''
-        
-        testFileLines=['* status\n']
-        testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9812   \n')
-        testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9813   \n')
-        testFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org')
-        testFile=open(testFilename,'w')
-        testFile.writelines(testFileLines)
-        testFile.close()
-
-        uniqueID=OFL.find_unique_id_inside_org_file(testFilename)
-        self.assertEqual(uniqueID,'2016-05-19_17-15-59-9812')
-        os.remove(testFilename)
-
-    def test4(self):
-        '''test find_unique_id_inside_file: file contains status node but does not contain unique ID'''
-        
-        testFileLines=[]
-        testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9812   \n')
-        testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9813   \n')
-        testFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org')
-        testFile=open(testFilename,'w')
-        testFile.writelines(testFileLines)
-        testFile.close()
-
-        uniqueID=OFL.find_unique_id_inside_org_file(testFilename)
-        self.failIf(uniqueID)
-        os.remove(testFilename)
-
-    def test5(self):
-        '''test find_unique_id_inside_file: file contains status node but does not contain unique ID'''
-        testFileLines=['one line\n','another line\n']
-        testFileLines.append('* status\n')
-        testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9812   \n')
-        testFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org')
-        testFile=open(testFilename,'w')
-        testFile.writelines(testFileLines)
-        testFile.close()
-
-        uniqueID=OFL.find_unique_id_inside_org_file(testFilename)
-        self.assertEqual(uniqueID,'2016-05-19_17-15-59-9812')
-        os.remove(testFilename)
-
-
 class TestSeparateParentLinesDescendantLines(unittest.TestCase):
     def test1(self):
         '''test separate_parent_lines_descendant_lines'''
@@ -437,20 +412,21 @@ class TestListOfChildNodesFromLines(unittest.TestCase):
 
     #TODO fill in more tests; first review Node.__init__
 
+#head
 class TestLineToList1(unittest.TestCase):
     def test1(self):
-        line='some text [[a link with brackets]] more text [[another link with brackets][description]].'
-        outputList=['some text ','[[a link with brackets]]',' more text ','[[another link with brackets][description]]','.']  #note the spaces
+        line='some text [[a link with brackets]] more text [[another link with brackets][description]]. \n'
+        outputList=['some text ','[[a link with brackets]]',' more text ','[[another link with brackets][description]]','. \n']  #note the spaces
         self.assertEqual(OFL.line_to_list1(line),outputList)
 
     def test2(self):
         line='some text [[a link with brackets]] more text [[another link with brackets][description]].\n'
-        outputList=['some text ','[[a link with brackets]]',' more text ','[[another link with brackets][description]]','.']  #note the spaces, and \n is gone
+        outputList=['some text ','[[a link with brackets]]',' more text ','[[another link with brackets][description]]','.\n']
         self.assertEqual(OFL.line_to_list1(line),outputList)
 
     def test3(self):
         line='some text [[a link with brackets]] more text [[another link with brackets][description]].  \n'
-        outputList=['some text ','[[a link with brackets]]',' more text ','[[another link with brackets][description]]','.  ']  #note the spaces, and \n is gone
+        outputList=['some text ','[[a link with brackets]]',' more text ','[[another link with brackets][description]]','.  \n']
         self.assertEqual(OFL.line_to_list1(line),outputList)
 
 class TestTextToLinkAndDescriptionDoubleBrackets(unittest.TestCase):
@@ -471,6 +447,13 @@ class TestSplitOnNonWhitespaceKeepEverything(unittest.TestCase):
         line='how now  brown   cow\tand.  \n'
         list=OFL.split_on_non_whitespace_keep_everything(line)
         expectedList=['how',' ','now','  ','brown','   ','cow','\t','and.','  \n','']
+        self.assertEqual(line,''.join(list))
+        self.assertEqual(list,expectedList)
+
+    def test2(self):
+        line='* tags \t\t:tag1:tag2:\n'
+        list=OFL.split_on_non_whitespace_keep_everything(line)
+        expectedList=['*',' ','tags',' \t\t',':tag1:tag2:','\n','']
         self.assertEqual(line,''.join(list))
         self.assertEqual(list,expectedList)
 
@@ -763,6 +746,107 @@ class TestFindBestRegexMatchForText(unittest.TestCase):
             self.failIf(matchingRegex)
 
     #TODO left off at get_external_link_examples_part_5 in regexForVariousLinksInOrgMode1.py
+#head
+#head TODO test traverse_nodes_to_fill_lists
+#head TODO test traverse_nodes_to_regen_after_link_updates
+#head TODO test traverse_nodes_to_recover_line_list
+#head TODO test traverse_nodes_to_reach_desired_node
+#head TODO test remove_tags_from_text
+#head TODO test add_brackets_to_match
+#head skip test of set_up_logging
+#head TODO test remove_old_logs
+#head skip test of turn_off_logging
+#head skip test of turn_logging_back_on_at_initial_level
+#head TODO test walk_files_looking_for_name_match
+#head TODO test walk_org_files_looking_for_unique_id_match
+#head TODO test find_all_name_matches_via_bash
+#head TODO test find_all_name_matches_via_bash_for_directories
+#head skip test of set_upd_database 
+#head TODO test user_chooses_element_from_list_or_rejects_all
+#head TODO test 
+#head TODO test 
+#head TODO test 
+
+class TestFindUniqueIDInsideFile(unittest.TestCase):
+    '''these are all tests of OFL.find_unique_id_inside_org_file
+    which is a function that goes line by line inside an org file
+    it's used when script has not made a full representation of that org file
+    '''
+    def test1(self):
+        '''test find_unique_id_inside_file: file contains status node but does not contain unique ID'''
+        
+        testFileLines=['* status\n']
+        testFileLines.append('blurb\n')
+        testFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org')
+        testFile=open(testFilename,'w')
+        testFile.writelines(testFileLines)
+        testFile.close()
+
+        uniqueID=OFL.find_unique_id_inside_org_file(testFilename)
+        self.failIf(uniqueID)
+        os.remove(testFilename)
+
+    def test2(self):
+        '''test find_unique_id_inside_file: file contains status node but does not contain unique ID'''
+        
+        testFileLines=['* status\n']
+        testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9812   \n')
+        testFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org')
+        testFile=open(testFilename,'w')
+        testFile.writelines(testFileLines)
+        testFile.close()
+
+        uniqueID=OFL.find_unique_id_inside_org_file(testFilename)
+        self.assertEqual(uniqueID,'2016-05-19_17-15-59-9812')
+        os.remove(testFilename)
+
+    def test3(self):
+        '''test find_unique_id_inside_file: file contains status node but does not contain unique ID'''
+        
+        testFileLines=['* status\n']
+        testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9812   \n')
+        testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9813   \n')
+        testFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org')
+        testFile=open(testFilename,'w')
+        testFile.writelines(testFileLines)
+        testFile.close()
+
+        uniqueID=OFL.find_unique_id_inside_org_file(testFilename)
+        self.assertEqual(uniqueID,'2016-05-19_17-15-59-9812')
+        os.remove(testFilename)
+
+    def test4(self):
+        '''test find_unique_id_inside_file: file contains status node but does not contain unique ID'''
+        
+        testFileLines=[]
+        testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9812   \n')
+        testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9813   \n')
+        testFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org')
+        testFile=open(testFilename,'w')
+        testFile.writelines(testFileLines)
+        testFile.close()
+
+        uniqueID=OFL.find_unique_id_inside_org_file(testFilename)
+        self.failIf(uniqueID)
+        os.remove(testFilename)
+
+    def test5(self):
+        '''test find_unique_id_inside_file: file contains status node but does not contain unique ID'''
+        testFileLines=['one line\n','another line\n']
+        testFileLines.append('* status\n')
+        testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9812   \n')
+        testFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org')
+        testFile=open(testFilename,'w')
+        testFile.writelines(testFileLines)
+        testFile.close()
+
+        uniqueID=OFL.find_unique_id_inside_org_file(testFilename)
+        self.assertEqual(uniqueID,'2016-05-19_17-15-59-9812')
+        os.remove(testFilename)
+
+
+
+
 #head do not see a test for make_regex_dict
 #head
 DocumentsFolderAP=os.path.join(os.path.expanduser('~'),'Documents')

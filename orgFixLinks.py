@@ -2365,6 +2365,7 @@ class Node():
         '''
         form list of tags
         list of tags, which can only be found on self.myLines[0]
+        because a blurb cannot have tags in org mode
         '''
         self.tags=[]
 
@@ -2410,15 +2411,19 @@ class Node():
         assert len(matches)==1,'%s does not match exactly one of LinkToOrgFile.myUniqueIDRegex, OrgFile.myUniqueIDRegex' % uniqueIDLine
 
         #first line of blurb looks different for status node versus header node
-        #this programming is ungainly; changing any Node attribute should make changes flow easily
+        #TODO this programming is ungainly; changing any Node attribute should make changes flow easily
         assert not self.uniqueID, 'node already has a unique ID'
 
+        #TODO if this method operates on a header node, why is the following here?
         assert not self.inHeader, 'unwanted method call on node from link found in machine-generated header'
+
+        #TODO seems like good idea to check that node is a status node?  or a header node?
 
         self.blurb.insert(0,uniqueIDLine)
         self.lines.insert(1,uniqueIDLine)
         self.myLines.insert(1,uniqueIDLine)
-        self.lineLists.insert(1,uniqueIDLine.split(' '))
+        self.lineLists.insert(1,split_on_non_whitespace_keep_everything(uniqueIDLine))
+        #TODO when/where is self.uniqueID set?
 
     def regenAfterLinkUpdates(self):
         '''
@@ -2442,7 +2447,7 @@ class Node():
         self.myLines=[''.join(a) for a in listOfStringsForEachLine]  #self.myLines is regenerated
 
         # TODO I don't think self.descendantLines is getting regenerated from self.linelists
-        # for my current purposes it's not needed to solve this?
+        # for my current purposes it's not needed to fix this?
         if self.descendantLines:
             self.lines=self.myLines+self.descendantLines
         else:
@@ -3230,12 +3235,12 @@ def list_of_child_nodes_from_lines(lines,sourceFile,parent=None):
 #head
 def line_to_list1(line):
     '''Generate a list from a line
-    input:  'some text [[a link with brackets]] more text [[another link with brackets][description]].'
-    output:  ['some text','[[a link with brackets]]','more text','[[another link with brackets][description]]','.']
+    input:  'some text [[a link with brackets]] more text [[another link with brackets][description]]. \n'
+    output:  ['some text','[[a link with brackets]]','more text','[[another link with brackets][description]]','. \n']
     this short operation is put in a function to facilitate unit testing
     '''
 
-    return Link.orgLinkWBracketsRegexNC.split(line.strip('\n'))
+    return Link.orgLinkWBracketsRegexNC.split(line)
 
 def text_to_link_and_description_double_brackets(text):
     '''text is [[link]] or [[link][description]]
@@ -4545,7 +4550,7 @@ regexOrderedList.append(LinkToNonOrgFile.linkRegexes['/anyFilename  or  ./anyFil
 regexDict=make_regex_dict()
 
 maxFailedRepairAttempts=10  #setting
-maxLinesInANodeToAnalyze=100  #setting  idea is that sometimes a user will paste large blocks of text in a node blurb, and script can hang forever trying to make sense of long chunks of text that do not look like org file material
+maxLinesInANodeToAnalyze=1000  #setting  idea is that sometimes a user will paste large blocks of text in a node blurb, and script can hang forever trying to make sense of long chunks of text that do not look like org file material
 # only purpose is to avoid errors where this script reacts improperly to a line of text.
 # if set too small, will not be able to get uniqueIDs in header when header contains many links
 secondsSinceFullyAnalyzedCutoff=2*24*60*60  #setting elapsed seconds since org file last fully analyzed; cutoff to be considered recently analyzed  24 hr/day * 60 min/hr * 60 sec/min
