@@ -1258,22 +1258,24 @@ class Link():
         '''
         Link Class
         '''
-
         self.text=text  #text is the whole thing including brackets: [[link][description]] or [[link]]
         self.inHeader=inHeader #was this link found in machine-generated header of an org file?
         self.sourceFile=sourceFile  #link is found inside this file, which must be .org
         self.hasBrackets=hasBrackets
 
-        if hasBrackets:
-            matchObjBrackets=self.orgLinkWBracketsRegex.match(text)
+        #TODO hasBrackets could be confusing; this code does not add brackets or remove brackets
 
+        matchObjBrackets=self.orgLinkWBracketsRegex.match(text)
+        if hasBrackets:
+            assert matchObjBrackets, 'link with text %s does not have brackets, but __init__ was called with hasBrackets set to True' % text
             self.link=matchObjBrackets.group('link')  #[[link][description]] or [[link]]
             #when there is no description, self.description will be None, as verified in ipython
             self.description=matchObjBrackets.group('description')  #[[link][description]]
-            if self.link.endswith(' '):  #sometimes have a typo with trailing space
+            if self.link.startswith(' ') or self.link.endswith(' '):  #sometimes have a typo with leading or trailing space
                 self.link=self.link.strip()
                 self.regenTextFromLinkAndDescription()
         else:
+            assert (not matchObjBrackets), 'link with text %s has brackets, but __init__ was called with hasBrackets set to False' % text
             self.link=self.text
             self.description=None
 
@@ -1281,12 +1283,11 @@ class Link():
         self.originalLink=self.link
         self.originalDescription=self.description
 
-        if sourceFile<>None:  #need to be able to tolerate None in order to do unit testing?
+        if sourceFile<>None:  #need to be able to tolerate None in order to do unit testing
             assert isinstance(sourceFile,OrgFile),'sourceFile is not of class OrgFile'
 
-        self.targetObjList=[]  #list of target objects a link gets over its repair process, most recent last
-
         #initialize
+        self.targetObjList=[]  #list of target objects a link gets over its repair process, most recent last
         self.nodeWhereFound=None
         self.targetObj=None
 
@@ -1315,10 +1316,11 @@ class Link():
         regen self.text
         '''
 
-        if self.hasBrackets:
-            self.regenDescription()
+        #TODO current code does not consider the case where link initially has no brackets and a description is added
 
+        if self.hasBrackets:
             if self.description:
+                self.regenDescription()
                 self.text='[['+self.link+']['+self.description+']]'
             else:
                 self.text='[['+self.link+']]'
@@ -1339,8 +1341,6 @@ class LinkToLocalFile(Link):
     Use subclass LinkToOrgFile for org file
     for all others use subclass LinkToNonOrgFile
     '''
-
-    maxLengthOfVisibleLinkText=5  #setting that affects length of visible text in a link to a local file
 
     def __init__(self,text,inHeader,sourceFile,hasBrackets,regexForLink):
         '''
@@ -1899,7 +1899,7 @@ class LinkToLocalFile(Link):
 
             if self.description==oldFileB.filenameAP:
                 if filenameAPChanged:
-                    if len(fileB.filenameAP)<=self.maxLengthOfVisibleLinkText:
+                    if len(fileB.filenameAP)<=maxLengthOfVisibleLinkText:
                         self.description=fileB.filenameAP
                         return None
 
@@ -1911,7 +1911,7 @@ class LinkToLocalFile(Link):
 
             if self.description==os.path.basename(oldFileB.filenameAP):
                 if basenameChanged:
-                    if len(fileB.filenameAP)<=self.maxLengthOfVisibleLinkText:
+                    if len(fileB.filenameAP)<=maxLengthOfVisibleLinkText:
                         self.description=fileB.filenameAP
                         return None
 
@@ -4554,6 +4554,7 @@ maxLinesInANodeToAnalyze=1000  #setting  idea is that sometimes a user will past
 # only purpose is to avoid errors where this script reacts improperly to a line of text.
 # if set too small, will not be able to get uniqueIDs in header when header contains many links
 secondsSinceFullyAnalyzedCutoff=2*24*60*60  #setting elapsed seconds since org file last fully analyzed; cutoff to be considered recently analyzed  24 hr/day * 60 min/hr * 60 sec/min
+maxLengthOfVisibleLinkText=5  #setting that affects length of visible text in a link to a local file
 
 db1=set_up_database()
 db1.setUpOrgTables()
