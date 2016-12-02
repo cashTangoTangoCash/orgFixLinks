@@ -1131,13 +1131,111 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         self.assertEqual(postFilename1,aLink.postFilename)
 
 
+    def test17(self):
+
+        hasBrackets=False
+        preFilename1='file:'
+        filename1='20160908ExceptionTest.py' #does not need brackets in org mode to be clickable
+        postFilename1=''
+        link1=preFilename1+filename1+postFilename1
+        description1=None
+
+        text1=text_from_link_and_description(link1,description1,hasBrackets)
+
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexes['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
+
+        aLink=OFL.LinkToLocalFile(text=text1,inHeader=False,sourceFile=None,hasBrackets=hasBrackets,regexForLink=matchingRegex)
+
+        self.assertEqual(aLink.text,text1)
+        self.assertEqual(aLink.link,link1)
+        self.assertEqual(aLink.description,description1)
+
+        self.assertEqual(preFilename1,aLink.preFilename)
+        self.assertEqual(filename1,aLink.filename)
+        self.assertEqual(postFilename1,aLink.postFilename)
+
     def test17B(self):
 
-        #TODO no regex to detect this one?  need to revisit how Node.__init__ works
+        hasBrackets=True
+        preFilename1='file:'
+        filename1='20160908ExceptionTest.py' #does not need brackets in org mode to be clickable
+        postFilename1=''
+        link1=preFilename1+filename1+postFilename1
+        description1=None
+
+        text1=text_from_link_and_description(link1,description1,hasBrackets)
+
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexes['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
+
+        aLink=OFL.LinkToLocalFile(text=text1,inHeader=False,sourceFile=None,hasBrackets=hasBrackets,regexForLink=matchingRegex)
+
+        self.assertEqual(aLink.text,text1)
+        self.assertEqual(aLink.link,link1)
+        self.assertEqual(aLink.description,description1)
+
+        self.assertEqual(preFilename1,aLink.preFilename)
+        self.assertEqual(filename1,aLink.filename)
+        self.assertEqual(postFilename1,aLink.postFilename)
+
+    def test17BD(self):
 
         hasBrackets=True
-        preFilename1=''
-        filename1='20160908ExceptionTest.py' #not clickable in org mode without brackets
+        preFilename1='file:'
+        filename1='20160908ExceptionTest.py' #does not need brackets in org mode to be clickable
+        postFilename1=''
+        link1=preFilename1+filename1+postFilename1
+        description1='a description'
+
+        text1=text_from_link_and_description(link1,description1,hasBrackets)
+
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexes['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
+
+        aLink=OFL.LinkToLocalFile(text=text1,inHeader=False,sourceFile=None,hasBrackets=hasBrackets,regexForLink=matchingRegex)
+
+        self.assertEqual(aLink.text,text1)
+        self.assertEqual(aLink.link,link1)
+        self.assertEqual(aLink.description,description1)
+
+        self.assertEqual(preFilename1,aLink.preFilename)
+        self.assertEqual(filename1,aLink.filename)
+        self.assertEqual(postFilename1,aLink.postFilename)
+
+    def test18(self):
+
+        hasBrackets=False
+        preFilename1='file:'
+        filename1='PythonScriptOldVersions' #clickable in org mode without brackets
+        postFilename1=''
+        link1=preFilename1+filename1+postFilename1
+        description1=None
+
+        text1=text_from_link_and_description(link1,description1,hasBrackets)
+
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexes['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
+
+        aLink=OFL.LinkToLocalFile(text=text1,inHeader=False,sourceFile=None,hasBrackets=hasBrackets,regexForLink=matchingRegex)
+
+        self.assertEqual(aLink.text,text1)
+        self.assertEqual(aLink.link,link1)
+        self.assertEqual(aLink.description,description1)
+
+        self.assertEqual(preFilename1,aLink.preFilename)
+        self.assertEqual(filename1,aLink.filename)
+        self.assertEqual(postFilename1,aLink.postFilename)
+
+    def test18B(self):
+
+        hasBrackets=True
+        preFilename1='file:'
+        filename1='PythonScriptOldVersions' #clickable in org mode without brackets
         postFilename1=''
         link1=preFilename1+filename1+postFilename1
         description1=None
@@ -1159,16 +1257,14 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         self.assertEqual(postFilename1,aLink.postFilename)
 
 
-    def test18B(self):
-
-        #TODO no regex to detect this one?  need to revisit how Node.__init__ works
+    def test18BD(self):
 
         hasBrackets=True
-        preFilename1=''
-        filename1='PythonScriptOldVersions' #not clickable in org mode without brackets
+        preFilename1='file:'
+        filename1='PythonScriptOldVersions' #clickable in org mode without brackets
         postFilename1=''
         link1=preFilename1+filename1+postFilename1
-        description1=None
+        description1='a description'
 
         text1=text_from_link_and_description(link1,description1,hasBrackets)
 
@@ -1634,7 +1730,7 @@ class TestFindBestRegexMatchForText(unittest.TestCase):
     # self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexes['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
     # self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexes['/anyFilename  or  ./anyFilename  or  ~/anyFilename'])
 
-    #head links that are not links to files on local disk
+    #head these tests are not in order; too much of a chore to renumber them
     def test1(self):
         '''some non-link text'''
         #see OFL.Node.__init__
@@ -1667,7 +1763,6 @@ class TestFindBestRegexMatchForText(unittest.TestCase):
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(someText)
         self.failIf(matchingRegex)
 
-    #head links to files on local disk
     def test6(self):
         link1='OrgModeFileCrawlerMain.org'  #without brackets, org will not detect it as a clickable link; with brackets, org sees it as an internal link
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
@@ -1764,12 +1859,12 @@ class TestFindBestRegexMatchForText(unittest.TestCase):
         self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
 
     def test22(self):
-        link1='20160908ExceptionTest.py' #without brackets, this link would not be clickable in org.  with brackets, org sees it as a clickable link.
+        link1='20160908ExceptionTest.py' #without brackets, this link would not be clickable in org.  with brackets, org sees it as a clickable internal link.
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
         self.failIf(matchingRegex)
 
     def test23(self):
-        link1='file:20160908ExceptionTest.py'
+        link1='file:20160908ExceptionTest.py'  #clickable link in org mode without brackets
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
         self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexes['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
         self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
@@ -1848,8 +1943,18 @@ class TestFindBestRegexMatchForText(unittest.TestCase):
         self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexes['file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything'])
         self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
 
-    #head long list of links that orgFixLinks.py ignores
     def test37(self):
+        link1='file:'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+        self.failIf(matchingRegex)
+
+    def test38(self):
+        link1=''
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+        self.failIf(matchingRegex)
+
+    #head long list of links that orgFixLinks.py ignores
+    def test39(self):
         #long list of org mode links that orgFixLinks.py ignores
         link1List=[]
 
