@@ -32,7 +32,7 @@ class Test_OFL_Link(unittest.TestCase):
         self.failIf(aLink.sourceFile)
         self.failIf(aLink.hasBrackets)
         self.assertEqual(aLink.link,initialText)
-        self.failIf(aLink.description)
+        self.assertEqual(aLink.description,None)
         #more parameters but seems unecessary to test them all
 
     def test2(self):
@@ -147,23 +147,142 @@ class Test_OFL_Link(unittest.TestCase):
         self.assertEqual(aLink.link,link2)
         self.assertEqual(aLink.description,description2)
 
-
 class Test_OFL_LinkToLocalFile(unittest.TestCase):
     #head test LinkToLocalFile.__init__
+    #B in test name means brackets; D means description
     def test1(self):
-        ''' link1=file:OrgModeFileCrawlerMain.org'''
+        '''text1=file:OrgModeFileCrawlerMain.org'''
+        hasBrackets=False
         preFilename1='file:'
         filename1='OrgModeFileCrawlerMain.org'
         postFilename1=''
         link1=preFilename1+filename1+postFilename1
+        description1=None
+
+        text1=text_from_link_and_description(link1,description1,hasBrackets)
+
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+        self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexes['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org'])  #UPDATE
+        self.assertEqual(matchingClass,OFL.LinkToOrgFile)
+
+        aLink=OFL.LinkToLocalFile(text=text1,inHeader=False,sourceFile=None,hasBrackets=False,regexForLink=matchingRegex)
+
+        self.assertEqual(aLink.text,text1)
+        self.assertEqual(aLink.link,link1)
+        self.assertEqual(aLink.description,description1)
+
+        self.assertEqual(preFilename1,aLink.preFilename)
+        self.assertEqual(filename1,aLink.filename)
+        self.assertEqual(postFilename1,aLink.postFilename)
+
+    #head TODO rewrite the rest of tests in this class in the style of test1; should save effort in working through the many boring tests in TestFindBestRegexMatchForText
+    def test1B(self):
+        '''text1=[[file:OrgModeFileCrawlerMain.org]]'''
+
+        preFilename1='file:'
+        filename1='OrgModeFileCrawlerMain.org'
+        postFilename1=''
+        link1=preFilename1+filename1+postFilename1
+        text1='[['+link1+']]'  #note the difference between link1 and text1
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
         self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexes['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org'])
         self.assertEqual(matchingClass,OFL.LinkToOrgFile)
 
-        aLink=OFL.LinkToLocalFile(text=link1,inHeader=False,sourceFile=None,hasBrackets=False,regexForLink=matchingRegex)
+        aLink=OFL.LinkToLocalFile(text=text1,inHeader=False,sourceFile=None,hasBrackets=True,regexForLink=matchingRegex)
 
-        self.assertEqual(aLink.text,link1)
+        self.assertEqual(aLink.text,text1)
+        self.assertEqual(aLink.link,link1)
+        self.failIf(aLink.description)
+
+        self.assertEqual(preFilename1,aLink.preFilename)
+        self.assertEqual(filename1,aLink.filename)
+        self.failIf(postFilename1,aLink.postFilename)
+
+    def test2(self):
+        '''text1=/OrgModeFileCrawlerMain.org'''
+        preFilename1=''
+        filename1='/OrgModeFileCrawlerMain.org'
+        postFilename1=''
+        link1=preFilename1+filename1+postFilename1
+        text1=link1
+
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+        self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexes['/anyFilename.org  or  ./anyFilename.org  or  ~/anyFilename.org'])
+        self.assertEqual(matchingClass,OFL.LinkToOrgFile)
+
+
+        aLink=OFL.LinkToLocalFile(text=text1,inHeader=False,sourceFile=None,hasBrackets=False,regexForLink=matchingRegex)
+
+        self.assertEqual(aLink.text,text1)
+        self.assertEqual(aLink.link,link1)
+        self.failIf(aLink.description)
+
+        self.assertEqual(preFilename1,aLink.preFilename)
+        self.assertEqual(filename1,aLink.filename)
+        self.failIf(postFilename1,aLink.postFilename)
+
+    def test3(self):
+        '''text1=file:/OrgModeFileCrawlerMain.org'''
+        preFilename1='file:'
+        filename1='/OrgModeFileCrawlerMain.org'
+        postFilename1=''
+        link1=preFilename1+filename1+postFilename1
+        text1=link1
+
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+        self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexes['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org'])
+        self.assertEqual(matchingClass,OFL.LinkToOrgFile)
+
+        aLink=OFL.LinkToLocalFile(text=text1,inHeader=False,sourceFile=None,hasBrackets=False,regexForLink=matchingRegex)
+
+        self.assertEqual(aLink.text,text1)
+        self.assertEqual(aLink.link,link1)
+        self.failIf(aLink.description)
+
+        self.assertEqual(preFilename1,aLink.preFilename)
+        self.assertEqual(filename1,aLink.filename)
+        self.failIf(postFilename1,aLink.postFilename)
+
+    def test4(self):
+        '''text1=~/OrgModeFileCrawlerMain.org'''
+
+        preFilename1=''
+        filename1='~/OrgModeFileCrawlerMain.org'
+        postFilename1=''
+        link1=preFilename1+filename1+postFilename1
+        text1=link1
+
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+        self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexes['/anyFilename.org  or  ./anyFilename.org  or  ~/anyFilename.org'])
+        self.assertEqual(matchingClass,OFL.LinkToOrgFile)
+
+        aLink=OFL.LinkToLocalFile(text=text1,inHeader=False,sourceFile=None,hasBrackets=False,regexForLink=matchingRegex)
+
+        self.assertEqual(aLink.text,text1)
+        self.assertEqual(aLink.link,link1)
+        self.failIf(aLink.description)
+
+        self.assertEqual(preFilename1,aLink.preFilename)
+        self.assertEqual(filename1,aLink.filename)
+        self.failIf(postFilename1,aLink.postFilename)
+
+    def test5(self):
+        '''text1=file:~/OrgModeFileCrawlerMain.org'''
+
+        preFilename1='file:'
+        filename1='~/OrgModeFileCrawlerMain.org'
+        postFilename1=''
+        link1=preFilename1+filename1+postFilename1
+        text1=link1
+
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+        self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexes['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org'])
+        self.assertEqual(matchingClass,OFL.LinkToOrgFile)
+
+        aLink=OFL.LinkToLocalFile(text=text1,inHeader=False,sourceFile=None,hasBrackets=False,regexForLink=matchingRegex)
+
+        self.assertEqual(aLink.text,text1)
         self.assertEqual(aLink.link,link1)
         self.failIf(aLink.description)
 
@@ -1002,6 +1121,53 @@ class TestFindUniqueIDInsideFile(unittest.TestCase):
 #head skip test get_list_of_all_repairable_org_files
 #head skip test operate_on_all_org_files
 #head skip test make_regex_dict
+#head tests of functions local to this module
+class TestTextFromLinkAndDescription(unittest.TestCase):
+    def test1(self):
+        link='anything'
+        description=None
+        hasBrackets=False
+        expectedText='anything'
+        self.assertEqual(expectedText,text_from_link_and_description(link,description,hasBrackets))
+
+    def test2(self):
+        link='anything'
+        description=None
+        hasBrackets=True
+        expectedText='[[anything]]'
+        self.assertEqual(expectedText,text_from_link_and_description(link,description,hasBrackets))
+
+    def test3(self):
+        link='anything'
+        description='any description'
+        hasBrackets=True
+        expectedText='[[anything][any description]]'
+        self.assertEqual(expectedText,text_from_link_and_description(link,description,hasBrackets))
+
+    def test4(self):
+        link='anything'
+        description='any description'
+        hasBrackets=False
+        expectedText='anything'
+        self.failUnlessRaises(ValueError,text_from_link_and_description,link,description,hasBrackets)
+
+#head
+def text_from_link_and_description(link,description,hasBrackets):
+
+    if description and (not hasBrackets):
+        raise ValueError('Cannot form a link with non-empty description and no brackets')
+
+    text=None
+    if hasBrackets:
+        if description:
+            text='[['+link+']['+description+']]'
+        else:
+            text='[['+link+']]'
+    else:
+        text=link
+
+    return text
+
 #head
 DocumentsFolderAP=os.path.join(os.path.expanduser('~'),'Documents')
 assert os.path.exists(DocumentsFolderAP), 'Cannot proceed since assuming the folder %s exists' % DocumentsFolderAP

@@ -1364,6 +1364,8 @@ class LinkToLocalFile(Link):
 
                 self.regenTextFromLinkAndDescription()
 
+        #TODO why is link not converted to absolute path filename here?
+
     def initTargetFile(self):
         '''
         LinkToLocalFile Class
