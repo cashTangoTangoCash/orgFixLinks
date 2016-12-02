@@ -1283,6 +1283,81 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         self.assertEqual(postFilename1,aLink.postFilename)
 
 
+    def test19(self):
+
+        hasBrackets=False
+        preFilename1='file:'
+        filename1='20160908ExceptionTest.py'
+        postFilename1='::23'
+        link1=preFilename1+filename1+postFilename1
+        description1=None
+
+        text1=text_from_link_and_description(link1,description1,hasBrackets)
+
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexes['file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything'])
+
+        aLink=OFL.LinkToLocalFile(text=text1,inHeader=False,sourceFile=None,hasBrackets=hasBrackets,regexForLink=matchingRegex)
+
+        self.assertEqual(aLink.text,text1)
+        self.assertEqual(aLink.link,link1)
+        self.assertEqual(aLink.description,description1)
+
+        self.assertEqual(preFilename1,aLink.preFilename)
+        self.assertEqual(filename1,aLink.filename)
+        self.assertEqual(postFilename1,aLink.postFilename)
+
+    def test19B(self):
+
+        hasBrackets=True
+        preFilename1='file:'
+        filename1='20160908ExceptionTest.py'
+        postFilename1='::23'
+        link1=preFilename1+filename1+postFilename1
+        description1=None
+
+        text1=text_from_link_and_description(link1,description1,hasBrackets)
+
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexes['file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything'])
+
+        aLink=OFL.LinkToLocalFile(text=text1,inHeader=False,sourceFile=None,hasBrackets=hasBrackets,regexForLink=matchingRegex)
+
+        self.assertEqual(aLink.text,text1)
+        self.assertEqual(aLink.link,link1)
+        self.assertEqual(aLink.description,description1)
+
+        self.assertEqual(preFilename1,aLink.preFilename)
+        self.assertEqual(filename1,aLink.filename)
+        self.assertEqual(postFilename1,aLink.postFilename)
+
+    def test19BD(self):
+
+        hasBrackets=True
+        preFilename1='file:'
+        filename1='20160908ExceptionTest.py'
+        postFilename1='::23'
+        link1=preFilename1+filename1+postFilename1
+        description1='a description'
+
+        text1=text_from_link_and_description(link1,description1,hasBrackets)
+
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
+
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexes['file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything'])
+
+        aLink=OFL.LinkToLocalFile(text=text1,inHeader=False,sourceFile=None,hasBrackets=hasBrackets,regexForLink=matchingRegex)
+
+        self.assertEqual(aLink.text,text1)
+        self.assertEqual(aLink.link,link1)
+        self.assertEqual(aLink.description,description1)
+
+        self.assertEqual(preFilename1,aLink.preFilename)
+        self.assertEqual(filename1,aLink.filename)
+        self.assertEqual(postFilename1,aLink.postFilename)
+
 class Test_OFL_LinkToNonOrgFile(unittest.TestCase):
     def test1(self):
         pass
@@ -1902,6 +1977,8 @@ class TestFindBestRegexMatchForText(unittest.TestCase):
         self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
 
     def test30(self):
+
+        #TODO this one shows that your script needs to tell difference between link with and without brackets
         link1=os.path.join(os.path.expanduser('~'),'Documents/Computer/Software/PythonNotes/SeverancePythonForInformatics/PythonForInformaticsSeverance009d2.pdf')+'::32'  #not clickable in org without brackets
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1)
         self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexes['/anyFilename::anything  or  ./anyFilename::anything  or  ~/anyFilename::anything'])
