@@ -1272,8 +1272,14 @@ class Link():
             #when there is no description, self.description will be None, as verified in ipython
             self.description=matchObjBrackets.group('description')  #[[link][description]]
             if self.link.startswith(' ') or self.link.endswith(' '):  #sometimes have a typo with leading or trailing space
-                self.link=self.link.strip()
-                self.regenTextFromLinkAndDescription()
+                if '::' not in self.link: #link does not end with a search term
+                    self.link=self.link.strip()
+                    self.regenTextFromLinkAndDescription()
+                else: #link ends with a search term; do not want to remove trailing spaces since they matter to search
+                    if self.link.startswith(' '):
+                        self.link=self.link.lstrip()
+                        self.regenTextFromLinkAndDescription()
+
         else:
             assert (not matchObjBrackets), 'link with text %s has brackets, but __init__ was called with hasBrackets set to False' % text
             self.link=self.text
@@ -3261,7 +3267,8 @@ def split_on_non_whitespace_keep_everything(text):
     return p4.split(text)
 
 def find_best_regex_match_for_text(text):
-    '''function that permits Node to match a piece of text to a link class'''
+    '''function that permits Node to match a piece of text to a link class
+    '''
     matchingRegex=None
     matchObj=None
     matchingClass=None
