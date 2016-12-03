@@ -1,74 +1,101 @@
-* machine-generated indices;  READ ONLY
-** list of links
-*** outgoing links to org files
-**** [[file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160920TestRadioTargets.org][20160920TestRadioTargets.org]]
-**** [[file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/OrgModeFileCrawlerMain.org::*sqlite3%20terminal%20programming%20notes][OrgModeFileCrawlerMain.org]]
-#LinkUniqueID2016-05-19_17-15-59-9812
-*** incoming links from org files
-**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/OrgModeFileCrawlerMain.org
-*** links to local non-org files
-**** [[file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py][20160908ExceptionTest.py]]
-**** /home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py
-**** /home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py
-**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py
-**** file:/made/up/filename.junk    :broken_link:
-**** /home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py
-**** [[/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py][20160908ExceptionTest.py]]
-**** [[/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py][20160908ExceptionTest.py]]
-**** [[/made/up/filename.junk][filename.junk]]    :broken_link:
-**** [[/home/dad84/Documents/madeupname.junk][madeupname.junk]]    :broken_link:
-**** [[file+sys:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160807PuzzleOverProgramLogic.xoj][20160807PuzzleOverProgramLogic.xoj]]
-**** file+sys:/
-**** [[file+emacs:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160807PuzzleOverProgramLogic.xoj][20160807PuzzleOverProgramLogic.xoj]]
-**** docview:/home/dad84/Documents/Computer/Software/PythonNotes/PythonForInformaticsSeverance/PythonForInformaticsSeverance009d2.pdf::32
-**** /home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py
-**** [[/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/fsljiwen sdfsdf][fsljiwen sdfsdf]]    :broken_link:
-**** [[/home/dad84/sdlfkwf fwun ofi][sdlfkwf fwun ofi]]    :broken_link:
-**** [[/sdfj sdfjk sdffweh8874y9][sdfj sdfjk sdffweh8874y9]]    :broken_link:
-**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908Exception    :broken_link:
-**** [[file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908Exception Test.py][20160908Exception Test.py]]    :broken_link:
-**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py
-**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/PythonScriptOldVersions
-**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler
-**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler
-**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/a    :broken_link:
-**** [[file:a][a]]    :broken_link:
-**** file:/
-**** /home/dad84/20160908ExceptionTest.py    :broken_link:
-** sets of links
-*** outgoing links to org files
-**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160920TestRadioTargets.org
-**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/OrgModeFileCrawlerMain.org
-*** incoming links from org files
-**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/OrgModeFileCrawlerMain.org
-*** links to local non-org files
-**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/PythonScriptOldVersions
-**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160807PuzzleOverProgramLogic.xoj
-**** file:/home/dad84/Documents/Computer/Software/PythonNotes/PythonForInformaticsSeverance/PythonForInformaticsSeverance009d2.pdf
-**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/fsljiwen sdfsdf
-**** file:/made/up/filename.junk
-**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908Exception Test.py
-**** file:/sdfj sdfjk sdffweh8874y9
-**** file:/
-**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler
-**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908Exception
-**** file:/home/dad84/sdlfkwf fwun ofi
-**** file:/home/dad84/20160908ExceptionTest.py
-**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/a
-**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py
-**** file:/home/dad84/Documents/madeupname.junk
-** list of tags
-** set of tags
 * status   
 #MyUniqueID2016-10-02_13-36-15-3938  
-* menu: Org:Hyperlinks:Literal Links   
+* Purpose of this file: experiment with how org reacts to various things
+* ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((   
+* helpful menu item in emacs org mode: Org:Hyperlinks:Literal Links   
 ** emacs/org goofs this up when you have multiple frames (C-x-5-2)   
-*** have to toggle it a few times and it can end up on correct setting   
+*** have to toggle it a few times trying to make it refresh and show current data
 * ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((   
 * separate these into internal links vs external links?   
 * http://orgmode.org/manual/External-links.html#External-links <<org external links>>   
 * http://orgmode.org/manual/Internal-links.html#Internal-links  <<org internal links>>   
 ** tried out radio targets in    [[file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160920TestRadioTargets.org][20160920TestRadioTargets.org]]      
+* ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((   
+* links of interest to org files
+* ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((   
+* no brackets file:OrgModeFileCrawlerMain.org::python works
+* brackets [[file:OrgModeFileCrawlerMain.org::python]] works
+* no brackets file+sys:OrgModeFileCrawlerMain.org::python opens new empty file in emacs
+* brackets [[file+sys:OrgModeFileCrawlerMain.org::python]] opens new empty file in emacs
+* no brackets file+emacs:OrgModeFileCrawlerMain.org::python opens new empty file in emacs
+* brackets [[file+emacs:OrgModeFileCrawlerMain.org::python]] opens new empty file in emacs
+* no brackets docview:OrgModeFileCrawlerMain.org::python following link: nothing happens
+* brackets [[docview:OrgModeFileCrawlerMain.org::python]] following link: nothing happens
+* ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((   
+* no brackets /anyFilename.org::anything 
+* brackets [[/junkIt.org::anything]] works;  opens file in emacs; will find anything in headline as long as it's the entire headline
+** doesn't have to be first level headline (one asterisk)
+** will find first matching headline in file
+* no brackets ./OrgModeFileCrawlerMain.org::python
+* brackets [[./OrgModeFileCrawlerMain.org::python]] works
+* no brackets ~/OrgModeFileCrawlerMain.org::python
+* brackets [[~/junkIt.org::python]] works
+* ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((   
+* no brackets OrgModeFileCrawlerMain.org::python
+* brackets [[OrgModeFileCrawlerMain.org::python]] org sees this as internal link
+* ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((   
+* no brackets file:OrgModeFileCrawlerMain.org works
+* brackets [[file:OrgModeFileCrawlerMain.org]] works
+* no brackets file+sys:OrgModeFileCrawlerMain.org nothing happens
+* brackets [[file+sys:OrgModeFileCrawlerMain.org]] nothing happens
+* no brackets file+emacs:OrgModeFileCrawlerMain.org works
+* brackets [[file+emacs:OrgModeFileCrawlerMain.org]] works
+* no brackets docview:OrgModeFileCrawlerMain.org nothing happens
+* brackets [[docview:OrgModeFileCrawlerMain.org]] nothing happens
+** no program named docview in linux (which docview); no docview in .emacs file
+* ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((   
+* no brackets OrgModeFileCrawlerMain.org
+* brackets [[OrgModeFileCrawlerMain.org]] org sees this as internal link
+* ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((   
+* no brackets /anyFilename.org 
+* brackets [[/junkIt.org]] 
+* no brackets ./OrgModeFileCrawlerMain.org
+* brackets [[./OrgModeFileCrawlerMain.org]] works
+* no brackets ~/OrgModeFileCrawlerMain.org
+* brackets [[~/junkIt.org]] works
+* ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((   
+* links of interest to non org files
+* ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((   
+* no brackets file:README.md::WARNING works; case insensitive search
+* brackets [[file:README.md::WARNING]] works; case insensitive search
+* no brackets file+sys:README.md::WARNING opens new blank file in emacs
+* brackets [[file+sys:README.md::WARNING]] opens new blank file in emacs
+* no brackets file+emacs:README.md::WARNING opens new blank file in emacs
+* brackets [[file+emacs:README.md::WARNING]] opens new blank file in emacs
+* no brackets docview:README.md::WARNING nothing happens
+* brackets [[docview:README.md::WARNING]] nothing happens
+* ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((   
+* no brackets /junkIt.txt::anything 
+* brackets [[/junkIt.txt::anything]] 
+* no brackets ./README.md::WARNING
+* brackets [[./README.md::WARNING]]
+* no brackets ~/junkIt.txt::anything
+* brackets [[~/junkIt.txt::anything]] works
+* ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((   
+* no brackets README.md::WARNING
+* brackets [[README.md::WARNING]] org sees this as internal link
+* ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((   
+* no brackets file:README.md works 
+* brackets [[file:README.md]] 
+* no brackets file+sys:README.md opens in emacs 
+* brackets [[file+sys:README.md]] 
+* no brackets file+emacs:README.md opens in emacs
+* brackets [[file+emacs:README.md]] 
+* no brackets docview:README.md 
+* brackets [[docview:README.md]] 
+* ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((   
+* no brackets README.md
+* brackets [[README.md]] org sees this as internal link
+* ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((   
+* no brackets /filename.txt 
+* brackets [[/junkIt.txt]] works
+* no brackets ./README.md
+* brackets [[./README.md]] works
+* no brackets ~/junkIt.txt
+* brackets [[~/junkIt.txt]] works
+* ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((   
+* file:
+* [[file:]] internal link
 * ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((   
 *    [[nothing to find]]      
 *** behaves like    [[org internal links]]      

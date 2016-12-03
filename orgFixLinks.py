@@ -1945,11 +1945,17 @@ class LinkToNonOrgFile(LinkToLocalFile):
     a link in an org file, to another file (which is not org) on local disk
     '''
 
+    #TODO update for brackets vs no brackets as in LinkToOrgFile
+
     # a dictionary of compiled regex objects; link is [[link][description]]
-    linkRegexes={'file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything':re.compile(r'^(?P<preFilename>(?:file(?:(?:[+]sys)|(?:[+]emacs))?:)|(?:docview:))(?P<filename>[^@*]+?)(?P<postFilename>::.+)$')}
-    linkRegexes['/anyFilename::anything  or  ./anyFilename::anything  or  ~/anyFilename::anything']=re.compile(r'^(?P<preFilename>)(?P<filename>[.~]?[/][^@*]+?)(?P<postFilename>::.+)$')
-    linkRegexes['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename']=re.compile(r'^(?P<preFilename>(?:file(?:(?:[+]sys)|(?:[+]emacs))?:)|(?:docview:))(?P<filename>[^@*]+$)(?P<postFilename>)')
-    linkRegexes['/anyFilename  or  ./anyFilename  or  ~/anyFilename']=re.compile(r'^(?P<preFilename>)(?P<filename>[.~]?[/][^@*]+$)(?P<postFilename>)')
+
+    linkRegexesBrackets={'file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything':re.compile(r'^(?P<preFilename>(?:file(?:(?:[+]sys)|(?:[+]emacs))?:)|(?:docview:))(?P<filename>[^@*]+?)(?P<postFilename>::.+)$')}
+    linkRegexesBrackets['/anyFilename::anything  or  ./anyFilename::anything  or  ~/anyFilename::anything']=re.compile(r'^(?P<preFilename>)(?P<filename>[.~]?[/][^@*]+?)(?P<postFilename>::.+)$')
+    linkRegexesBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename']=re.compile(r'^(?P<preFilename>(?:file(?:(?:[+]sys)|(?:[+]emacs))?:)|(?:docview:))(?P<filename>[^@*]+$)(?P<postFilename>)')
+    linkRegexesBrackets['/anyFilename  or  ./anyFilename  or  ~/anyFilename']=re.compile(r'^(?P<preFilename>)(?P<filename>[.~]?[/][^@*]+$)(?P<postFilename>)')
+
+    linkRegexesNoBrackets={'file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything':re.compile(r'^(?P<preFilename>(?:file(?:(?:[+]sys)|(?:[+]emacs))?:)|(?:docview:))(?P<filename>[^@*]+?)(?P<postFilename>::.+)$')}
+    linkRegexesNoBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename']=re.compile(r'^(?P<preFilename>(?:file(?:(?:[+]sys)|(?:[+]emacs))?:)|(?:docview:))(?P<filename>[^@*]+$)(?P<postFilename>)')
 
     def __init__(self,text,inHeader,sourceFile,hasBrackets,regexForLink):
         '''
@@ -2004,10 +2010,17 @@ class LinkToOrgFile(LinkToLocalFile):
     # a dictionary of compiled regex objects; link is [[link][description]]
     #using dictionary instead of list to make code easier to maintain
     #key is really long string but is descriptive
-    linkRegexes={'file:anyFilename.org::anything or file+sys:anyFilename.org::anything or file+emacs:anyFilename.org::anything or docview:anyFilename.org::anything':re.compile(r'^(?P<preFilename>(?:file(?:(?:[+]sys)|(?:[+]emacs))?:)|(?:docview:))(?P<filename>[^@*]+?[.]org)(?P<postFilename>::.+)$')}
-    linkRegexes['/anyFilename.org::anything  or  ./anyFilename.org::anything  or  ~/anyFilename.org::anything']=re.compile(r'^(?P<preFilename>)(?P<filename>[.~]?[/][^@*]+?[.]org)(?P<postFilename>::.+)$')
-    linkRegexes['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org']=re.compile(r'^(?P<preFilename>(?:file(?:(?:[+]sys)|(?:[+]emacs))?:)|(?:docview:))(?P<filename>[^@*]+?[.]org$)(?P<postFilename>)')
-    linkRegexes['/anyFilename.org  or  ./anyFilename.org  or  ~/anyFilename.org']=re.compile(r'^(?P<preFilename>)(?P<filename>[.~]?[/][^@*]+?[.]org$)(?P<postFilename>)')
+
+    #use 20160921TestAFewLinks.org to try out links in org mode
+    #TODO you could also have blacklist regex: if a match, this is not a clickable link in org mode
+    linkRegexesBrackets={'file:anyFilename.org::anything or file+sys:anyFilename.org::anything or file+emacs:anyFilename.org::anything or docview:anyFilename.org::anything':re.compile(r'^(?P<preFilename>(?:file(?:(?:[+]sys)|(?:[+]emacs))?:)|(?:docview:))(?P<filename>[^@*]+?[.]org)(?P<postFilename>::.+)$')}
+    linkRegexesBrackets['/anyFilename.org::anything  or  ./anyFilename.org::anything  or  ~/anyFilename.org::anything']=re.compile(r'^(?P<preFilename>)(?P<filename>[.~]?[/][^@*]+?[.]org)(?P<postFilename>::.+)$')
+    linkRegexesBrackets['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org']=re.compile(r'^(?P<preFilename>(?:file(?:(?:[+]sys)|(?:[+]emacs))?:)|(?:docview:))(?P<filename>[^@*]+?[.]org$)(?P<postFilename>)')
+    linkRegexesBrackets['/anyFilename.org  or  ./anyFilename.org  or  ~/anyFilename.org']=re.compile(r'^(?P<preFilename>)(?P<filename>[.~]?[/][^@*]+?[.]org$)(?P<postFilename>)')
+
+    #TODO if no brackets, cannot have spaces; log an error
+    linkRegexesNoBrackets={'file:anyFilename.org::anything or file+sys:anyFilename.org::anything or file+emacs:anyFilename.org::anything or docview:anyFilename.org::anything':re.compile(r'^(?P<preFilename>(?:file(?:(?:[+]sys)|(?:[+]emacs))?:)|(?:docview:))(?P<filename>[^@*]+?[.]org)(?P<postFilename>::.+)$')}
+    linkRegexesNoBrackets['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org']=re.compile(r'^(?P<preFilename>(?:file(?:(?:[+]sys)|(?:[+]emacs))?:)|(?:docview:))(?P<filename>[^@*]+?[.]org$)(?P<postFilename>)')
 
     #unique ID in header of self.sourceFile pertaining to this link is written differently than unique ID in status section of self.sourceFile
     #this makes it easy to find unique ID of an org file without making a full representation of it in this script
@@ -3266,18 +3279,29 @@ def split_on_non_whitespace_keep_everything(text):
     p4=re.compile(r'(\s+)')
     return p4.split(text)
 
-def find_best_regex_match_for_text(text):
-    '''function that permits Node to match a piece of text to a link class
+def find_best_regex_match_for_text(link,hasBrackets):
+    '''function that permits Node to match a piece of text to a link class.
+    Whether or not a link has brackets changes how org mode treats it
+    no brackets: link
+    has brackets: [[link]]
+    has brackets: [[link][description]]
     '''
+
     matchingRegex=None
     matchObj=None
     matchingClass=None
-
-    matches1=[(a,a.match(text)) for a in regexOrderedList] #list of tuples: (regex,match object)
+    if hasBrackets:
+        matches1=[(a,a.match(link)) for a in regexOrderedListBrackets] #list of tuples: (regex,match object)
+    else:
+        matches1=[(a,a.match(link)) for a in regexOrderedListNoBrackets] #list of tuples: (regex,match object)
     matches2=[z for z in matches1 if z[1]] #the tuples from matches1 where there is a match
+
     if matches2:  #if there are any matches
         matchingRegex,matchObj=matches2[0]  #the first match should be the desired one, according to ordering in regexOrderedList
-        matchingClass=regexDict[matchingRegex]
+        if hasBrackets:
+            matchingClass=regexDictBrackets[matchingRegex]
+        else:
+            matchingClass=regexDictNoBrackets[matchingRegex]
 
     return matchingRegex,matchObj,matchingClass
 
@@ -4496,17 +4520,22 @@ def operate_on_all_org_files(maxTime=None,maxN=None,hitReturnToStop=True,userFix
     clean_up_before_ending_spidering_run(isDryRun,messg1='Completed spidering run')
 
 #head
-def make_regex_dict():
+def make_regex_dicts():
     '''
-    regexDict is a dictionary where key is compiled regex and value is class that compiled regex pertains to
-    purpose: matching link in [[link][description]] to class
+    a regexDict is a dictionary where key is compiled regex and value is class that compiled regex belongs to
+    purpose: matching a link in [[link][description]] to class
     '''
-    regexDict1={a:LinkToOrgFile for a in LinkToOrgFile.linkRegexes.values()}  #dictionary comprehension
-    regexDict2={a:LinkToNonOrgFile for a in LinkToNonOrgFile.linkRegexes.values()}
+    regexDict1Brackets={a:LinkToOrgFile for a in LinkToOrgFile.linkRegexesBrackets.values()}  #dictionary comprehension
+    regexDict2Brackets={a:LinkToNonOrgFile for a in LinkToNonOrgFile.linkRegexesBrackets.values()}
     #http://stackoverflow.com/questions/38987/how-to-merge-two-python-dictionaries-in-a-single-expression
-    regexDict1.update(regexDict2)
+    regexDict1Brackets.update(regexDict2Brackets)
 
-    return regexDict1
+    regexDict1NoBrackets={a:LinkToOrgFile for a in LinkToOrgFile.linkRegexesNoBrackets.values()}  #dictionary comprehension
+    regexDict2NoBrackets={a:LinkToNonOrgFile for a in LinkToNonOrgFile.linkRegexesNoBrackets.values()}
+    #http://stackoverflow.com/questions/38987/how-to-merge-two-python-dictionaries-in-a-single-expression
+    regexDict1NoBrackets.update(regexDict2NoBrackets)
+
+    return regexDict1Brackets,regexDict1NoBrackets
 
 #head
 def usage():
@@ -4543,20 +4572,28 @@ keyboardInputLock=threading.Lock()
 origFolder=os.getcwd()
 pastInteractiveRepairs=get_past_interactive_repairs_dict()  # a dictionary for storing past interactive repairs of broken links
 asteriskRegex=re.compile('(?P<asterisks>^\*+) ')
+
 #list of compiled regex for identifying class of link; has particular order for identifying link in [[link][description]]
 
-regexOrderedList=[LinkToOrgFile.linkRegexes['file:anyFilename.org::anything or file+sys:anyFilename.org::anything or file+emacs:anyFilename.org::anything or docview:anyFilename.org::anything']]
-regexOrderedList.append(LinkToOrgFile.linkRegexes['/anyFilename.org::anything  or  ./anyFilename.org::anything  or  ~/anyFilename.org::anything'])
-regexOrderedList.append(LinkToNonOrgFile.linkRegexes['file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything'])
-regexOrderedList.append(LinkToNonOrgFile.linkRegexes['/anyFilename::anything  or  ./anyFilename::anything  or  ~/anyFilename::anything'])
+regexOrderedListBrackets=[LinkToOrgFile.linkRegexesBrackets['file:anyFilename.org::anything or file+sys:anyFilename.org::anything or file+emacs:anyFilename.org::anything or docview:anyFilename.org::anything']]
+regexOrderedListBrackets.append(LinkToOrgFile.linkRegexesBrackets['/anyFilename.org::anything  or  ./anyFilename.org::anything  or  ~/anyFilename.org::anything'])
+regexOrderedListBrackets.append(LinkToNonOrgFile.linkRegexesBrackets['file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything'])
+regexOrderedListBrackets.append(LinkToNonOrgFile.linkRegexesBrackets['/anyFilename::anything  or  ./anyFilename::anything  or  ~/anyFilename::anything'])
 
-regexOrderedList.append(LinkToOrgFile.linkRegexes['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org'])
-regexOrderedList.append(LinkToOrgFile.linkRegexes['/anyFilename.org  or  ./anyFilename.org  or  ~/anyFilename.org'])
-regexOrderedList.append(LinkToNonOrgFile.linkRegexes['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
-regexOrderedList.append(LinkToNonOrgFile.linkRegexes['/anyFilename  or  ./anyFilename  or  ~/anyFilename'])
+regexOrderedListBrackets.append(LinkToOrgFile.linkRegexesBrackets['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org'])
+regexOrderedListBrackets.append(LinkToOrgFile.linkRegexesBrackets['/anyFilename.org  or  ./anyFilename.org  or  ~/anyFilename.org'])
+regexOrderedListBrackets.append(LinkToNonOrgFile.linkRegexesBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
+regexOrderedListBrackets.append(LinkToNonOrgFile.linkRegexesBrackets['/anyFilename  or  ./anyFilename  or  ~/anyFilename'])
 
-#dictionary that matches compiled regex in regexOrderedList to class it came from
-regexDict=make_regex_dict()
+
+regexOrderedListNoBrackets=[LinkToOrgFile.linkRegexesNoBrackets['file:anyFilename.org::anything or file+sys:anyFilename.org::anything or file+emacs:anyFilename.org::anything or docview:anyFilename.org::anything']]
+regexOrderedListNoBrackets.append(LinkToNonOrgFile.linkRegexesNoBrackets['file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything'])
+
+regexOrderedListNoBrackets.append(LinkToOrgFile.linkRegexesNoBrackets['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org'])
+regexOrderedListNoBrackets.append(LinkToNonOrgFile.linkRegexesNoBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
+
+#dictionary that matches compiled regex in regexOrderedListBrackets/regexOrderedListNoBrackets to class it belongs to
+regexDictBrackets,regexDictNoBrackets=make_regex_dicts()
 
 maxFailedRepairAttempts=10  #setting
 maxLinesInANodeToAnalyze=1000  #setting  idea is that sometimes a user will paste large blocks of text in a node blurb, and script can hang forever trying to make sense of long chunks of text that do not look like org file material
