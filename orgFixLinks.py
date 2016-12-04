@@ -1363,14 +1363,14 @@ class LinkToLocalFile(Link):
         self.postFilename=self.matchObjForLink.group('postFilename')  #named groups
 
         if self.filename != '/':  # if filename is not '/', which is root of filesystem
-            #get rid of trailing slash
+            #get rid of trailing slash; link should work just the same without it
             if self.filename.endswith('/'):
                 self.filename=self.filename.rstrip('/')
                 self.link=self.preFilename+self.filename+self.postFilename
 
                 self.regenTextFromLinkAndDescription()
 
-        #TODO why is link not converted to absolute path filename here?
+        #TODO why is link not converted to absolute path filename here?  see LinkToLocalFile.initTargetFile
 
     def initTargetFile(self):
         '''
@@ -1379,7 +1379,7 @@ class LinkToLocalFile(Link):
         so need to regen self.link, self.text
         '''
 
-        #warning: this method is overwritten in LinkToOrgFile; use dive into python techniques to allow inheritance instead
+        #TODO warning: this method is overwritten in LinkToOrgFile; use dive into python techniques to allow inheritance instead
 
         Link.associateWTargetObj(self,self.targetClassObj(self.filename,self.inHeader))
         self.originalTargetObj=self.targetObj
@@ -1420,7 +1420,7 @@ class LinkToLocalFile(Link):
 
         self.targetObj=newFileObj
         self.targetObjList.append(newFileObj) #most recent last
-        self.__regenOnChangedFilenameAP()
+        self.__regenOnChangedFilenameAP()  #TODO what about child classes using changeTargetObj, and __?
         self.testIfWorking()
 
     #head
@@ -1481,11 +1481,8 @@ class LinkToLocalFile(Link):
     def attemptRepairViaPastUserRepairs(self):
         '''
         LinkToLocalFile Class
-        a dictionary is saved to disk
+        a dictionary is saved to csv file on disk
         it contains previous link repairs performed interactively with user
-        not using sqlite database here since am trying to defeat bugs involving sqlite database
-        trying to save user repairs to disk in a form other than sqlite database since keep deleting sqlite
-        database while debugging
         '''
 
         assert not self.inHeader, 'unwanted operation for link in header'
@@ -1936,7 +1933,7 @@ class LinkToLocalFile(Link):
         some housekeeping tasks when giving up on repairing a link
         '''
         fileB=self.targetObj
-        fileB.triedAndFailedToRepair=True
+        fileB.triedAndFailedToRepair=True  #TODO assumes a repair attempt was made in this run
         self.databaseHousekeepingForBrokenLink()
         fileB.myFilesTable.incrNumFailedRepairAttempts(fileB)
 
@@ -2063,7 +2060,7 @@ class LinkToOrgFile(LinkToLocalFile):
         #.replace won't change basename1
         newBasename1=basename1.replace('.org','Main.org')
 
-        filenameAPMatchList=find_all_name_matches_via_bash(newBasename1)  #requires linux and bash shell
+        filenameAPMatchList=find_all_name_matches_via_bash(newBasename1)  #requires linux
 
         if filenameAPMatchList:
             if len(filenameAPMatchList)>1:
@@ -2329,10 +2326,14 @@ class Node():
         self.linksToNonOrgFiles=[]
 
         #make a dictionary d1 to connect link regexes to lists of links
-        #TODO would look cleaner to have class as key instead of link regex, but quick google search suggests more trouble than worth?
-        d1={a:self.linksToOrgFiles for a in LinkToOrgFile.linkRegexes.values()}  #dictionary comprehension
-        d2={a:self.linksToNonOrgFiles for a in LinkToNonOrgFile.linkRegexes.values()}  #dictionary comprehension
-        d1.update(d2)
+        #TODO would look cleaner to have class as key instead of link regex, but quick google search suggests accomplishing this is more trouble than it's worth?
+        d1Brackets={a:self.linksToOrgFiles for a in LinkToOrgFile.linkRegexesBrackets.values()}  #dictionary comprehension
+        d2Brackets={a:self.linksToNonOrgFiles for a in LinkToNonOrgFile.linkRegexesBrackets.values()}  #dictionary comprehension
+        d1Brackets.update(d2Brackets)
+
+        d1NoBrackets={a:self.linksToOrgFiles for a in LinkToOrgFile.linkRegexesNoBrackets.values()}  #dictionary comprehension
+        d2NoBrackets={a:self.linksToNonOrgFiles for a in LinkToNonOrgFile.linkRegexesNoBrackets.values()}  #dictionary comprehension
+        d1NoBrackets.update(d2NoBrackets)
 
         self.lineLists=[]  #a list for each line in self.myLines
         count=0
@@ -2353,12 +2354,12 @@ class Node():
                     link,description=text_to_link_and_description_double_brackets(piece)
 
                     #based on which regex matches link, create a link object and add it to lineList2
-                    matchingRegex,matchObj,matchingClass=find_best_regex_match_for_text(link)
+                    matchingRegex,matchObj,matchingClass=find_best_regex_match_for_text(link,hasBrackets=True)
 
                     if matchingRegex: #if there is a match
                         lineList2.append(matchingClass(text=piece,inHeader=self.inHeader,sourceFile=self.sourceFile,hasBrackets=True,regexForLink=matchingRegex))  #creating instance of e.g. LinkToOrgFile
                         lineList2[-1].associateWNode(self)
-                        d1[matchingRegex].append(lineList2[-1])  #d1[matchingRegex] is the appropriate self.listOfLinks
+                        d1Brackets[matchingRegex].append(lineList2[-1])  #d1Brackets[matchingRegex] is the appropriate self.listOfLinks
                         lineList2[-1].initTargetFile()  #create instance of target of this link
                         lineList2[-1].testIfWorking()
                         continue  #go to next piece in line
@@ -2368,13 +2369,13 @@ class Node():
                 else:  #piece does not include [[link]] or [[link][description]], but might include a link without brackets
                     pieceList=split_on_non_whitespace_keep_everything(piece)
                     for each1 in pieceList:  #here we are looking for links without brackets
-                        matchingRegex,matchObj,matchingClass=find_best_regex_match_for_text(each1)
+                        matchingRegex,matchObj,matchingClass=find_best_regex_match_for_text(each1,hasBrackets=False)
 
                         if matchingRegex: #if there is a match
                             foundLink=matchingClass(text=each1,inHeader=self.inHeader,sourceFile=self.sourceFile,hasBrackets=False,regexForLink=matchingRegex)
                             lineList2.append(foundLink)
                             foundLink.associateWNode(self)  # assuming this will update the object in lineList2
-                            d1[matchingRegex].append(foundLink)  #d1[matchingRegex] is the appropriate self.listOfLinks
+                            d1NoBrackets[matchingRegex].append(foundLink)  #d1NoBrackets[matchingRegex] is the appropriate self.listOfLinks
                             foundLink.initTargetFile()  #create instance of target of this link
                             foundLink.testIfWorking()
                         else:
@@ -2630,7 +2631,7 @@ class LocalFile():
         '''LocalFile Class'''
 
         if self.leaveAsSymlink:
-            logging.warning('Changing from symlink to non symlink despite self.leaveAsSymlink being set to True')
+            logging.warning('Changing %s from symlink to non symlink despite self.leaveAsSymlink being set to True' % self.filenameAP)
 
         if self.inHeader:
             #turn_off_logging()
@@ -2736,15 +2737,15 @@ class OrgFile(LocalFile):
         self.uniqueIDFromHeader=None  #header node in another org file indicates this file should have this unique ID
         self.uniqueIDFromDatabase=None  #a database lookup indicates this file should have this unique ID
 
-        #have I looked inside this file for unique ID?
+        #in this run, has script looked inside this file for a unique ID?
         self.lookedInsideForUniqueID=False
 
-        #did you just add a unique ID to an org file that does not already have one?
+        #in this run, has script added unique ID to this file (only done when file does not already contain one)?
         self.insertedUniqueID=False
 
-        self.userManuallyFixesMyOutgoingLinks=True  #flag that allows user to say they want to skip fixing outgoing links of this file; default value is True
+        self.userManuallyFixesMyOutgoingLinks=True  #when True, user is prompted by script to manually fix outgoing links
 
-        self.recentlyFullyAnalyzed=None  #unknown
+        self.recentlyFullyAnalyzed=None  #unknown; a database lookup will determine if this org file was recently analyzed
 
         self.linksToOrgFilesList=[]
         self.linksToNonOrgFilesList=[]
@@ -3147,7 +3148,7 @@ class OrgFile(LocalFile):
         #turn these OrgFile, NonOrgFile instances into Link instances
         linkRegexesKey='file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org'
         if orgFilesILinkTo:
-            self.linksToOrgFilesList=[LinkToOrgFile(text='file:'+a.filenameAP,inHeader=False,sourceFile=self,hasBrackets=False,regexForLink=LinkToOrgFile.linkRegexes[linkRegexesKey]) for a in orgFilesILinkTo]
+            self.linksToOrgFilesList=[LinkToOrgFile(text='file:'+a.filenameAP,inHeader=False,sourceFile=self,hasBrackets=False,regexForLink=LinkToOrgFile.linkRegexesNoBrackets[linkRegexesKey]) for a in orgFilesILinkTo]
 
             for link1 in self.linksToOrgFilesList:
                 link1.initTargetFile()
@@ -3157,7 +3158,7 @@ class OrgFile(LocalFile):
 
         linkRegexesKey='file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'
         if nonOrgFilesILinkTo:
-            self.linksToNonOrgFilesList=[LinkToNonOrgFile(text='file:'+a.filenameAP,inHeader=False,sourceFile=self,hasBrackets=False,regexForLink=LinkToNonOrgFile.linkRegexes[linkRegexesKey]) for a in nonOrgFilesILinkTo]
+            self.linksToNonOrgFilesList=[LinkToNonOrgFile(text='file:'+a.filenameAP,inHeader=False,sourceFile=self,hasBrackets=False,regexForLink=LinkToNonOrgFile.linkRegexesNoBrackets[linkRegexesKey]) for a in nonOrgFilesILinkTo]
 
             for link1 in self.linksToNonOrgFilesList:
                 link1.initTargetFile()

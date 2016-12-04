@@ -151,8 +151,6 @@ class Test_OFL_Link(unittest.TestCase):
 
 class Test_OFL_LinkToLocalFile(unittest.TestCase):
     #head test LinkToLocalFile.__init__
-    #B in test name means brackets; D means description
-    #head TODO testN, testNB, testNBD should really just be a single class with inputs that change for B,D; how to do this with unittest?
     def test1(self):
         '''link1=file:OrgModeFileCrawlerMain.org'''
         hasBrackets=False
@@ -1287,32 +1285,107 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         self.assertEqual(filename1,aLink.filename)
         self.assertEqual(postFilename1,aLink.postFilename)
 
+    def test20B(self):
+        '''test trailing slash removal feature'''
+        hasBrackets=True
+        preFilename1=''
+        filename1=os.path.join(os.path.expanduser('~'),'Documents/')  #trailing slash
+        postFilename1=''
+        link1=preFilename1+filename1+postFilename1
+        description1=None
+
+        text1=text_from_link_and_description(link1,description1,hasBrackets)
+
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
+
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesBrackets['/anyFilename  or  ./anyFilename  or  ~/anyFilename'])
+        aLink=OFL.LinkToLocalFile(text=text1,inHeader=False,sourceFile=None,hasBrackets=hasBrackets,regexForLink=matchingRegex)
+
+        newFilename=os.path.join(os.path.expanduser('~'),'Documents')  #minus trailing slash
+        newLink=preFilename1+newFilename+postFilename1
+        newText=text_from_link_and_description(newLink,description1,hasBrackets)
+
+        self.assertEqual(aLink.text,newText)
+        self.assertEqual(aLink.link,newLink)
+        self.assertEqual(aLink.description,description1)
+
+        self.assertEqual(preFilename1,aLink.preFilename)
+        self.assertEqual(newFilename,aLink.filename)
+        self.assertEqual(postFilename1,aLink.postFilename)
+
+    def test20BD(self):
+        '''test trailing slash removal feature'''
+        hasBrackets=True
+        preFilename1=''
+        filename1=os.path.join(os.path.expanduser('~'),'Documents/')  #trailing slash
+        postFilename1=''
+        link1=preFilename1+filename1+postFilename1
+        description1='a description'
+
+        text1=text_from_link_and_description(link1,description1,hasBrackets)
+
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
+
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesBrackets['/anyFilename  or  ./anyFilename  or  ~/anyFilename'])
+        aLink=OFL.LinkToLocalFile(text=text1,inHeader=False,sourceFile=None,hasBrackets=hasBrackets,regexForLink=matchingRegex)
+
+        newFilename=os.path.join(os.path.expanduser('~'),'Documents')  #minus trailing slash
+        newLink=preFilename1+newFilename+postFilename1
+        newText=text_from_link_and_description(newLink,description1,hasBrackets)
+
+        self.assertEqual(aLink.text,newText)
+        self.assertEqual(aLink.link,newLink)
+        self.assertEqual(aLink.description,description1)
+
+        self.assertEqual(preFilename1,aLink.preFilename)
+        self.assertEqual(newFilename,aLink.filename)
+        self.assertEqual(postFilename1,aLink.postFilename)
+
+    #head skipping test of initTargetFile
+    #head skipping test of testIfWorking
+    #head skipping test of __regenOnChangedFilenameAP
+    #head skipping test of changeTargetObj
+    #head skipping test of attemptRepairViaBasenameMatchOnDisk
+    #head skipping test of attemptRepairViaPastUserRepairs
+    #head skipping test of attemptRepairViaInteractingWithUser
+    #head skipping test of attemptRepairVia...
+    #head skipping test of finishRepairVia...
+    #head skipping test of databaseHousekeepingForBrokenLink
+    #head test of regenDescription TODO
+    #head skipping test of giveUpOnRepairing
 class Test_OFL_LinkToNonOrgFile(unittest.TestCase):
-    def test1(self):
-        pass
+    pass
+    #head skip test of databaseHousekeepingForWorkingLink
 
 class Test_OFL_LinkToOrgFile(unittest.TestCase):
-    def test1(self):
-        pass
+    pass
+    #head skip test of attemptRepairByAddingMain
+    #head skip test of attemptRepairByRemovingMain
+    #head skip test of attemptRepairViaExpectedUniqueIDAndBashFind
+    #head skip test of attemptRepairViaUniqueIDFromHeaderAndBashFind
+    #head skip test of attemptRepairViaUniqueIDFromDatabaseAndBashFind
+    #head skip test of attemptRepairUsingUniqueIDFromHeaderAndDatabase
+    #head skip test of attemptRepairViaLookingInsideFilesForUniqueID
+    #head skip test of databaseHousekeepingForWorkingLink
 
 #head
 class Test_OFL_Node(unittest.TestCase):
     pass
-    # def test1_NodeInit(self):
-    #     '''test OFL.Node.__init__ for a node with tags and one child node'''
-    #     lines=['* tags \t\t:tag1:tag2:\n','blurb 1\n','** tags  \t\t :tag3:tag4:\n','blurb\t2\n']
-    #     aNode=OFL.Node(lines,sourceFile=None)
-    #     self.failIf(aNode.inHeader)
-    #     self.failUnless(aNode.level==1)
-    #     self.assertEqual(aNode.myLines,lines[0:2])
-    #     self.assertEqual(aNode.descendantLines,lines[2:])
-    #     self.assertEqual(len(aNode.childNodeList),1)
-    #     self.assertEqual(aNode.tags,['tag1','tag2'])
-    #     self.assertEqual(aNode.blurb,[lines[1]])  #blurb is a list of lines
-    #     self.failIf(aNode.linksToOrgFiles)
-    #     self.failIf(aNode.linksToNonOrgFiles)
-    #     self.assertEqual(aNode.lineLists,[['*',' ','tags',' \t\t',':tag1:tag2:','\n',''],['blurb',' ','1','\n','']])
-
+    def test1_NodeInit(self):
+        '''test OFL.Node.__init__ for a node with tags and one child node'''
+        lines=['* tags \t\t:tag1:tag2:\n','blurb 1\n','** tags  \t\t :tag3:tag4:\n','blurb\t2\n']
+        aNode=OFL.Node(lines,sourceFile=None)
+        self.failIf(aNode.inHeader)
+        self.failUnless(aNode.level==1)
+        self.assertEqual(aNode.myLines,lines[0:2])
+        self.assertEqual(aNode.descendantLines,lines[2:])
+        self.assertEqual(len(aNode.childNodeList),1)
+        self.assertEqual(aNode.tags,['tag1','tag2'])
+        self.assertEqual(aNode.blurb,[lines[1]])  #blurb is a list of lines
+        self.failIf(aNode.linksToOrgFiles)
+        self.failIf(aNode.linksToNonOrgFiles)
+        self.assertEqual(aNode.lineLists,[['*',' ','tags',' \t\t',':tag1:tag2:','\n',''],['blurb',' ','1','\n','']])
+    #head TODO writing more tests of NodeInit
     # def test2_NodeInit(self):
     #     '''test OFL.Node.__init__ for a node with links'''
     #     #TODO wait till have written tests for Links?
@@ -1422,7 +1495,6 @@ class Test_OFL_LocalFile(unittest.TestCase):
         os.remove(testFilename)
 
     #head test LocalFile.testIfExistsSymlinkVersion
-    #head TODO test LocalFile.testIfExistsSymlinkVersion; python can create a symlink; see main org file google python repair symlink; webarnes.ca link; my file link-fixDDCommented.py
     def test1_testSymlinkHandling(self):
         '''test LocalFileMethods handling of symlinks'''
   
@@ -1556,9 +1628,13 @@ class Test_OFL_LocalFile(unittest.TestCase):
         os.remove(symlinkFilename)
 
     #head TODO could write a test with a target, a first symlink pointing to it, and a 2nd symlink pointing to first symlink.  delete the 1st two files; now what about symlink #2?
-    #head for me this rarely occurs in real life
+    #head skip test of changeFromSymlinkToNonSymlink
+    #head skip test of changeBackToSymlink
+    #head skip test of checkMaxRepairAttempts
+
 #head skip test NonOrgFile
 class Test_OFL_OrgFile(unittest.TestCase):
+    #head skip test of __init__
     def test1_endsInDotOrg(self):
         '''test OrgFile.endsInDotOrg'''
         filenameAP=os.path.join(DocumentsFolderAP,'fakeFile.org')
@@ -1571,8 +1647,20 @@ class Test_OFL_OrgFile(unittest.TestCase):
         orgFile=OFL.OrgFile(filenameAP,inHeader=False)
         self.failIf(orgFile.endsInDotOrg())
 
-    #head TODO test useDatabaseToGetOutwardLinks
-    #head TODO test createFullRepresentation; expecting this to be not easy
+    #head TODO test createFullRepresentation?  decided to look at tests for Node first
+    #head TODO test lookInsideForUniqueID?
+    #head TODO test generateAndInsertMyUniqueID?
+    #head TODO test addNodeLinksAndTagsToMyLists?
+    #head TODO test addUniqueIDsFromHeaderToOutgoingOrgLinkTargets?
+    #head TODO test checkConsistencyOfThreeUniqueIDDataItems?
+    #head TODO test makeListOfOrgFilesThatLinkToMe?
+    #head TODO test makeSetsOfLinksForHeader?
+    #head TODO test makeNewHeader?
+    #head TODO test fullRepresentationToNewLines?  this would be good sanity check: input lines match output lines, as long as header could be turned off
+    #head TODO test sanityChecksBeforeRewriteFile?
+    #head TODO test rewriteFileFromNewLines?
+    #head skip test useDatabaseToGetOutwardLinks
+
 #head
 #head test standalone functions
 class TestAllUpperToAllLowercase(unittest.TestCase):

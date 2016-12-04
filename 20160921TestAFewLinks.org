@@ -202,3 +202,5 @@
 * file:/   
 ** it's weird how this is a valid link to root of filesystem (works when in brackets)   
 * /home/dad84/20160908ExceptionTest.py     
+* trailing slash on filename  [[file:~/Documents/]] brings up contents of Documents folder in dired
+* [[file:~/Documents]] works just the same without the trailing slash
