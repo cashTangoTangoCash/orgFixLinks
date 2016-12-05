@@ -2364,7 +2364,7 @@ class Node():
                         lineList2[-1].testIfWorking()
                         continue  #go to next piece in line
                     else:
-                        lineList2.append(piece)  #since link does not match any regex, leave this piece as text 
+                        lineList2.append(piece)  #since link does not match any regex, leave this piece as text TODO does this cause any issue in regenAfterLinkUpdates?
                         continue  #go to next piece in line
                 else:  #piece does not include [[link]] or [[link][description]], but might include a link without brackets
                     pieceList=split_on_non_whitespace_keep_everything(piece)
@@ -2382,6 +2382,36 @@ class Node():
                             lineList2.append(each1)
             self.lineLists.append(lineList2)
             count+=1
+    #head
+    def regenAfterLinkUpdates(self):
+        '''
+        Node Class
+        after link objects are updated/revised, regeneration is required
+        '''
+
+        assert not self.inHeader, 'unwanted method call on node in machine-generated header'
+
+        listOfStringsForEachLine=[]
+        for lineList in self.lineLists:
+            list1=[]  #list of strings that make up this line of text
+            for item in lineList:
+                #item is either a string or an instance of a Link or one of its descendant classes
+                if isinstance(item,types.StringType):
+                    list1.append(item)
+                else:
+                    list1.append(item.text)
+            listOfStringsForEachLine.append(list1)
+
+        self.myLines=[''.join(a) for a in listOfStringsForEachLine]  #self.myLines is regenerated
+
+        # TODO I don't think self.descendantLines is getting regenerated from self.linelists.
+        # TODO is it necessary to get this working in this script?
+        # TODO is it desirable to recursively regenerate all the descendant nodes?  maybe just wanted to regen self?
+        if self.descendantLines:
+            self.lines=self.myLines+self.descendantLines
+        else:
+            self.lines=self.myLines
+        self.blurb=self.myLines[1:]
     #head
     def makeTagList(self):
         '''
@@ -2428,53 +2458,26 @@ class Node():
 
         #throw an error if uniqueIDLine does not match one of
         #LinkToOrgFile.myUniqueIDRegex, OrgFile.myUniqueIDRegex
-        matchObjList=[LinkToOrgFile.myUniqueIDRegex.match(uniqueIDLine),OrgFile.myUniqueIDRegex.match(uniqueIDLine)]
+        matchObjList=[LinkToOrgFile.myUniqueIDRegex.match(uniqueIDLine),OrgFile.myUniqueIDRegex.match(uniqueIDLine)]  #first is unique ID for header; second is uniqueID for status node
         matches=[a for a in matchObjList if a]
         assert len(matches)==1,'%s does not match exactly one of LinkToOrgFile.myUniqueIDRegex, OrgFile.myUniqueIDRegex' % uniqueIDLine
 
-        #first line of blurb looks different for status node versus header node
+        matchObj=matches[0]
+        uniqueIDInLine=matchObj.group('uniqueID')
+
         #TODO this programming is ungainly; changing any Node attribute should make changes flow easily
         assert not self.uniqueID, 'node already has a unique ID'
 
         #TODO if this method operates on a header node, why is the following here?
-        assert not self.inHeader, 'unwanted method call on node from link found in machine-generated header'
+        # assert not self.inHeader, 'unwanted method call on node from link found in machine-generated header'
 
-        #TODO seems like good idea to check that node is a status node?  or a header node?
+        #TODO seems like good idea to check that node is a status node?  or a header node?  raise error or log an error if not.
 
         self.blurb.insert(0,uniqueIDLine)
         self.lines.insert(1,uniqueIDLine)
         self.myLines.insert(1,uniqueIDLine)
         self.lineLists.insert(1,split_on_non_whitespace_keep_everything(uniqueIDLine))
-        #TODO when/where is self.uniqueID set?
-
-    def regenAfterLinkUpdates(self):
-        '''
-        Node Class
-        after link objects are updated/revised, regeneration is required
-        '''
-
-        assert not self.inHeader, 'unwanted method call on node in machine-generated header'
-
-        listOfStringsForEachLine=[]
-        for lineList in self.lineLists:
-            list1=[]  #list of strings that make up this line of text
-            for item in lineList:
-                #item is either a string or an instance of a Link or one of its descendant classes
-                if isinstance(item,types.StringType):
-                    list1.append(item)
-                else:
-                    list1.append(item.text)
-            listOfStringsForEachLine.append(list1)
-
-        self.myLines=[''.join(a) for a in listOfStringsForEachLine]  #self.myLines is regenerated
-
-        # TODO I don't think self.descendantLines is getting regenerated from self.linelists
-        # for my current purposes it's not needed to fix this?
-        if self.descendantLines:
-            self.lines=self.myLines+self.descendantLines
-        else:
-            self.lines=self.myLines
-        self.blurb=self.myLines[1:]
+        self.uniqueID=uniqueIDInLine
 
 #head  Classes for files on local disk
 class LocalFile():
@@ -3278,7 +3281,9 @@ def text_to_link_and_description_double_brackets(text):
 
 def split_on_non_whitespace_keep_everything(text):
     p4=re.compile(r'(\s+)')
-    return p4.split(text)
+    splitTextList=p4.split(text)
+    retList=[a for a in splitTextList if a<>'']  #get rid of useless '' elements
+    return retList
 
 def find_best_regex_match_for_text(link,hasBrackets):
     '''function that permits Node to match a piece of text to a link class.

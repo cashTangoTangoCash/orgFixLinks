@@ -2,6 +2,8 @@ import unittest
 import orgFixLinks as OFL
 import datetime
 import os
+# import pudb
+#TODO can put pudb_set_trace anywhere in this script and it should work
 
 #NOTE all tests have not been written.  did not learn unit testing until long after an entire working version of orgFixLinks was written;
 #it's hard to write tests after code is already written...
@@ -84,6 +86,8 @@ class Test_OFL_Link(unittest.TestCase):
         self.assertEqual(aLink.description,initialDescription)
         #more parameters but seems unecessary to test them all
 
+    #head skip test of associateWNode
+    #head skip test of associateWTargetObj
     #head test Link.regenTextFromLinkAndDescription
     def test5(self):
         '''a test of Link.regenTextFromLinkAndDescription'''
@@ -149,6 +153,7 @@ class Test_OFL_Link(unittest.TestCase):
         self.assertEqual(aLink.link,link2)
         self.assertEqual(aLink.description,description2)
 
+    #head skip test of regenDescription
 class Test_OFL_LinkToLocalFile(unittest.TestCase):
     #head test LinkToLocalFile.__init__
     def test1(self):
@@ -1355,10 +1360,12 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
     #head skipping test of giveUpOnRepairing
 class Test_OFL_LinkToNonOrgFile(unittest.TestCase):
     pass
+    #head skip test of __init__
     #head skip test of databaseHousekeepingForWorkingLink
 
 class Test_OFL_LinkToOrgFile(unittest.TestCase):
     pass
+    #head skip test of __init__
     #head skip test of attemptRepairByAddingMain
     #head skip test of attemptRepairByRemovingMain
     #head skip test of attemptRepairViaExpectedUniqueIDAndBashFind
@@ -1370,7 +1377,6 @@ class Test_OFL_LinkToOrgFile(unittest.TestCase):
 
 #head
 class Test_OFL_Node(unittest.TestCase):
-    pass
     def test1_NodeInit(self):
         '''test OFL.Node.__init__ for a node with tags and one child node'''
         lines=['* tags \t\t:tag1:tag2:\n','blurb 1\n','** tags  \t\t :tag3:tag4:\n','blurb\t2\n']
@@ -1384,74 +1390,108 @@ class Test_OFL_Node(unittest.TestCase):
         self.assertEqual(aNode.blurb,[lines[1]])  #blurb is a list of lines
         self.failIf(aNode.linksToOrgFiles)
         self.failIf(aNode.linksToNonOrgFiles)
-        self.assertEqual(aNode.lineLists,[['*',' ','tags',' \t\t',':tag1:tag2:','\n',''],['blurb',' ','1','\n','']])
-    #head TODO writing more tests of NodeInit
-    # def test2_NodeInit(self):
-    #     '''test OFL.Node.__init__ for a node with links'''
-    #     #TODO wait till have written tests for Links?
-    #     # link1Text='[[][]]'
-    #     # link2Text='[[][]]'
-    #     # link3Text='[[][]]'
-    #     # lines=['* links [[][]] \t\t\n','blurb 1 [[][]] another link \n','** tags  \t\t :tag3:tag4:\n','blurb\t2\n']
-    #     # aNode=OFL.Node(lines,sourceFile=None)
-    #     # self.failIf(aNode.inHeader)
-    #     # self.failUnless(aNode.level==1)
-    #     # self.assertEqual(aNode.myLines,lines[0:2])
-    #     # self.assertEqual(aNode.descendantLines,lines[2:])
-    #     # self.assertEqual(len(aNode.childNodeList),1)
-    #     # self.assertEqual(aNode.tags,['tag1','tag2'])
-    #     # self.assertEqual(aNode.blurb,[lines[1]])  #blurb is a list of lines
-    #     # self.failIf(aNode.linksToOrgFiles)
-    #     # self.failIf(aNode.linksToNonOrgFiles)
-    #     # self.assertEqual(aNode.lineLists,[['*',' ','tags',' \t\t',':tag1:tag2:','\n',''],['blurb',' ','1','\n','']])
-    #     pass
+        # self.assertEqual(aNode.lineLists,[['*',' ','tags',' \t\t',':tag1:tag2:','\n',''],['blurb',' ','1','\n','']])
+        self.assertEqual(aNode.lineLists,[['*',' ','tags',' \t\t',':tag1:tag2:','\n'],['blurb',' ','1','\n']])
 
-    #head
+    def test2_NodeInit(self):
+        '''test OFL.Node.__init__ for a node with links'''
+
+        link1Text='file:aFirstFakeFile.txt'
+        link2Text='file:aSecondFakeFile.txt'
+        link3Text='[[file:aThirdFakeFile.txt]]'
+        link4Text='[[file:aFourthFakeFile.txt][a description]]'
+
+        lines=['* links '+link1Text+' \t\t'+link2Text+'\n','blurb 1 '+link3Text+' another link '+link4Text+'\n']
+        aNode=OFL.Node(lines,sourceFile=None)
+        self.assertEqual(aNode.myLines,lines)
+        self.failIf(aNode.childNodeList)
+        self.failIf(aNode.linksToOrgFiles)
+        self.assertEqual(len(aNode.linksToNonOrgFiles),4)
+        # pudb.set_trace()
+
+        self.assertEqual(len(aNode.lineLists[0]),8)
+        self.assertEqual(len(aNode.lineLists[1]),12)
+
+        linksInLine1=[a for a in aNode.lineLists[0] if isinstance(a,OFL.LinkToNonOrgFile)]
+        self.assertEqual(len(linksInLine1),2)
+        linksInLine2=[a for a in aNode.lineLists[1] if isinstance(a,OFL.LinkToNonOrgFile)]
+        self.assertEqual(len(linksInLine2),2)
+
+    #head test regenAfterLinkUpdates
+    def test1_NodeRegenAfterLinkUpdates(self):
+        '''OFL.Node.regenAfterLinkUpdates'''
+        lines=['* tags \t\t:tag1:tag2:\n','blurb 1\n','** tags  \t\t :tag3:tag4:\n','blurb\t2\n']
+        linesInNode1=lines[0:2]
+
+        node1=OFL.Node(lines,sourceFile=None)
+        node1.regenAfterLinkUpdates()
+        self.assertEqual(linesInNode1,node1.myLines)
+
+    def test2_NodeRegenAfterLinkUpdates(self):
+        '''OFL.Node.regenAfterLinkUpdates'''
+        lines=['* tags \t\t:tag1:tag2:\n','blurb 1\n','** tags  \t\t :tag3:tag4:\n','blurb\t2\n']
+
+        node1=OFL.Node(lines,sourceFile=None)
+        node2=node1.childNodeList[0]
+
+        node1.regenAfterLinkUpdates()
+        node2.regenAfterLinkUpdates()
+
+        self.assertEqual(lines,[node1.myLines[0],node1.myLines[1],node2.myLines[0],node2.myLines[1]])
+
+    def test3_NodeRegenAfterLinkUpdates(self):
+        '''OFL.Node.regenAfterLinkUpdates'''
+
+        pass
+
+        #TODO script changes the links to absolute path filenames, so will not see equality of input and output lines
+
+        # self.maxDiff=None
+
+        # link1Text='file:aFirstFakeFile.txt'
+        # link2Text='file:aSecondFakeFile.txt'
+        # link3Text='[[file:aThirdFakeFile.txt]]'
+        # link4Text='[[file:aFourthFakeFile.txt][a description]]'
+
+        # lines=['* links '+link1Text+' \t\t'+link2Text+'\n','blurb 1 '+link3Text+' another link '+link4Text+'\n']
+
+        # node1=OFL.Node(lines,sourceFile=None)
+        # node1.regenAfterLinkUpdates()
+        # self.assertEqual(lines,node1.myLines)
+
     #head OFL.Node.makeTagList is tested as part of testing __init__
-    # def test1_NodeFindUniqueID(self):
-    #     '''test Node.findUniqueID (uniqueIDRegexObj is set to OrgFile.myUniqueIDRegex)'''
+    #head test findUniqueID
+    def test1_NodeFindUniqueID(self):
+        '''test Node.findUniqueID (uniqueIDRegexObj is set to OrgFile.myUniqueIDRegex)'''
 
-    #     testLines1=['* status\n','#MyUniqueID2016-05-19_17-15-59-9812   \n']
-    #     node1=OFL.Node(testLines1,sourceFile=None)
-    #     node1.findUniqueID(OFL.OrgFile.myUniqueIDRegex)
-    #     self.failUnless(node1.uniqueID)
-    #     self.assertEqual(node1.uniqueID,'2016-05-19_17-15-59-9812')
+        testLines1=['* status\n','#MyUniqueID2016-05-19_17-15-59-9812   \n']
+        node1=OFL.Node(testLines1,sourceFile=None)
+        node1.findUniqueID(OFL.OrgFile.myUniqueIDRegex)
+        self.failUnless(node1.uniqueID)
+        self.assertEqual(node1.uniqueID,'2016-05-19_17-15-59-9812')
 
-    # def test2_NodeFindUniqueID(self):
-    #     '''test Node.findUniqueID (uniqueIDRegexObj set to OrgFile.myUniqueIDRegex)'''
+    def test2_NodeFindUniqueID(self):
+        '''test Node.findUniqueID (uniqueIDRegexObj set to OrgFile.myUniqueIDRegex)'''
 
-    #     testLines1=['* status\n','** #MyUniqueID2016-05-19_17-15-59-9812   \n']
-    #     node1=OFL.Node(testLines1,sourceFile=None)
-    #     node1.findUniqueID(OFL.OrgFile.myUniqueIDRegex)
-    #     self.failIf(node1.uniqueID)
+        testLines1=['* status\n','** #MyUniqueID2016-05-19_17-15-59-9812   \n']
+        node1=OFL.Node(testLines1,sourceFile=None)
+        node1.findUniqueID(OFL.OrgFile.myUniqueIDRegex)
+        self.failIf(node1.uniqueID) #fails since unique ID is not on first line of blurb following level 1 status node
 
-    # #head
-    # def test1_NodeAddUniqueID(self):
-    #     #TODO fill in
-    #     #TODO code there looks unfamiliar and sketchy; need to review
-    #     pass
-
-    #head
-    # def test1_NodeRegenAfterLinkUpdates(self):
-    #     '''OFL.Node.regenAfterLinkUpdates'''
-    #     lines=['* tags \t\t:tag1:tag2:\n','blurb 1\n','** tags  \t\t :tag3:tag4:\n','blurb\t2\n']
-    #     linesInNode1=lines[0:2]
-
-    #     node1=OFL.Node(lines,sourceFile=None)
-    #     node1.regenAfterLinkUpdates()
-    #     self.assertEqual(linesInNode1,node1.myLines)
-
-    # def test2_NodeRegenAfterLinkUpdates(self):
-    #     '''OFL.Node.regenAfterLinkUpdates'''
-    #     lines=['* tags \t\t:tag1:tag2:\n','blurb 1\n','** tags  \t\t :tag3:tag4:\n','blurb\t2\n']
-
-    #     node1=OFL.Node(lines,sourceFile=None)
-    #     node2=node1.childNodeList[0]
-
-    #     node1.regenAfterLinkUpdates()
-    #     node2.regenAfterLinkUpdates()
-
-    #     self.assertEqual(lines,[node1.myLines[0],node1.myLines[1],node2.myLines[0],node2.myLines[1]])
+    #head test addUniqueID
+    def test1_NodeAddUniqueID(self):
+        lines=['* status\n']
+        aNode=OFL.Node(lines,sourceFile=None)
+        self.failIf(aNode.uniqueID)
+        aNode.findUniqueID(OFL.OrgFile.myUniqueIDRegex)
+        self.failIf(aNode.uniqueID)
+        uniqueIDLine='#MyUniqueID2016-12-25_23-59-59-1234  \n'
+        aNode.addUniqueID(uniqueIDLine)
+        expectedLines=[lines[0],uniqueIDLine]
+        self.assertEqual(expectedLines,aNode.myLines)
+        self.assertEqual(expectedLines,aNode.lines)
+        self.assertEqual(uniqueIDLine,aNode.blurb[0])
+        self.assertEqual(aNode.uniqueID,'2016-12-25_23-59-59-1234')
 
 #head
 class Test_OFL_LocalFile(unittest.TestCase):
@@ -1799,14 +1839,16 @@ class TestSplitOnNonWhitespaceKeepEverything(unittest.TestCase):
     def test1(self):
         line='how now  brown   cow\tand.  \n'
         list=OFL.split_on_non_whitespace_keep_everything(line)
-        expectedList=['how',' ','now','  ','brown','   ','cow','\t','and.','  \n','']
+        # expectedList=['how',' ','now','  ','brown','   ','cow','\t','and.','  \n','']
+        expectedList=['how',' ','now','  ','brown','   ','cow','\t','and.','  \n']
         self.assertEqual(line,''.join(list))
         self.assertEqual(list,expectedList)
 
     def test2(self):
         line='* tags \t\t:tag1:tag2:\n'
         list=OFL.split_on_non_whitespace_keep_everything(line)
-        expectedList=['*',' ','tags',' \t\t',':tag1:tag2:','\n','']
+        # expectedList=['*',' ','tags',' \t\t',':tag1:tag2:','\n','']
+        expectedList=['*',' ','tags',' \t\t',':tag1:tag2:','\n']
         self.assertEqual(line,''.join(list))
         self.assertEqual(list,expectedList)
 
