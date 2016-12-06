@@ -2327,9 +2327,6 @@ class Node():
 
         self.myLines,self.descendantLines=separate_parent_lines_descendant_lines(lines)
 
-        #sometimes I goof up with tab completion in emacs org mode, and make a link to a .org~ file instead of a .org
-        self.myLines=[line.replace('.org~','.org') for line in self.myLines]
-
         #recursive scheme in action
         if self.descendantLines:
             self.childNodeList=list_of_child_nodes_from_lines(lines=self.descendantLines,sourceFile=self.sourceFile,parent=self)
@@ -2376,6 +2373,10 @@ class Node():
             for piece in lineList1:
                 if Link.orgLinkWBracketsRegexNC.match(piece):  #piece is [[link]] or [[link][description]]
                     link,description=text_to_link_and_description_double_brackets(piece)
+
+                    #sometimes I goof up with tab completion in emacs org mode, and make a link to a .org~ file instead of a .org
+                    #TODO this belongs in a link, not here
+                    link=link.replace('.org~','.org')
 
                     #based on which regex matches link, create a link object and add it to lineList2
                     matchingRegex,matchObj,matchingClass=find_best_regex_match_for_text(link,hasBrackets=True)
@@ -2480,8 +2481,9 @@ class Node():
         uniqueIDLine for header looks like: #LinkUniqueID2016-12-25_23-59-59-1234 
         '''
 
-        #throw an error if uniqueIDLine does not match one of
-        #LinkToOrgFile.myUniqueIDRegex, OrgFile.myUniqueIDRegex
+        assert not self.uniqueID, 'node already has a unique ID'
+
+        #throw an error if uniqueIDLine does not match one of LinkToOrgFile.myUniqueIDRegex, OrgFile.myUniqueIDRegex
         matchObjList=[LinkToOrgFile.myUniqueIDRegex.match(uniqueIDLine),OrgFile.myUniqueIDRegex.match(uniqueIDLine)]  #first is unique ID for header; second is uniqueID for status node
         matches=[a for a in matchObjList if a]
         assert len(matches)==1,'%s does not match exactly one of LinkToOrgFile.myUniqueIDRegex, OrgFile.myUniqueIDRegex' % uniqueIDLine
@@ -2489,17 +2491,15 @@ class Node():
         matchObj=matches[0]
         uniqueIDInLine=matchObj.group('uniqueID')
 
-        #TODO this programming is ungainly; changing any Node attribute should make changes flow easily
-        assert not self.uniqueID, 'node already has a unique ID'
-
         #TODO if this method operates on a header node, why is the following here?
         # assert not self.inHeader, 'unwanted method call on node from link found in machine-generated header'
 
         #TODO seems like good idea to check that node is a status node?  or a header node?  raise error or log an error if not.
 
-        self.blurb.insert(0,uniqueIDLine)
         self.lines.insert(1,uniqueIDLine)
-        self.myLines.insert(1,uniqueIDLine)
+        #TODO do not understand why unit test indicates the following line must be commented out
+        # self.myLines.insert(1,uniqueIDLine)
+        self.blurb.insert(0,uniqueIDLine)
         self.lineLists.insert(1,split_on_non_whitespace_keep_everything(uniqueIDLine))
         self.uniqueID=uniqueIDInLine
 
@@ -2511,11 +2511,19 @@ class LocalFile():
         input leaveAsSymlink is for test purposes only
         '''
 
+        #seeing problems in ipython with ~ character and filenames
+        # http://stackoverflow.com/questions/2313053/python-how-to-access-linux-paths
+        if filename1.startswith('~'):
+            filename1=os.path.expanduser(filename1)
+
         self.originalFilename=filename1
+        logging.debug('original filename is %s' % self.originalFilename)
         self.inHeader=inHeader
+
         self.myFilesTable=myFilesTable
         self.symlinksTable=symlinksTable
         self.previousFilenamesTable=previousFilenamesTable
+
         self.leaveAsSymlink=leaveAsSymlink
 
         #TODO want to turn off logging for files in header, but need to test that this code is actually working; is commented out for now
@@ -2526,14 +2534,11 @@ class LocalFile():
             pass
             #turn_logging_back_on_at_initial_level()
 
-        logging.debug('original filename is %s' % self.originalFilename)
         self.changedFromSymlinkToNonSymlink=False #initialize
 
-        #seeing problems in ipython with ~ character and filenames
-        # http://stackoverflow.com/questions/2313053/python-how-to-access-linux-paths
-        if filename1.startswith('~'):
-            filename1=os.path.expanduser(filename1)
-
+        #TODO why is this commented out?  is it because filename1 is not necessarily absolute path, so path1 might be unusable?
+        #in many cases, this script is analyzing org files that have been moved, so a relative link in such an org file will no longer make sense
+        #TODO why not write a test in orgFixLinksTests that figures out what is going on
         # path1=os.path.split(filename1)[0]
         # folder1=os.getcwd()
         # os.chdir(path1)
@@ -2552,7 +2557,7 @@ class LocalFile():
         logging.debug('original targetFilenameAP is %s' % self.targetFilenameAP)  
 
         if not leaveAsSymlink:
-            #to simplify this script, ignore symlink and work on target instead
+            #to simplify this script, replace symlinks with their targets
             self.changeFromSymlinkToNonSymlink()
 
         self.simpleClickableLink='file:'+self.filenameAP  #simple clickable link in org mode
@@ -2744,8 +2749,8 @@ class OrgFile(LocalFile):
     def __init__(self,filename1,inHeader,leaveAsSymlink=False):
         '''
         OrgFile Class
-        initialize this object with minimal attributes
-        for certain org files, use method createFullRepresentation for a more complete data structure
+        initialize this object with minimal attributes.
+        createFullRepresentation is for org files that are to be rewritten.
         input leaveAsSymlink is for test purposes only
         '''
 
@@ -2803,7 +2808,8 @@ class OrgFile(LocalFile):
 
         #list of Node objects representing mainline (* ) nodes
         #this recursively creates a representation of an org file as a tree-like structure of Node objects
-        #each node object contains Link objects, which point to more File objects
+        #each Node has a list of its own child Nodes
+        #each Node may contain Links, which point to Files
         self.mainlineNodes=list_of_child_nodes_from_lines(self.oldLines,self)
 
         if not self.mainlineNodes:
@@ -3259,7 +3265,7 @@ def list_of_child_nodes_from_lines(lines,sourceFile,parent=None):
     '''
 
     if (parent<>None) and (not isinstance(parent,Node)):
-        logging.error('Misusing input parent of list_of_child_nodes_from_lines; parent is neither None nor of type Node')
+        logging.error('Parent must be either None or of type Node; parent is forced to None')
         parent=None
 
     childNodeList=[]

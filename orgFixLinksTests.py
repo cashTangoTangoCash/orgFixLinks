@@ -2,7 +2,7 @@ import unittest
 import orgFixLinks as OFL
 import datetime
 import os
-# import pudb
+import pudb
 #TODO can put pudb_set_trace anywhere in this script and it should work
 
 #NOTE all tests have not been written.  did not learn unit testing until long after an entire working version of orgFixLinks was written;
@@ -10,6 +10,8 @@ import os
 
 #TODO merge previous test file into this file
 #TODO would like there to be two files on github, this unit test file and orgFixLinks.py.  keep very simple.
+
+#TODO when stuff is imported, is there an issue with current working directory not being the same as in a complete run of orgFixLinks?  search on: chdir
 
 #TODO test that unique ID generator makes unique IDs that are detected by appropriate regex
 
@@ -1599,8 +1601,8 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
         OFL.maxLengthOfVisibleLinkText=oldSetting
 
-    #head skipping test of __regenOnChangedFilenameAP
-    #head skipping test of changeTargetObj
+    #head skipping test of __regenOnChangedFilenameAP; see tests of regenDescription
+    #head skipping test of changeTargetObj; see tests of regenDescription
     #head
     #head skipping test of attemptRepairViaBasenameMatchOnDisk
     #head skipping test of attemptRepairViaPastUserRepairs
@@ -1735,24 +1737,39 @@ class Test_OFL_Node(unittest.TestCase):
         lines=['* status\n']
         aNode=OFL.Node(lines,sourceFile=None)
         self.failIf(aNode.uniqueID)
+        self.assertEqual(len(aNode.myLines),1)
+
         aNode.findUniqueID(OFL.OrgFile.myUniqueIDRegex)
         self.failIf(aNode.uniqueID)
+
         uniqueIDLine='#MyUniqueID2016-12-25_23-59-59-1234  \n'
+
+        # pudb.set_trace()
+
         aNode.addUniqueID(uniqueIDLine)
+        self.assertEqual(len(aNode.lines),2)
+        self.assertEqual(len(aNode.myLines),2)
+        self.assertEqual(len(aNode.blurb),1)
+        self.assertEqual(len(aNode.lineLists),2)
+
+
         expectedLines=[lines[0],uniqueIDLine]
         self.assertEqual(expectedLines,aNode.myLines)
+
         self.assertEqual(expectedLines,aNode.lines)
+
         self.assertEqual(uniqueIDLine,aNode.blurb[0])
         self.assertEqual(aNode.uniqueID,'2016-12-25_23-59-59-1234')
 
 #head
 class Test_OFL_LocalFile(unittest.TestCase):
-    #head TODO is there anything to test in LocalFile.__init__?  seems like no.
+    #head __init__ is tested to a degree in some tests below
     #head test LocalFile.testIfExists
     def test1_testIfExists(self):
         '''test LocalFileMethods.testIfExists'''
 
         #put a file on disk; file is known to exist
+        #file is created in current working directory
         testFileLines=['* status\n']
         testFileLines.append('blurb\n')
         testFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org')
@@ -1788,7 +1805,7 @@ class Test_OFL_LocalFile(unittest.TestCase):
 
     #head test LocalFile.testIfExistsSymlinkVersion
     def test1_testSymlinkHandling(self):
-        '''test LocalFileMethods handling of symlinks'''
+        '''test LocalFile methods handling of symlinks'''
   
         #create a file on disk to be a symlink target
         testFileLines=['* status\n']
@@ -1806,9 +1823,9 @@ class Test_OFL_LocalFile(unittest.TestCase):
 
         testSymlink=OFL.OrgFile(symlinkFilename,inHeader=False,leaveAsSymlink=True)  #leaveAsSymlink is False in normal operation of orgFixLinks.py
 
-        self.failUnless(testSymlink.exists)  #symlink exists; it would exist even if target were missing
+        self.failUnless(testSymlink.exists)  #symlink exists; it would exist even if target were missing, according to definition in script
         self.failIf(testSymlink.changedFromSymlinkToNonSymlink) #because leaveAsSymlink=True
-        self.assertEqual(testSymlink.targetFilenameAP,testTarget.filenameAP)
+        self.assertEqual(testSymlink.targetFilenameAP,testTarget.filenameAP) #symlink points at target
         self.failUnless(testSymlink.targetExists)
         self.failUnless(testSymlink.isSymlink)
         self.failIf(testSymlink.isBrokenSymlink)
@@ -1817,7 +1834,7 @@ class Test_OFL_LocalFile(unittest.TestCase):
         os.remove(symlinkFilename)
 
     def test2_testSymlinkHandling(self):
-        '''test LocalFileMethods handling of symlinks'''
+        '''test LocalFile methods handling of symlinks'''
 
         #create a file on disk; it will be symlink target
         testFileLines=['* status\n']
@@ -1829,6 +1846,7 @@ class Test_OFL_LocalFile(unittest.TestCase):
 
         testTarget=OFL.OrgFile(testFilename,inHeader=False)
 
+
         #make a symlink that points to the first file
         symlinkFilename=os.path.join(anotherFolder2,datetime.datetime.now().strftime('%Y%m%d_%H%MTestSymlink.org'))
         os.symlink(testFilename,symlinkFilename) #target comes first
@@ -1836,12 +1854,12 @@ class Test_OFL_LocalFile(unittest.TestCase):
         #delete target after making symlink to it
         os.remove(testFilename)
         testTarget.testIfExists()
-        self.failIf(testTarget.exists)
 
         testSymlink=OFL.OrgFile(symlinkFilename,inHeader=False,leaveAsSymlink=True)  #leaveAsSymlink=False in normal operation of orgFixLinks.py
 
-        #even though link target is missing, my code says the link itself exists
-        self.failUnless(testSymlink.exists)
+
+        self.failIf(testTarget.exists)  #target was deleted
+        self.failUnless(testSymlink.exists)  #script defines a symlink as existing if the symlink itself exists, even if the target is missing
 
         self.failIf(testSymlink.targetExists) #it is the target that does not exist
         self.failIf(testSymlink.changedFromSymlinkToNonSymlink) #because leaveAsSymlink=True
@@ -1853,7 +1871,8 @@ class Test_OFL_LocalFile(unittest.TestCase):
         os.remove(symlinkFilename)
 
     def test3_testSymlinkHandling(self):
-        '''test LocalFileMethods handling of symlinks'''
+        '''test LocalFile methods handling of symlinks'''
+
         #create a file on disk; it will be symlink target
         testFileLines=['* status\n']
         testFileLines.append('blurb\n')
@@ -1864,11 +1883,13 @@ class Test_OFL_LocalFile(unittest.TestCase):
 
         testTarget=OFL.OrgFile(testFilename,inHeader=False)
 
+
         #make a symlink that points to the first file
         symlinkFilename=os.path.join(anotherFolder2,datetime.datetime.now().strftime('%Y%m%d_%H%MTestSymlink.org'))
         os.symlink(testFilename,symlinkFilename) #target comes first
 
         testSymlink=OFL.OrgFile(symlinkFilename,inHeader=False,leaveAsSymlink=False)  #it is replaced with its target
+
 
         self.failUnless(testSymlink.exists) #was replaced with its target and target exists
         self.failUnless(testSymlink.changedFromSymlinkToNonSymlink) #because leaveAsSymlink=False
@@ -1884,7 +1905,7 @@ class Test_OFL_LocalFile(unittest.TestCase):
         os.remove(symlinkFilename)
 
     def test4_testSymlinkHandling(self):
-        '''test LocalFileMethods handling of symlinks'''
+        '''test LocalFile methods handling of symlinks'''
 
         #create a file on disk; it will be target of symlink
         testFileLines=['* status\n']
@@ -1896,18 +1917,22 @@ class Test_OFL_LocalFile(unittest.TestCase):
 
         testTarget=OFL.OrgFile(testFilename,inHeader=False)
 
+
         #make a symlink that points to that test file
         symlinkFilename=os.path.join(anotherFolder2,datetime.datetime.now().strftime('%Y%m%d_%H%MTestSymlink.org'))
         os.symlink(testFilename,symlinkFilename) #target comes first
+
 
         #delete target after making symlink to it
         os.remove(testTarget.filenameAP)
         testTarget.testIfExists()
         self.failIf(testTarget.exists)
 
+        #instantiate testSymlink after its target was deleted:
         testSymlink=OFL.OrgFile(symlinkFilename,inHeader=False,leaveAsSymlink=False) #symlink is replaced with target
 
-        self.failIf(testSymlink.exists) #target was deleted
+
+        self.failIf(testSymlink.exists) #symlink was replaced with target, and target was deleted
         self.failUnless(testSymlink.changedFromSymlinkToNonSymlink)
         self.assertEqual(testSymlink.filenameAP,testTarget.filenameAP)
         # self.failIf(testSymlink.targetExists)
@@ -1920,13 +1945,14 @@ class Test_OFL_LocalFile(unittest.TestCase):
         os.remove(symlinkFilename)
 
     #head TODO could write a test with a target, a first symlink pointing to it, and a 2nd symlink pointing to first symlink.  delete the 1st two files; now what about symlink #2?
-    #head skip test of changeFromSymlinkToNonSymlink
-    #head skip test of changeBackToSymlink
-    #head skip test of checkMaxRepairAttempts
+    #head
+    #head skip test of changeFromSymlinkToNonSymlink; already tested as parts of tests above
+    #head skip test of changeBackToSymlink, or TODO use test-first approach to write this method
+    #head skip test of checkMaxRepairAttempts; how would the reading be verified?
 
 #head skip test NonOrgFile
 class Test_OFL_OrgFile(unittest.TestCase):
-    #head skip test of __init__
+    #head skip test of __init__; material beyond LocalFile.__init__ appears to be all simple initialization statements that should need no testing
     def test1_endsInDotOrg(self):
         '''test OrgFile.endsInDotOrg'''
         filenameAP=os.path.join(DocumentsFolderAP,'fakeFile.org')
@@ -1939,7 +1965,7 @@ class Test_OFL_OrgFile(unittest.TestCase):
         orgFile=OFL.OrgFile(filenameAP,inHeader=False)
         self.failIf(orgFile.endsInDotOrg())
 
-    #head TODO test createFullRepresentation?  decided to look at tests for Node first
+    #head TODO test createFullRepresentation?  decided to look at tests for Node first  LEFTOFF LEFT OFF
     #head TODO test lookInsideForUniqueID?
     #head TODO test generateAndInsertMyUniqueID?
     #head TODO test addNodeLinksAndTagsToMyLists?
@@ -2055,7 +2081,41 @@ class TestListOfChildNodesFromLines(unittest.TestCase):
         childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
         self.assertEqual([],childNodeList)
 
-    #TODO fill in more tests; first review Node.__init__
+    def test2(self):
+        '''test list_of_child_nodes_from_lines: no line starts with asterisk'''
+        lines=['* first\n','second\n','* third\n','fourth\n']
+        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
+
+        expectedList=[OFL.Node(lines[0:2],sourceFile=None),OFL.Node(lines[2:],sourceFile=None)]
+
+        #this does not work: appears that instances are at different memory locations, so are unequal?
+        # self.assertEqual(expectedList,childNodeList)
+
+        self.assertEqual(expectedList[0].myLines,childNodeList[0].myLines)
+        self.assertEqual(expectedList[1].myLines,childNodeList[1].myLines)
+        self.assertEqual(len(childNodeList),2)
+
+    def test3(self):
+        '''test list_of_child_nodes_from_lines: no line starts with asterisk'''
+        lines=['* first\n','** second\n','* third\n','** fourth\n']
+        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
+
+        expectedList=[OFL.Node(lines[0:1],sourceFile=None),OFL.Node(lines[2:3],sourceFile=None)]
+
+        self.assertEqual(expectedList[0].myLines,childNodeList[0].myLines)
+        self.assertEqual(expectedList[1].myLines,childNodeList[1].myLines)
+        self.assertEqual(len(childNodeList),2)
+
+    def test4(self):
+        '''test list_of_child_nodes_from_lines: no line starts with asterisk'''
+        lines=['** first\n','*** second\n','** third\n','*** fourth\n']
+        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
+
+        expectedList=[OFL.Node(lines[0:1],sourceFile=None),OFL.Node(lines[2:3],sourceFile=None)]
+
+        self.assertEqual(expectedList[0].myLines,childNodeList[0].myLines)
+        self.assertEqual(expectedList[1].myLines,childNodeList[1].myLines)
+        self.assertEqual(len(childNodeList),2)
 
 #head
 class TestLineToList1(unittest.TestCase):
@@ -2693,7 +2753,7 @@ class TestFindBestRegexMatchForText(unittest.TestCase):
 #head TODO test add_brackets_to_match
 #head skip test of set_up_logging
 #head TODO test remove_old_logs
-#head skip test of turn_off_logging
+#head skip test of turn_off_logging, or TODO use test-first to get it working, then use it when wanted to suppress logging for files in header
 #head skip test of turn_logging_back_on_at_initial_level
 #head TODO test walk_files_looking_for_name_match
 #head TODO test walk_org_files_looking_for_unique_id_match
