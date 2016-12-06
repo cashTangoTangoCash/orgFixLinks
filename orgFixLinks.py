@@ -1370,8 +1370,6 @@ class LinkToLocalFile(Link):
 
                 self.regenTextFromLinkAndDescription()
 
-        #TODO why is link not converted to absolute path filename here?  see LinkToLocalFile.initTargetFile
-
     def initTargetFile(self):
         '''
         LinkToLocalFile Class
@@ -1381,11 +1379,9 @@ class LinkToLocalFile(Link):
 
         #TODO warning: this method is overwritten in LinkToOrgFile; use dive into python techniques to allow inheritance instead
 
-        Link.associateWTargetObj(self,self.targetClassObj(self.filename,self.inHeader))
+        Link.associateWTargetObj(self,self.targetClassObj(self.filename,self.inHeader))  #target object is instantiated here
         self.originalTargetObj=self.targetObj
-
-        self.link=self.preFilename+self.targetObj.filenameAP+self.postFilename  # expecting further processing in NonOrgFile to change things
-        self.regenTextFromLinkAndDescription()
+        self.__regenOnChangedFilenameAP
 
     #head
     def testIfWorking(self):
@@ -1401,14 +1397,95 @@ class LinkToLocalFile(Link):
             return False
 
     #head  fixing broken link
+    def regenDescription(self):
+        '''LinkToLocalFile
+        a first problem: a link is repaired and there was a description and it was
+        the old filename; need to come up with new description because old description no longer makes sense
+
+        a second problem: visible text (description) can get too long; shorten it if possible
+        '''
+        try:
+            fileB=self.targetObj
+        except AttributeError:
+            return None
+
+        if self.description:
+            try:
+                oldFileB=self.originalTargetObj
+            except AttributeError:
+                return None
+
+            if fileB.filenameAP != oldFileB.filenameAP:
+                filenameAPChanged=True
+            else:
+                filenameAPChanged=False
+
+            if os.path.basename(fileB.filenameAP) != os.path.basename(oldFileB.filenameAP):
+                basenameChanged=True
+            else:
+                basenameChanged=False
+
+            if basenameChanged and (not filenameAPChanged):
+                logging.error('Programming logic error: not possible for filenameAP to be unchanged but basename to be changed')
+
+            #it is possible for filenameAP to change but basename to remain the same
+
+            #making no changes to a very long description unless it has lost its meaning; assuming user intends it to be very long
+
+            oldBasename=os.path.basename(oldFileB.filenameAP)
+
+            if self.description==oldBasename:
+                if basenameChanged:
+                    self.description=os.path.basename(fileB.filenameAP)
+
+                    if len(self.description)>maxLengthOfVisibleLinkText:
+                        logging.warning('Basename %s is longer than max visible link text %s' % (os.path.basename(fileB.filenameAP),maxLengthOfVisibleLinkText))
+                    return None
+                else:
+                    #description still makes sense, so leave it alone
+                    return None
+
+            if self.description==oldFileB.filenameAP:
+                if filenameAPChanged:
+                    if len(fileB.filenameAP)<=maxLengthOfVisibleLinkText:
+                        self.description=fileB.filenameAP
+                        return None
+
+                    self.description=os.path.basename(fileB.filenameAP)
+                    if len(self.description)>maxLengthOfVisibleLinkText:
+                        logging.warning('Basename %s is longer than max visible link text %s' % (os.path.basename(fileB.filenameAP),maxLengthOfVisibleLinkText))
+                    return None
+                else:
+                    #description still makes sense, so leave it alone
+                    return None
+
+            if self.description==os.path.basename(oldFileB.filenameAP):
+                if basenameChanged:
+                    if len(fileB.filenameAP)<=maxLengthOfVisibleLinkText:
+                        self.description=fileB.filenameAP
+                        return None
+
+                    self.description=os.path.basename(fileB.filenameAP)        
+                    if len(self.description)>maxLengthOfVisibleLinkText:
+                        logging.warning('Basename %s is longer than max visible link text %s' % (os.path.basename(fileB.filenameAP),maxLengthOfVisibleLinkText))
+
+                    return None
+                else:
+                    #description still makes sense, so leave it alone
+                    return None
+
+        #if there was no description, no need to add one
+
     def __regenOnChangedFilenameAP(self):
         '''
         LinkToLocalFile Class
+        filenameAP refers to self.targetObj.filenameAP
         '''
 
         # note: child class will not be able to call this function since it starts with __
-
+        self.filename=self.targetObj.filenameAP
         self.link=self.preFilename+self.filename+self.postFilename
+        self.regenDescription()
         self.regenTextFromLinkAndDescription()
 
     def changeTargetObj(self,newFileObj):
@@ -1420,7 +1497,8 @@ class LinkToLocalFile(Link):
 
         self.targetObj=newFileObj
         self.targetObjList.append(newFileObj) #most recent last
-        self.__regenOnChangedFilenameAP()  #TODO what about child classes using changeTargetObj, and __?
+        #in the following, filenameAP refers to self.targetObj.filenameAP:
+        self.__regenOnChangedFilenameAP()  #TODO does __ cause trouble with child classes using changeTargetObj?
         self.testIfWorking()
 
     #head
@@ -1874,60 +1952,6 @@ class LinkToLocalFile(Link):
         self.linksTable.updateLinkStatus(self.sourceFile,self.targetObj)
 
     #head
-    def regenDescription(self):
-        '''LinkToLocalFile
-        one problem: a link is repaired and there was a description and it was
-        the old filename; need to come up with new description because old description no longer makes sense
-
-        visible text (description) can get too long; shorten it if possible
-        '''
-        try:
-            fileB=self.targetObj
-        except AttributeError:
-            return None
-
-        if self.description:
-            try:
-                oldFileB=self.originalTargetObj
-            except AttributeError:
-                return None
-
-            if fileB.filenameAP != oldFileB.filenameAP:
-                filenameAPChanged=True
-            else:
-                filenameAPChanged=False
-
-            if os.path.basename(fileB.filenameAP) != os.path.basename(oldFileB.filenameAP):
-                basenameChanged=True
-            else:
-                basenameChanged=False
-
-            if self.description==oldFileB.filenameAP:
-                if filenameAPChanged:
-                    if len(fileB.filenameAP)<=maxLengthOfVisibleLinkText:
-                        self.description=fileB.filenameAP
-                        return None
-
-                    self.description=os.path.basename(fileB.filenameAP)        
-                    return None
-                else:
-                    #description still makes sense, so leave it alone
-                    return None
-
-            if self.description==os.path.basename(oldFileB.filenameAP):
-                if basenameChanged:
-                    if len(fileB.filenameAP)<=maxLengthOfVisibleLinkText:
-                        self.description=fileB.filenameAP
-                        return None
-
-                    self.description=os.path.basename(fileB.filenameAP)        
-                    return None
-                else:
-                    #description still makes sense, so leave it alone
-                    return None
-
-        #if there was no description, no need to add one
-
     def giveUpOnRepairing(self):
         '''LinkToLocalFile
         some housekeeping tasks when giving up on repairing a link

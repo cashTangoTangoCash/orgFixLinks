@@ -1346,18 +1346,270 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         self.assertEqual(newFilename,aLink.filename)
         self.assertEqual(postFilename1,aLink.postFilename)
 
+    #head end of tests of LinkToLocalFile.__init__
     #head skipping test of initTargetFile
     #head skipping test of testIfWorking
+    def test1_RegenDescription(self):
+        '''no change should be made to a long description that still matches the current link target'''
+
+        oldSetting=OFL.maxLengthOfVisibleLinkText
+        OFL.maxLengthOfVisibleLinkText=1000
+
+        oldBasename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest1RegenDescription.org')
+        oldFilenameAP=os.path.join(anotherFolder,oldBasename)
+        oldLink=oldFilenameAP
+
+        hasBrackets=True
+
+        oldDescription='a lengthy description which is also unrelated to any filenames, so it cannot become outdated by changes in filenames'
+
+        oldText=text_from_link_and_description(oldLink,oldDescription,hasBrackets)  #link is the same as filename in this case
+
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(oldLink,hasBrackets)
+
+        aLink=OFL.LinkToOrgFile(text=oldText,inHeader=False,sourceFile=None,hasBrackets=hasBrackets,regexForLink=matchingRegex)
+        aLink.initTargetFile()  #regenDescription gets called by this function
+
+        self.assertEqual(aLink.targetObj.filenameAP,oldFilenameAP)
+        self.assertEqual(aLink.targetObj.filenameAP,aLink.originalTargetObj.filenameAP)
+        self.assertEqual(aLink.description,oldDescription)  #main point of this test
+
+        OFL.maxLengthOfVisibleLinkText=oldSetting
+
+    def test1B_RegenDescription(self):
+        '''no change should be made to a long description that still matches the current link target'''
+
+        oldSetting=OFL.maxLengthOfVisibleLinkText
+        OFL.maxLengthOfVisibleLinkText=1
+
+        oldBasename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest1RegenDescription.org')
+        oldFilenameAP=os.path.join(anotherFolder,oldBasename)
+        oldLink=oldFilenameAP
+
+        hasBrackets=True
+
+        oldDescription='a lengthy description which is also unrelated to any filenames, so it cannot become outdated by changes in filenames'
+
+        oldText=text_from_link_and_description(oldLink,oldDescription,hasBrackets)  #link is the same as filename in this case
+
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(oldLink,hasBrackets)
+
+        aLink=OFL.LinkToOrgFile(text=oldText,inHeader=False,sourceFile=None,hasBrackets=hasBrackets,regexForLink=matchingRegex)
+        aLink.initTargetFile()  #regenDescription gets called by this function
+
+        self.assertEqual(aLink.targetObj.filenameAP,oldFilenameAP)
+        self.assertEqual(aLink.targetObj.filenameAP,aLink.originalTargetObj.filenameAP)
+        self.assertEqual(aLink.description,oldDescription)  #main point of this test
+
+        OFL.maxLengthOfVisibleLinkText=oldSetting
+
+    def test2_RegenDescription(self):
+        '''no change should be made to a long description that still matches the current link target'''
+
+        oldSetting=OFL.maxLengthOfVisibleLinkText
+        OFL.maxLengthOfVisibleLinkText=1000
+
+        oldBasename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest1RegenDescription.org')
+        oldFilenameAP=os.path.join(anotherFolder,oldBasename)
+        oldLink=oldFilenameAP
+
+        hasBrackets=True
+
+        oldDescription=oldFilenameAP
+
+        oldText=text_from_link_and_description(oldLink,oldDescription,hasBrackets)  #link is the same as filename in this case
+
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(oldLink,hasBrackets)
+
+        aLink=OFL.LinkToOrgFile(text=oldText,inHeader=False,sourceFile=None,hasBrackets=hasBrackets,regexForLink=matchingRegex)
+        aLink.initTargetFile()  #regenDescription gets called by this function
+
+        self.assertEqual(aLink.targetObj.filenameAP,oldFilenameAP)
+        self.assertEqual(aLink.targetObj.filenameAP,aLink.originalTargetObj.filenameAP)
+        self.assertEqual(aLink.description,oldDescription)  #main point of this test
+
+        OFL.maxLengthOfVisibleLinkText=oldSetting
+
+    def test2B_RegenDescription(self):
+        '''no change should be made to a long description that still matches the current link target'''
+
+        oldSetting=OFL.maxLengthOfVisibleLinkText
+        OFL.maxLengthOfVisibleLinkText=1
+
+        oldBasename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest1RegenDescription.org')
+        oldFilenameAP=os.path.join(anotherFolder,oldBasename)
+        oldLink=oldFilenameAP
+
+        hasBrackets=True
+
+        oldDescription=oldFilenameAP
+
+        oldText=text_from_link_and_description(oldLink,oldDescription,hasBrackets)  #link is the same as filename in this case
+
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(oldLink,hasBrackets)
+
+        aLink=OFL.LinkToOrgFile(text=oldText,inHeader=False,sourceFile=None,hasBrackets=hasBrackets,regexForLink=matchingRegex)
+        aLink.initTargetFile()  #regenDescription gets called by this function
+
+        self.assertEqual(aLink.targetObj.filenameAP,oldFilenameAP)
+        self.assertEqual(aLink.targetObj.filenameAP,aLink.originalTargetObj.filenameAP)
+        self.assertEqual(aLink.description,oldDescription)  #main point of this test
+
+        OFL.maxLengthOfVisibleLinkText=oldSetting
+
+    #head
+    def test3_RegenDescription(self):
+        '''filename of target is changed; old link description was old filename; link description changes to new filename'''
+        oldSetting=OFL.maxLengthOfVisibleLinkText
+        OFL.maxLengthOfVisibleLinkText=1000
+
+        oldBasename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest3RegenDescription.org')
+        oldFilenameAP=os.path.join(anotherFolder,oldBasename)
+        oldLink=oldFilenameAP
+
+        hasBrackets=True
+
+        oldDescription=oldFilenameAP
+
+        oldText=text_from_link_and_description(oldLink,oldDescription,hasBrackets)  #link is the same as filename in this case
+
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(oldLink,hasBrackets)
+
+        aLink=OFL.LinkToOrgFile(text=oldText,inHeader=False,sourceFile=None,hasBrackets=hasBrackets,regexForLink=matchingRegex)
+        aLink.initTargetFile()  #regenDescription gets called by this function
+
+        self.assertEqual(aLink.targetObj.filenameAP,oldFilenameAP)
+        self.assertEqual(aLink.targetObj.filenameAP,aLink.originalTargetObj.filenameAP)
+        self.assertEqual(aLink.description,oldDescription)
+
+        newBasename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest3RegenDescriptionNewBasename.org')
+        newFilenameAP=os.path.join(anotherFolder,newBasename) #same folder, new basename
+        newFile=OFL.OrgFile(newFilenameAP,inHeader=False)
+        aLink.changeTargetObj(newFile) #regenDescription gets called by this function
+
+        self.assertEqual(aLink.targetObj.filenameAP,newFilenameAP)
+        self.assertEqual(aLink.originalTargetObj.filenameAP,oldFilenameAP)
+        self.assertEqual(aLink.description,newFilenameAP)
+
+        OFL.maxLengthOfVisibleLinkText=oldSetting
+
+    def test3B_RegenDescription(self):
+        '''filename of target is changed; old link description was old filename; link description changes to new filename'''
+        oldSetting=OFL.maxLengthOfVisibleLinkText
+        OFL.maxLengthOfVisibleLinkText=1
+
+        oldBasename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest3RegenDescription.org')
+        oldFilenameAP=os.path.join(anotherFolder,oldBasename)
+        oldLink=oldFilenameAP
+
+        hasBrackets=True
+
+        oldDescription=oldFilenameAP
+
+        oldText=text_from_link_and_description(oldLink,oldDescription,hasBrackets)  #link is the same as filename in this case
+
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(oldLink,hasBrackets)
+
+        aLink=OFL.LinkToOrgFile(text=oldText,inHeader=False,sourceFile=None,hasBrackets=hasBrackets,regexForLink=matchingRegex)
+        aLink.initTargetFile()  #regenDescription gets called by this function
+
+        self.assertEqual(aLink.targetObj.filenameAP,oldFilenameAP)
+        self.assertEqual(aLink.targetObj.filenameAP,aLink.originalTargetObj.filenameAP)
+        self.assertEqual(aLink.description,oldDescription)
+
+        newBasename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest3RegenDescriptionNewBasename.org')
+        newFilenameAP=os.path.join(anotherFolder,newBasename) #same folder, new basename
+        newFile=OFL.OrgFile(newFilenameAP,inHeader=False)
+        aLink.changeTargetObj(newFile) #regenDescription gets called by this function
+
+        self.assertEqual(aLink.targetObj.filenameAP,newFilenameAP)
+        self.assertEqual(aLink.originalTargetObj.filenameAP,oldFilenameAP)
+        self.assertEqual(aLink.description,newBasename)  #description is shortened from filenameAP to basename
+
+        OFL.maxLengthOfVisibleLinkText=oldSetting
+
+
+    def test4_RegenDescription(self):
+        '''filename of target is changed; old link description was old basename; link description changes to new basename'''
+        oldSetting=OFL.maxLengthOfVisibleLinkText
+        OFL.maxLengthOfVisibleLinkText=1000
+
+        oldBasename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest3RegenDescription.org')
+        oldFilenameAP=os.path.join(anotherFolder,oldBasename)
+        oldLink=oldFilenameAP
+
+        hasBrackets=True
+
+        oldDescription=oldBasename
+
+        oldText=text_from_link_and_description(oldLink,oldDescription,hasBrackets)  #link is the same as filename in this case
+
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(oldLink,hasBrackets)
+
+        aLink=OFL.LinkToOrgFile(text=oldText,inHeader=False,sourceFile=None,hasBrackets=hasBrackets,regexForLink=matchingRegex)
+        aLink.initTargetFile()  #regenDescription gets called by this function
+
+        self.assertEqual(aLink.targetObj.filenameAP,oldFilenameAP)
+        self.assertEqual(aLink.targetObj.filenameAP,aLink.originalTargetObj.filenameAP)
+        self.assertEqual(aLink.description,oldBasename)
+
+        newBasename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest3RegenDescriptionNewBasename.org')
+        newFilenameAP=os.path.join(anotherFolder,newBasename) #same folder, new basename
+        newFile=OFL.OrgFile(newFilenameAP,inHeader=False)
+        aLink.changeTargetObj(newFile) #regenDescription gets called by this function
+
+        self.assertEqual(aLink.targetObj.filenameAP,newFilenameAP)
+        self.assertEqual(aLink.originalTargetObj.filenameAP,oldFilenameAP)
+        self.assertEqual(aLink.description,newBasename)
+
+        OFL.maxLengthOfVisibleLinkText=oldSetting
+
+    def test4B_RegenDescription(self):
+        '''filename of target is changed; old link description was old basename; link description changes to new basename'''
+        oldSetting=OFL.maxLengthOfVisibleLinkText
+        OFL.maxLengthOfVisibleLinkText=1
+
+        oldBasename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest3RegenDescription.org')
+        oldFilenameAP=os.path.join(anotherFolder,oldBasename)
+        oldLink=oldFilenameAP
+
+        hasBrackets=True
+
+        oldDescription=oldBasename
+
+        oldText=text_from_link_and_description(oldLink,oldDescription,hasBrackets)  #link is the same as filename in this case
+
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(oldLink,hasBrackets)
+
+        aLink=OFL.LinkToOrgFile(text=oldText,inHeader=False,sourceFile=None,hasBrackets=hasBrackets,regexForLink=matchingRegex)
+        aLink.initTargetFile()  #regenDescription gets called by this function
+
+        self.assertEqual(aLink.targetObj.filenameAP,oldFilenameAP)
+        self.assertEqual(aLink.targetObj.filenameAP,aLink.originalTargetObj.filenameAP)
+        self.assertEqual(aLink.description,oldBasename)
+
+        newBasename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest3RegenDescriptionNewBasename.org')
+        newFilenameAP=os.path.join(anotherFolder,newBasename) #same folder, new basename
+        newFile=OFL.OrgFile(newFilenameAP,inHeader=False)
+        aLink.changeTargetObj(newFile) #regenDescription gets called by this function
+
+        self.assertEqual(aLink.targetObj.filenameAP,newFilenameAP)
+        self.assertEqual(aLink.originalTargetObj.filenameAP,oldFilenameAP)
+        self.assertEqual(aLink.description,newBasename)
+
+        OFL.maxLengthOfVisibleLinkText=oldSetting
+
     #head skipping test of __regenOnChangedFilenameAP
     #head skipping test of changeTargetObj
+    #head
     #head skipping test of attemptRepairViaBasenameMatchOnDisk
     #head skipping test of attemptRepairViaPastUserRepairs
     #head skipping test of attemptRepairViaInteractingWithUser
     #head skipping test of attemptRepairVia...
     #head skipping test of finishRepairVia...
     #head skipping test of databaseHousekeepingForBrokenLink
-    #head test of regenDescription TODO
     #head skipping test of giveUpOnRepairing
+
 class Test_OFL_LinkToNonOrgFile(unittest.TestCase):
     pass
     #head skip test of __init__
@@ -1854,6 +2106,7 @@ class TestSplitOnNonWhitespaceKeepEverything(unittest.TestCase):
 
 class TestFindBestRegexMatchForText(unittest.TestCase):
     #head this is where you test if your regexes can correctly identify links
+    #head function name is somewhat confusing; input is link instead of text=[[link][description]]
     #head temp lines for copy and paste:
     # self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexes['file:anyFilename.org::anything or file+sys:anyFilename.org::anything or file+emacs:anyFilename.org::anything or docview:anyFilename.org::anything'])
     # self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexes['/anyFilename.org::anything  or  ./anyFilename.org::anything  or  ~/anyFilename.org::anything'])
@@ -2485,8 +2738,7 @@ class TestFindUniqueIDInsideFile(unittest.TestCase):
         os.remove(testFilename)
 
     def test3(self):
-        '''test find_unique_id_inside_file: file contains status node but does not contain unique ID'''
-        
+
         testFileLines=['* status\n']
         testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9812   \n')
         testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9813   \n')
@@ -2500,8 +2752,7 @@ class TestFindUniqueIDInsideFile(unittest.TestCase):
         os.remove(testFilename)
 
     def test4(self):
-        '''test find_unique_id_inside_file: file contains status node but does not contain unique ID'''
-        
+
         testFileLines=[]
         testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9812   \n')
         testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9813   \n')
@@ -2515,7 +2766,7 @@ class TestFindUniqueIDInsideFile(unittest.TestCase):
         os.remove(testFilename)
 
     def test5(self):
-        '''test find_unique_id_inside_file: file contains status node but does not contain unique ID'''
+
         testFileLines=['one line\n','another line\n']
         testFileLines.append('* status\n')
         testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9812   \n')
@@ -2598,3 +2849,4 @@ anotherFolder2=os.path.join(DocumentsFolderAP,'TempOFLTests1','TempOFLTests2')
 #head
 if __name__ == "__main__":
     unittest.main()
+    #TODO could delete anotherFolder, anotherFolder2
