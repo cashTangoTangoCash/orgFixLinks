@@ -2372,17 +2372,17 @@ class Node():
             lineList2=[]
             for piece in lineList1:
                 if Link.orgLinkWBracketsRegexNC.match(piece):  #piece is [[link]] or [[link][description]]
-                    link,description=text_to_link_and_description_double_brackets(piece)
+                    link1,description=text_to_link_and_description_double_brackets(piece)
 
-                    #sometimes I goof up with tab completion in emacs org mode, and make a link to a .org~ file instead of a .org
-                    #TODO this belongs in a link, not here
-                    link=link.replace('.org~','.org')
+                    link=remove_tilde_from_org_link(link1)
+
+                    piece2=text_from_link_and_description(link,description,hasBrackets=True)
 
                     #based on which regex matches link, create a link object and add it to lineList2
                     matchingRegex,matchObj,matchingClass=find_best_regex_match_for_text(link,hasBrackets=True)
 
                     if matchingRegex: #if there is a match
-                        lineList2.append(matchingClass(text=piece,inHeader=self.inHeader,sourceFile=self.sourceFile,hasBrackets=True,regexForLink=matchingRegex))  #creating instance of e.g. LinkToOrgFile
+                        lineList2.append(matchingClass(text=piece2,inHeader=self.inHeader,sourceFile=self.sourceFile,hasBrackets=True,regexForLink=matchingRegex))  #creating instance of e.g. LinkToOrgFile
                         lineList2[-1].associateWNode(self)
                         d1Brackets[matchingRegex].append(lineList2[-1])  #d1Brackets[matchingRegex] is the appropriate self.listOfLinks
                         lineList2[-1].initTargetFile()  #create instance of target of this link
@@ -2397,7 +2397,14 @@ class Node():
                         matchingRegex,matchObj,matchingClass=find_best_regex_match_for_text(each1,hasBrackets=False)
 
                         if matchingRegex: #if there is a match
-                            foundLink=matchingClass(text=each1,inHeader=self.inHeader,sourceFile=self.sourceFile,hasBrackets=False,regexForLink=matchingRegex)
+
+                            if each1.endswith('.org~'):
+                                link1=remove_tilde_from_org_link(each1)
+                                matchingRegex,matchObj,matchingClass=find_best_regex_match_for_text(link1,hasBrackets=False)
+                            else:
+                                link1=each1
+
+                            foundLink=matchingClass(text=link1,inHeader=self.inHeader,sourceFile=self.sourceFile,hasBrackets=False,regexForLink=matchingRegex)
                             lineList2.append(foundLink)
                             foundLink.associateWNode(self)  # assuming this will update the object in lineList2
                             d1NoBrackets[matchingRegex].append(foundLink)  #d1NoBrackets[matchingRegex] is the appropriate self.listOfLinks
@@ -2497,7 +2504,7 @@ class Node():
         #TODO seems like good idea to check that node is a status node?  or a header node?  raise error or log an error if not.
 
         self.lines.insert(1,uniqueIDLine)
-        #TODO do not understand why unit test indicates the following line must be commented out
+        #TODO do not understand why unit test indicates the following line must be commented out; checked in orgFixLinksTests that separate_parent_lines_descendant_lines does not automatically update when a new line is added
         # self.myLines.insert(1,uniqueIDLine)
         self.blurb.insert(0,uniqueIDLine)
         self.lineLists.insert(1,split_on_non_whitespace_keep_everything(uniqueIDLine))
@@ -3308,6 +3315,32 @@ def text_to_link_and_description_double_brackets(text):
     assert link, 'link cannot be empty'
     description=matchObj1.group('description')
     return link,description
+
+def text_from_link_and_description(link,description,hasBrackets):
+
+    if description and (not hasBrackets):
+        raise ValueError('Cannot form a link with non-empty description and no brackets')
+
+    text=None
+    if hasBrackets:
+        if description:
+            text='[['+link+']['+description+']]'
+        else:
+            text='[['+link+']]'
+    else:
+        text=link
+
+    return text
+
+def remove_tilde_from_org_link(linkText):
+    #sometimes I goof up with tab completion in emacs, and make a link to a .org~ file instead of a .org
+
+    #TODO rewrite with regular expressions
+    if linkText.endswith('.org~'):
+        tempLink=linkText.replace('.org~','.org',1)  #only replace the first occurrence; TODO this should instead be done with regular expressions
+        if (not tempLink.endswith('.org~')):
+            return tempLink
+    return linkText
 
 def split_on_non_whitespace_keep_everything(text):
     p4=re.compile(r'(\s+)')

@@ -167,7 +167,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1=None
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
         self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexesNoBrackets['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org'])  #UPDATE
@@ -191,7 +191,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1=None
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
         self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexesBrackets['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org'])  #UPDATE
@@ -215,7 +215,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1='a description'
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
         self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexesBrackets['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org'])  #UPDATE
@@ -239,7 +239,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1=None
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -263,7 +263,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1='a description'
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -287,7 +287,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1=None
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -311,7 +311,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1=None
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -335,7 +335,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1='a description'
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -359,7 +359,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1=None
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -383,7 +383,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1='a description'
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -407,7 +407,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1=None
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -431,7 +431,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1=None
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -455,7 +455,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1='a description'
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -479,7 +479,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1=None
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -503,7 +503,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1=None
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -527,7 +527,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1='a description'
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -551,7 +551,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1=None
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -575,7 +575,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1='a description'
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -600,7 +600,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1=None
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -624,7 +624,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1=None
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -649,7 +649,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1='a description'
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -674,7 +674,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1=None
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -699,7 +699,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1='a description'
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -724,7 +724,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1=None
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -749,7 +749,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1=None
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -774,7 +774,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1='a description'
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -799,7 +799,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1=None
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -824,7 +824,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1='a description'
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -849,7 +849,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1=None
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -873,7 +873,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1='a description'
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -897,7 +897,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1=None
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -922,7 +922,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1='a description'
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -948,7 +948,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1=None
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -973,7 +973,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1='a description'
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -998,7 +998,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1=None
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -1023,7 +1023,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1=None
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -1048,7 +1048,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1='a description'
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -1074,7 +1074,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1=None
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -1099,7 +1099,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1=None
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -1124,7 +1124,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1='a description'
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -1149,7 +1149,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1=None
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -1174,7 +1174,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1=None
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -1200,7 +1200,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1='a description'
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -1226,7 +1226,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1=None
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -1251,7 +1251,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1=None
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -1276,7 +1276,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1='a description'
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -1301,7 +1301,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1=None
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -1310,7 +1310,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
         newFilename=os.path.join(os.path.expanduser('~'),'Documents')  #minus trailing slash
         newLink=preFilename1+newFilename+postFilename1
-        newText=text_from_link_and_description(newLink,description1,hasBrackets)
+        newText=OFL.text_from_link_and_description(newLink,description1,hasBrackets)
 
         self.assertEqual(aLink.text,newText)
         self.assertEqual(aLink.link,newLink)
@@ -1329,7 +1329,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         link1=preFilename1+filename1+postFilename1
         description1='a description'
 
-        text1=text_from_link_and_description(link1,description1,hasBrackets)
+        text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
 
@@ -1338,7 +1338,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
         newFilename=os.path.join(os.path.expanduser('~'),'Documents')  #minus trailing slash
         newLink=preFilename1+newFilename+postFilename1
-        newText=text_from_link_and_description(newLink,description1,hasBrackets)
+        newText=OFL.text_from_link_and_description(newLink,description1,hasBrackets)
 
         self.assertEqual(aLink.text,newText)
         self.assertEqual(aLink.link,newLink)
@@ -1365,7 +1365,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
         oldDescription='a lengthy description which is also unrelated to any filenames, so it cannot become outdated by changes in filenames'
 
-        oldText=text_from_link_and_description(oldLink,oldDescription,hasBrackets)  #link is the same as filename in this case
+        oldText=OFL.text_from_link_and_description(oldLink,oldDescription,hasBrackets)  #link is the same as filename in this case
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(oldLink,hasBrackets)
 
@@ -1392,7 +1392,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
         oldDescription='a lengthy description which is also unrelated to any filenames, so it cannot become outdated by changes in filenames'
 
-        oldText=text_from_link_and_description(oldLink,oldDescription,hasBrackets)  #link is the same as filename in this case
+        oldText=OFL.text_from_link_and_description(oldLink,oldDescription,hasBrackets)  #link is the same as filename in this case
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(oldLink,hasBrackets)
 
@@ -1419,7 +1419,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
         oldDescription=oldFilenameAP
 
-        oldText=text_from_link_and_description(oldLink,oldDescription,hasBrackets)  #link is the same as filename in this case
+        oldText=OFL.text_from_link_and_description(oldLink,oldDescription,hasBrackets)  #link is the same as filename in this case
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(oldLink,hasBrackets)
 
@@ -1446,7 +1446,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
         oldDescription=oldFilenameAP
 
-        oldText=text_from_link_and_description(oldLink,oldDescription,hasBrackets)  #link is the same as filename in this case
+        oldText=OFL.text_from_link_and_description(oldLink,oldDescription,hasBrackets)  #link is the same as filename in this case
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(oldLink,hasBrackets)
 
@@ -1473,7 +1473,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
         oldDescription=oldFilenameAP
 
-        oldText=text_from_link_and_description(oldLink,oldDescription,hasBrackets)  #link is the same as filename in this case
+        oldText=OFL.text_from_link_and_description(oldLink,oldDescription,hasBrackets)  #link is the same as filename in this case
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(oldLink,hasBrackets)
 
@@ -1508,7 +1508,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
         oldDescription=oldFilenameAP
 
-        oldText=text_from_link_and_description(oldLink,oldDescription,hasBrackets)  #link is the same as filename in this case
+        oldText=OFL.text_from_link_and_description(oldLink,oldDescription,hasBrackets)  #link is the same as filename in this case
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(oldLink,hasBrackets)
 
@@ -1544,7 +1544,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
         oldDescription=oldBasename
 
-        oldText=text_from_link_and_description(oldLink,oldDescription,hasBrackets)  #link is the same as filename in this case
+        oldText=OFL.text_from_link_and_description(oldLink,oldDescription,hasBrackets)  #link is the same as filename in this case
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(oldLink,hasBrackets)
 
@@ -1579,7 +1579,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
         oldDescription=oldBasename
 
-        oldText=text_from_link_and_description(oldLink,oldDescription,hasBrackets)  #link is the same as filename in this case
+        oldText=OFL.text_from_link_and_description(oldLink,oldDescription,hasBrackets)  #link is the same as filename in this case
 
         matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(oldLink,hasBrackets)
 
@@ -1671,6 +1671,38 @@ class Test_OFL_Node(unittest.TestCase):
         linksInLine2=[a for a in aNode.lineLists[1] if isinstance(a,OFL.LinkToNonOrgFile)]
         self.assertEqual(len(linksInLine2),2)
 
+    def test3_NodeInit(self):
+        '''test OFL.Node.__init__ for a node with links'''
+
+        link1Text='file:aFirstFakeFile.org~'
+        link1TextCorrected='file:aFirstFakeFile.org'
+
+        lines=['* links '+link1Text+' \t\t \n','blurb 1 ']
+        linesCorrected=['* links '+link1TextCorrected+' \t\t \n','blurb 1 ']
+        aNode=OFL.Node(lines,sourceFile=None)
+        aNode.regenAfterLinkUpdates()
+
+        self.assertEqual(aNode.myLines,linesCorrected)
+
+        self.failIf(aNode.linksToNonOrgFiles)
+        self.assertEqual(len(aNode.linksToOrgFiles),1)
+
+    def test4_NodeInit(self):
+        '''test OFL.Node.__init__ for a node with links'''
+
+        link1Text='file:aFirstFakeFile.org~'
+        link1TextCorrected='file:aFirstFakeFile.org'
+
+        lines=['* links [['+link1Text+']] \t\t \n','blurb 1 ']
+        linesCorrected=['* links [['+link1TextCorrected+']] \t\t \n','blurb 1 ']
+        aNode=OFL.Node(lines,sourceFile=None)
+        aNode.regenAfterLinkUpdates()
+
+        self.assertEqual(aNode.myLines,linesCorrected)
+
+        self.failIf(aNode.linksToNonOrgFiles)
+        self.assertEqual(len(aNode.linksToOrgFiles),1)
+
     #head test regenAfterLinkUpdates
     def test1_NodeRegenAfterLinkUpdates(self):
         '''OFL.Node.regenAfterLinkUpdates'''
@@ -1738,6 +1770,7 @@ class Test_OFL_Node(unittest.TestCase):
         aNode=OFL.Node(lines,sourceFile=None)
         self.failIf(aNode.uniqueID)
         self.assertEqual(len(aNode.myLines),1)
+        self.assertEqual(len(aNode.lines),1)
 
         aNode.findUniqueID(OFL.OrgFile.myUniqueIDRegex)
         self.failIf(aNode.uniqueID)
@@ -1755,7 +1788,6 @@ class Test_OFL_Node(unittest.TestCase):
 
         expectedLines=[lines[0],uniqueIDLine]
         self.assertEqual(expectedLines,aNode.myLines)
-
         self.assertEqual(expectedLines,aNode.lines)
 
         self.assertEqual(uniqueIDLine,aNode.blurb[0])
@@ -2074,6 +2106,17 @@ class TestSeparateParentLinesDescendantLines(unittest.TestCase):
         self.assertEqual(parentLines,['* line1','line2'])
         self.assertEqual(descendantLines,['** line3','line 4'])
 
+    def test5(self):
+        '''test separate_parent_lines_descendant_lines'''
+        lines=['* line1','** line2','*** line3']
+        parentLines,descendantLines=OFL.separate_parent_lines_descendant_lines(lines)
+        self.assertEqual(parentLines,['* line1'])
+        self.assertEqual(descendantLines,['** line2','*** line3'])
+
+        lines=['* line1','blurb 1','** line2','blurb 2','*** line3']
+        self.assertEqual(parentLines,['* line1'])
+        self.assertEqual(descendantLines,['** line2','*** line3'])
+
 class TestListOfChildNodesFromLines(unittest.TestCase):
     def test1(self):
         '''test list_of_child_nodes_from_lines: no line starts with asterisk'''
@@ -2146,6 +2189,53 @@ class TestTextToLinkAndDescriptionDoubleBrackets(unittest.TestCase):
         link,description=OFL.text_to_link_and_description_double_brackets(someText)
         self.assertEqual(' link link ',link)
         self.assertEqual(' descr descr ',description)
+
+class TestTextFromLinkAndDescription(unittest.TestCase):
+    def test1(self):
+        link='anything'
+        description=None
+        hasBrackets=False
+        expectedText='anything'
+        self.assertEqual(expectedText,OFL.text_from_link_and_description(link,description,hasBrackets))
+
+    def test2(self):
+        link='anything'
+        description=None
+        hasBrackets=True
+        expectedText='[[anything]]'
+        self.assertEqual(expectedText,OFL.text_from_link_and_description(link,description,hasBrackets))
+
+    def test3(self):
+        link='anything'
+        description='any description'
+        hasBrackets=True
+        expectedText='[[anything][any description]]'
+        self.assertEqual(expectedText,OFL.text_from_link_and_description(link,description,hasBrackets))
+
+    def test4(self):
+        link='anything'
+        description='any description'
+        hasBrackets=False
+        expectedText='anything'
+        self.failUnlessRaises(ValueError,OFL.text_from_link_and_description,link,description,hasBrackets)
+
+class TestRemoveTildeFromOrgLink(unittest.TestCase):
+    def test1(self):
+        link='file:anyName.org~'
+        link2='file:anyName.org'
+        self.assertEqual(link2,OFL.remove_tilde_from_org_link(link))
+
+    def test2(self):
+        link='file:anyName.org'
+        self.assertEqual(link,OFL.remove_tilde_from_org_link(link))
+
+    def test3(self):
+        link='file:.org~anyName.org'
+        self.assertEqual(link,OFL.remove_tilde_from_org_link(link))
+
+    def test4(self):
+        link='file:.org~anyName.org~'
+        self.assertEqual(link,OFL.remove_tilde_from_org_link(link))  #TODO want to use regular expressions to improve this
 
 class TestSplitOnNonWhitespaceKeepEverything(unittest.TestCase):
     def test1(self):
@@ -2850,54 +2940,6 @@ class TestFindUniqueIDInsideFile(unittest.TestCase):
 #head skip test usage
 #head
 #head
-#head
-#head tests of functions local to this module
-class TestTextFromLinkAndDescription(unittest.TestCase):
-    def test1(self):
-        link='anything'
-        description=None
-        hasBrackets=False
-        expectedText='anything'
-        self.assertEqual(expectedText,text_from_link_and_description(link,description,hasBrackets))
-
-    def test2(self):
-        link='anything'
-        description=None
-        hasBrackets=True
-        expectedText='[[anything]]'
-        self.assertEqual(expectedText,text_from_link_and_description(link,description,hasBrackets))
-
-    def test3(self):
-        link='anything'
-        description='any description'
-        hasBrackets=True
-        expectedText='[[anything][any description]]'
-        self.assertEqual(expectedText,text_from_link_and_description(link,description,hasBrackets))
-
-    def test4(self):
-        link='anything'
-        description='any description'
-        hasBrackets=False
-        expectedText='anything'
-        self.failUnlessRaises(ValueError,text_from_link_and_description,link,description,hasBrackets)
-
-#head
-def text_from_link_and_description(link,description,hasBrackets):
-
-    if description and (not hasBrackets):
-        raise ValueError('Cannot form a link with non-empty description and no brackets')
-
-    text=None
-    if hasBrackets:
-        if description:
-            text='[['+link+']['+description+']]'
-        else:
-            text='[['+link+']]'
-    else:
-        text=link
-
-    return text
-
 #head
 DocumentsFolderAP=os.path.join(os.path.expanduser('~'),'Documents')
 assert os.path.exists(DocumentsFolderAP), 'Cannot proceed since assuming the folder %s exists' % DocumentsFolderAP
