@@ -2835,10 +2835,92 @@ class TestFindBestRegexMatchForText(unittest.TestCase):
             self.failIf(matchingRegex)
 
 #head
-#head TODO test traverse_nodes_to_fill_lists
+class TestMakeListOf(unittest.TestCase):
+    def test1(self):
+        input=[]
+        self.assertEqual(OFL.make_list_of(input),input)
+
+    def test2(self):
+        input=['a','b','c']
+        self.assertEqual(OFL.make_list_of(input),input)
+
+    def test3(self):
+        input='abcde'
+        self.assertEqual(OFL.make_list_of(input),[input])
+
+    def test4(self):
+        input=OFL.make_list_of
+        self.assertEqual(OFL.make_list_of(input),[input])
+
+#head TODO test traverse_nodes_to_fill_lists LEFT OFF LEFTOFF
 #head TODO test traverse_nodes_to_regen_after_link_updates
-#head TODO test traverse_nodes_to_recover_line_list
-#head TODO test traverse_nodes_to_reach_desired_node
+class TestTraverseNodesToRecoverLineList(unittest.TestCase):
+    def test1(self):
+        lines=['first\n','second\n','third\n']
+        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
+        self.assertEqual(childNodeList,[])
+        linesOut=[]
+        OFL.traverse_nodes_to_recover_line_list(childNodeList,linesOut)
+        self.assertEqual([],linesOut)
+
+    def test2(self):
+
+        lines=['* first\n','second\n','* third\n','fourth\n']
+        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
+        linesOut=[]
+        OFL.traverse_nodes_to_recover_line_list(childNodeList,linesOut)
+        self.assertEqual(lines,linesOut)
+
+    def test3(self):
+        lines=['* first\n','** second\n','* third\n','** fourth\n']
+        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
+        linesOut=[]
+        OFL.traverse_nodes_to_recover_line_list(childNodeList,linesOut)
+        self.assertEqual(lines,linesOut)
+
+    def test4(self):
+        lines=['** first\n','*** second\n','** third\n','*** fourth\n']
+        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
+        linesOut=[]
+        OFL.traverse_nodes_to_recover_line_list(childNodeList,linesOut)
+        self.assertEqual(lines,linesOut)
+
+class TestTraverseNodesToReachDesiredNode(unittest.TestCase):
+    def test1(self):
+
+        lines=['* first\n','second\n','* third\n','fourth\n']
+        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
+        foundNode=OFL.traverse_nodes_to_reach_desired_node(childNodeList,'first',maxLevel=1)
+        self.assertEqual(foundNode.myLines[0],lines[0])
+
+    def test2(self):
+
+        lines=['* first\n','second\n','* third\n','fourth\n']
+        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
+        foundNode=OFL.traverse_nodes_to_reach_desired_node(childNodeList,'second',maxLevel=1)
+        self.assertEqual(foundNode,None)
+
+    def test3(self):
+
+        lines=['* first\n','second\n','* third\n','fourth\n']
+        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
+        foundNode=OFL.traverse_nodes_to_reach_desired_node(childNodeList,'third',maxLevel=1)
+        self.assertEqual(foundNode.myLines[0],lines[2])
+
+    def test4(self):
+
+        lines=['** first\n','*** second\n','** third\n','*** fourth\n']
+        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
+        foundNode=OFL.traverse_nodes_to_reach_desired_node(childNodeList,'second',maxLevel=1)
+        self.assertEqual(foundNode,None)
+
+    def test5(self):
+
+        lines=['** first\n','*** second\n','** third\n','*** fourth\n']
+        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
+        foundNode=OFL.traverse_nodes_to_reach_desired_node(childNodeList,'second')
+        self.assertEqual(foundNode.myLines[0],lines[1])
+
 #head TODO test remove_tags_from_text
 #head TODO test add_brackets_to_match
 #head skip test of set_up_logging
