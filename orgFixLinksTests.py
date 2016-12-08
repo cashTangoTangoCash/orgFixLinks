@@ -1978,6 +1978,25 @@ class Test_OFL_LocalFile(unittest.TestCase):
 
     #head TODO could write a test with a target, a first symlink pointing to it, and a 2nd symlink pointing to first symlink.  delete the 1st two files; now what about symlink #2?
     #head
+    def test1_readLines(self):
+        testFileLines=['* status\n']
+        testFileLines.append('* second node\n')
+        testFileLines.append('** child of second node\n')
+        testFileLines.append('* third node\n')
+        testFileLines.append('** child of third node\n')
+        testFileLines.append('*** grandchild of third node\n')
+        testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        testFile=open(testFilename,'w')
+        testFile.writelines(testFileLines)
+        testFile.close()
+
+        orgFile=OFL.OrgFile(testFilename,inHeader=False)
+        orgFile.readLines()
+
+        self.assertEqual(orgFile.oldLines,testFileLines)
+
+        os.remove(testFilename)
+
     #head skip test of changeFromSymlinkToNonSymlink; already tested as parts of tests above
     #head skip test of changeBackToSymlink, or TODO use test-first approach to write this method
     #head skip test of checkMaxRepairAttempts; how would the reading be verified?
@@ -1997,10 +2016,66 @@ class Test_OFL_OrgFile(unittest.TestCase):
         orgFile=OFL.OrgFile(filenameAP,inHeader=False)
         self.failIf(orgFile.endsInDotOrg())
 
-    #head TODO test createFullRepresentation?  decided to look at tests for Node first  LEFTOFF LEFT OFF
+    #head skip test createFullRepresentation; broke it up into subroutines below, which can be tested individually
+    #head TODO test createNodeRepresentation
+    def test1_createNodeRepresentation(self):
+        '''test OrgFile.createNodeRepresentation'''
+        testFileLines=['* status\n']
+        testFileLines.append('* second node\n')
+        testFileLines.append('** child of second node\n')
+        testFileLines.append('* third node\n')
+        testFileLines.append('** child of third node\n')
+        testFileLines.append('*** grandchild of third node\n')
+        testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        testFile=open(testFilename,'w')
+        testFile.writelines(testFileLines)
+        testFile.close()
+
+        orgFile=OFL.OrgFile(testFilename,inHeader=False)
+        orgFile.readLines()
+        orgFile.createNodeRepresentation()
+
+        self.assertEqual(len(orgFile.mainlineNodes),3)
+        self.assertEqual(len(orgFile.mainlineNodes[1].childNodeList),1)
+        self.assertEqual(len(orgFile.mainlineNodes[2].childNodeList),1)
+        self.assertEqual(len(orgFile.mainlineNodes[2].childNodeList[0].childNodeList),1)
+        self.failIf(orgFile.oldLinesHaveHeader)
+        self.failIf(orgFile.headerMainlineNode)
+        self.assertEqual(orgFile.oldBodyLines,testFileLines)
+
+        os.remove(testFilename)
+
+    def test2_createNodeRepresentation(self):
+        '''test OrgFile.createNodeRepresentation'''
+
+        testFileLines=['* machine-generated indices;  READ ONLY\n']
+        testFileLines.append('* status\n')
+        testFileLines.append('* third node\n')
+
+        testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        testFile=open(testFilename,'w')
+        testFile.writelines(testFileLines)
+        testFile.close()
+
+        orgFile=OFL.OrgFile(testFilename,inHeader=False)
+        orgFile.readLines()
+        orgFile.createNodeRepresentation()
+
+        self.assertEqual(len(orgFile.mainlineNodes),3)
+        self.assertEqual(len(orgFile.bodyMainlineNodes),2)
+        self.failUnless(orgFile.oldLinesHaveHeader)
+        self.failUnless(orgFile.headerMainlineNode)
+        self.assertEqual(orgFile.oldBodyLines,testFileLines[1:])
+        self.assertEqual(orgFile.oldHeaderLines,[testFileLines[0]])
+
+        os.remove(testFilename)
+
+    #head TODO test traverseNodesToFillLists
+    #head skip test addNodesToFillLists; included in traverseNodesToFillLists
+    #head skip test addNodeLinksAndTagsToMyLists
+    #head
     #head TODO test lookInsideForUniqueID?
     #head TODO test generateAndInsertMyUniqueID?
-    #head TODO test addNodeLinksAndTagsToMyLists?
     #head TODO test addUniqueIDsFromHeaderToOutgoingOrgLinkTargets?
     #head TODO test checkConsistencyOfThreeUniqueIDDataItems?
     #head TODO test makeListOfOrgFilesThatLinkToMe?
@@ -2852,7 +2927,6 @@ class TestMakeListOf(unittest.TestCase):
         input=OFL.make_list_of
         self.assertEqual(OFL.make_list_of(input),[input])
 
-#head TODO test traverse_nodes_to_fill_lists LEFT OFF LEFTOFF
 #head TODO test traverse_nodes_to_regen_after_link_updates
 class TestTraverseNodesToRecoverLineList(unittest.TestCase):
     def test1(self):

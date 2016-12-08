@@ -2666,6 +2666,13 @@ class LocalFile():
         return self.exists
 
     #head
+    def readLines(self):
+
+        f1=open(self.filenameAP,'r')
+ 
+        self.oldLines=f1.readlines()
+        f1.close()
+
     def changeFromSymlinkToNonSymlink(self):
         '''LocalFile Class'''
 
@@ -2786,8 +2793,13 @@ class OrgFile(LocalFile):
 
         self.recentlyFullyAnalyzed=None  #unknown; a database lookup will determine if this org file was recently analyzed
 
+        #outgoing links
+        #list of objects; order of list is same order as links appear in file
+        #these lists are for body nodes, not for machine-generated header node
         self.linksToOrgFilesList=[]
         self.linksToNonOrgFilesList=[]
+
+        self.tagList=[]
 
         #turn_logging_back_on_at_initial_level()
 
@@ -2805,14 +2817,27 @@ class OrgFile(LocalFile):
         '''
 
         assert not self.inHeader, 'unwanted method call on file from link in machine-generated header'
+        assert self.exists, '%s does not exist; cannot create full representation' % self.filenameAP
 
         logging.debug('creating full representation of %s' % self.filenameAP)
 
-        f1=open(self.filenameAP,'r')
- 
-        self.oldLines=f1.readlines()
-        f1.close()
+        self.readLines()
 
+        self.createNodeRepresentation()
+
+        #this will recursively walk the body mainline Nodes and their descendant Nodes
+        #and add node links and tags to my lists
+        self.traverseNodesToFillLists(self.bodyMainlineNodes)
+
+        logging.debug('finished creating full representation of %s' % self.filenameAP)
+        logging.info('Initial state of links')
+        logging.info('%s has %s outgoing links to org files, of which %s are initially broken' % (self.filenameAP,len(self.linksToOrgFilesList),len([a for a in self.linksToOrgFilesList if not a.targetObj.exists])))
+        logging.info('%s has %s outgoing links to non-org files, of which %s are initially broken\n' % (self.filenameAP,len(self.linksToNonOrgFilesList),len([a for a in self.linksToNonOrgFilesList if not a.targetObj.exists])))
+        self.fullRepresentation=True
+
+        self.lookInsideForUniqueID()  #self.uniqueID could still be None
+
+    def createNodeRepresentation(self):
         #list of Node objects representing mainline (* ) nodes
         #this recursively creates a representation of an org file as a tree-like structure of Node objects
         #each Node has a list of its own child Nodes
@@ -2848,6 +2873,7 @@ class OrgFile(LocalFile):
 
             traverse_nodes_to_recover_line_list(self.bodyMainlineNodes,self.oldBodyLines)
 
+        #either identify the existing status node, or create one and insert it
         self.statusNode=None
         self.statusNode=traverse_nodes_to_reach_desired_node(self.bodyMainlineNodes,'status',maxLevel=1)
         if self.statusNode:
@@ -2858,24 +2884,30 @@ class OrgFile(LocalFile):
             self.bodyMainlineNodes.insert(0,self.statusNode)  #inserting new status node at beginning of this list
             # logging.debug('no status node detected for %s; inserted a new one' % self.filenameAP)
 
-        #list of objects; order of list is same order as links appear in file
-        #these lists are for body nodes, not for machine-generated header node
-        self.linksToNonOrgFilesList=[]
-        #outgoing links
-        self.linksToOrgFilesList=[]
-        self.tagList=[]
+    def traverseNodesToFillLists(self,nodeList1):
+        ''' a function that enables
+        a recursive walk of a tree of Nodes belonging to an OrgFile,
+        for the purpose of populating lists of links belonging to the OrgFile.
+        nodeList is intended to be a subset of the nodes of an OrgFile.
+        '''
+        
+        nodeList=make_list_of(nodeList1)
+        
+        for aNode in nodeList:
+            self.addNodeLinksAndTagsToMyLists(aNode)
+            self.traverse_nodes_to_fill_lists(aNode.childNodeList)
 
-        #this will recursively walk the body mainline Nodes and their descendant Nodes
-        #and add node links and tags to my lists
-        traverse_nodes_to_fill_lists(self.bodyMainlineNodes,self)
+    def addNodeLinksAndTagsToMyLists(self,aNode):
+        '''
+        OrgFile Class
+        given a Node, add its links and tags to my lists
+        '''
 
-        logging.debug('finished creating full representation of %s' % self.filenameAP)
-        logging.info('Initial state of links')
-        logging.info('%s has %s outgoing links to org files, of which %s are initially broken' % (self.filenameAP,len(self.linksToOrgFilesList),len([a for a in self.linksToOrgFilesList if not a.targetObj.exists])))
-        logging.info('%s has %s outgoing links to non-org files, of which %s are initially broken\n' % (self.filenameAP,len(self.linksToNonOrgFilesList),len([a for a in self.linksToNonOrgFilesList if not a.targetObj.exists])))
-        self.fullRepresentation=True
+        assert not self.inHeader, 'unwanted method call on file from link in machine-generated header'
 
-        self.lookInsideForUniqueID()  #self.uniqueID could still be None
+        self.linksToNonOrgFilesList.extend(aNode.linksToNonOrgFiles)
+        self.linksToOrgFilesList.extend(aNode.linksToOrgFiles)
+        self.tagList.extend(aNode.tags)
 
     #head
     def lookInsideForUniqueID(self):
@@ -2927,18 +2959,8 @@ class OrgFile(LocalFile):
         #TODO write code to insert a unique ID into a file without a full node representation?  need to add it after a machine-generated header section
 
     #head
-    def addNodeLinksAndTagsToMyLists(self,aNode):
-        '''
-        OrgFile Class
-        given a Node, add its links and tags to my lists
-        '''
 
-        assert not self.inHeader, 'unwanted method call on file from link in machine-generated header'
-
-        self.linksToNonOrgFilesList.extend(aNode.linksToNonOrgFiles)
-        self.linksToOrgFilesList.extend(aNode.linksToOrgFiles)
-        self.tagList.extend(aNode.tags)
-
+    #head
     def addUniqueIDsFromHeaderToOutgoingOrgLinkTargets(self):
         '''
         OrgFile Class
@@ -3386,18 +3408,6 @@ def make_list_of(someThing):
         return tempList
     else:
         return someThing
-
-def traverse_nodes_to_fill_lists(nodeList1,anOrgFile):
-    ''' a function that enables
-    a recursive walk of tree of nodes
-    for purpose of populating lists of links belonging to an org file
-    '''
-
-    nodeList=make_list_of(nodeList1)
-
-    for aNode in nodeList:
-        anOrgFile.addNodeLinksAndTagsToMyLists(aNode)
-        traverse_nodes_to_fill_lists(aNode.childNodeList,anOrgFile)
 
 #head
 def traverse_nodes_to_regen_after_link_updates(nodeList1):
