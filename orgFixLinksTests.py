@@ -2017,9 +2017,12 @@ class Test_OFL_OrgFile(unittest.TestCase):
         self.failIf(orgFile.endsInDotOrg())
 
     #head skip test createFullRepresentation; broke it up into subroutines below, which can be tested individually
-    #head TODO test createNodeRepresentation
     def test1_createNodeRepresentation(self):
         '''test OrgFile.createNodeRepresentation'''
+
+        #writing tests for this method is pretty tiresome but did uncover bugs
+
+        #file starts out with status node but no header node
         testFileLines=['* status\n']
         testFileLines.append('* second node\n')
         testFileLines.append('** child of second node\n')
@@ -2039,8 +2042,13 @@ class Test_OFL_OrgFile(unittest.TestCase):
         self.assertEqual(len(orgFile.mainlineNodes[1].childNodeList),1)
         self.assertEqual(len(orgFile.mainlineNodes[2].childNodeList),1)
         self.assertEqual(len(orgFile.mainlineNodes[2].childNodeList[0].childNodeList),1)
+
         self.failIf(orgFile.oldLinesHaveHeader)
+        self.failIf(orgFile.oldHeaderLines)
         self.failIf(orgFile.headerMainlineNode)
+
+        self.assertEqual(len(orgFile.bodyMainlineNodes),3)
+
         self.assertEqual(orgFile.oldBodyLines,testFileLines)
 
         os.remove(testFilename)
@@ -2048,6 +2056,7 @@ class Test_OFL_OrgFile(unittest.TestCase):
     def test2_createNodeRepresentation(self):
         '''test OrgFile.createNodeRepresentation'''
 
+        #file starts out with header node and status node
         testFileLines=['* machine-generated indices;  READ ONLY\n']
         testFileLines.append('* status\n')
         testFileLines.append('* third node\n')
@@ -2062,13 +2071,97 @@ class Test_OFL_OrgFile(unittest.TestCase):
         orgFile.createNodeRepresentation()
 
         self.assertEqual(len(orgFile.mainlineNodes),3)
+
         self.assertEqual(len(orgFile.bodyMainlineNodes),2)
+
         self.failUnless(orgFile.oldLinesHaveHeader)
         self.failUnless(orgFile.headerMainlineNode)
+
         self.assertEqual(orgFile.oldBodyLines,testFileLines[1:])
         self.assertEqual(orgFile.oldHeaderLines,[testFileLines[0]])
 
         os.remove(testFilename)
+
+    def test3_createNodeRepresentation(self):
+        '''test OrgFile.createNodeRepresentation'''
+
+        #file starts out without status node and without header node
+
+        testFileLines=['* a first node\n']
+        testFileLines.append('* second node\n')
+        testFileLines.append('** child of second node\n')
+        testFileLines.append('* third node\n')
+        testFileLines.append('** child of third node\n')
+        testFileLines.append('*** grandchild of third node\n')
+        testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        testFile=open(testFilename,'w')
+        testFile.writelines(testFileLines)
+        testFile.close()
+
+        orgFile=OFL.OrgFile(testFilename,inHeader=False)
+        orgFile.readLines()
+        orgFile.createNodeRepresentation()
+
+        self.assertEqual(len(orgFile.mainlineNodes),4)  #status node is added
+
+        self.failUnless(orgFile.statusNode)
+        self.failIf(orgFile.mainlineNodes[0].childNodeList)
+
+        self.failIf(orgFile.mainlineNodes[1].childNodeList)
+
+        self.assertEqual(len(orgFile.mainlineNodes[2].childNodeList),1)
+        self.assertEqual(len(orgFile.mainlineNodes[3].childNodeList),1)
+        self.assertEqual(len(orgFile.mainlineNodes[3].childNodeList[0].childNodeList),1)
+
+        self.failIf(orgFile.oldLinesHaveHeader)
+        self.failIf(orgFile.headerMainlineNode)
+        self.assertEqual(orgFile.oldBodyLines,testFileLines)
+
+        self.assertEqual(orgFile.mainlineNodes,orgFile.bodyMainlineNodes)
+
+        os.remove(testFilename)
+
+    def test4_createNodeRepresentation(self):
+        '''test OrgFile.createNodeRepresentation'''
+
+        #file starts out with header node and without status node
+
+        testFileLines=['* machine-generated indices;  READ ONLY\n']
+        testFileLines.append('* a first node\n')
+        testFileLines.append('* second node\n')
+        testFileLines.append('** child of second node\n')
+        testFileLines.append('* third node\n')
+        testFileLines.append('** child of third node\n')
+        testFileLines.append('*** grandchild of third node\n')
+        testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        testFile=open(testFilename,'w')
+        testFile.writelines(testFileLines)
+        testFile.close()
+
+        orgFile=OFL.OrgFile(testFilename,inHeader=False)
+        orgFile.readLines()
+        orgFile.createNodeRepresentation()
+
+        self.assertEqual(len(orgFile.mainlineNodes),5)  #status node is added
+
+        self.failIf(orgFile.mainlineNodes[0].childNodeList)
+        self.failIf(orgFile.mainlineNodes[1].childNodeList)
+        self.failIf(orgFile.mainlineNodes[2].childNodeList)
+        self.assertEqual(len(orgFile.mainlineNodes[3].childNodeList),1)
+        self.assertEqual(len(orgFile.mainlineNodes[4].childNodeList),1)
+        self.assertEqual(len(orgFile.mainlineNodes[4].childNodeList[0].childNodeList),1)
+
+        self.failUnless(orgFile.oldLinesHaveHeader)
+        self.failUnless(orgFile.headerMainlineNode)
+
+        self.assertEqual(orgFile.oldHeaderLines,[testFileLines[0]])
+        self.assertEqual(orgFile.oldBodyLines,testFileLines[1:])
+
+        self.failUnless(orgFile.statusNode)
+        self.assertEqual(len(orgFile.bodyMainlineNodes),4)
+
+        os.remove(testFilename)
+
 
     #head TODO test traverseNodesToFillLists
     #head skip test addNodesToFillLists; included in traverseNodesToFillLists

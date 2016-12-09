@@ -2859,30 +2859,33 @@ class OrgFile(LocalFile):
         if self.mainlineNodes[0].myLines[0].startswith(headerText1):
             # logging.debug('%s already has machine-generated header section' % self.filenameAP)
             self.oldLinesHaveHeader=True
+
             self.headerMainlineNode=self.mainlineNodes[0]
-            #the rest of the nodes in the org file are created and edited by the human user
             self.bodyMainlineNodes=self.mainlineNodes[1:]
 
-            traverse_nodes_to_recover_line_list(self.bodyMainlineNodes,self.oldBodyLines)
             traverse_nodes_to_recover_line_list(self.mainlineNodes[0],self.oldHeaderLines)
         else:
             # logging.debug('%s does not have machine-generated header section' % self.filenameAP)
             self.oldLinesHaveHeader=False
             self.headerMainlineNode=None
-            self.bodyMainlineNodes=self.mainlineNodes
+            # self.bodyMainlineNodes=self.mainlineNodes  #tricky python language behavior: a change to self.mainlineNodes can automatically happen to self.bodyMainlineNodes
+            self.bodyMainlineNodes=self.mainlineNodes[:]
 
-            traverse_nodes_to_recover_line_list(self.bodyMainlineNodes,self.oldBodyLines)
+        traverse_nodes_to_recover_line_list(self.bodyMainlineNodes,self.oldBodyLines)
 
         #either identify the existing status node, or create one and insert it
-        self.statusNode=None
+        self.statusNode=None  #not a Boolean variable
         self.statusNode=traverse_nodes_to_reach_desired_node(self.bodyMainlineNodes,'status',maxLevel=1)
-        if self.statusNode:
-            # logging.debug('detected status node of %s' % self.filenameAP)
-            pass
-        else:
+
+        if (not self.statusNode):
             self.statusNode=Node(['* status\n'],sourceFile=self)
-            self.bodyMainlineNodes.insert(0,self.statusNode)  #inserting new status node at beginning of this list
-            # logging.debug('no status node detected for %s; inserted a new one' % self.filenameAP)
+
+            if self.headerMainlineNode:
+                self.mainlineNodes.insert(1,self.statusNode)  #insert status node after header node
+            else:
+                self.mainlineNodes.insert(0,self.statusNode)
+                # logging.debug('no status node detected for %s; inserted a new one' % self.filenameAP)
+            self.bodyMainlineNodes.insert(0,self.statusNode)
 
     def traverseNodesToFillLists(self,nodeList1):
         ''' a function that enables
