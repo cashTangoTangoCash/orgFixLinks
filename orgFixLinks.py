@@ -2898,7 +2898,7 @@ class OrgFile(LocalFile):
         
         for aNode in nodeList:
             self.addNodeLinksAndTagsToMyLists(aNode)
-            self.traverse_nodes_to_fill_lists(aNode.childNodeList)
+            self.traverseNodesToFillLists(aNode.childNodeList)
 
     def addNodeLinksAndTagsToMyLists(self,aNode):
         '''
@@ -2945,23 +2945,20 @@ class OrgFile(LocalFile):
         assert not self.inHeader, 'unwanted method call on file from link in machine-generated header'
 
         if self.uniqueID:
-            #this org file already has one which was found inside the file; don't change it
-            pass
+            logging.warning('call placed to generateAndInsertMyUniqueID for %s but uniqueID already set' % self.filenameAP)
         else:
-            if self.fullRepresentation:
-                self.uniqueID=datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')+'-'+rand_int_as_string(4)
+            assert self.fullRepresentation, 'generateAndInsertMyUniqueID called for %s but createFullRepresentation was never carried out' % self.filenameAP
 
-                if not self.statusNode:
-                    logging.debug('no status node found in full representation of %s; adding one' % self.filenameAP)
-                    self.statusNode=Node('* status\n',self)
-                    self.bodyMainlineNodes.insert(0,self.statusNode)
-                self.statusNode.addUniqueID('#MyUniqueID'+self.uniqueID+'\n')
-                logging.debug('adding unique ID %s to %s via full representation' % (self.uniqueID,self.filenameAP))
-                self.insertedUniqueID=True
+            self.uniqueID=datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')+'-'+rand_int_as_string(4)
+
+            assert self.statusNode, 'generateAndInsertMyUniqueID called for %s but status node was never added' % self.filenameAP
+            self.statusNode.addUniqueID('#MyUniqueID'+self.uniqueID+'\n')
+
+            logging.debug('added unique ID %s to %s via full representation' % (self.uniqueID,self.filenameAP))
+            self.insertedUniqueID=True
 
         #TODO write code to insert a unique ID into a file without a full node representation?  need to add it after a machine-generated header section
-
-    #head
+        #simple: just add a status node to the end of the file followed by the blurb line with unique ID
 
     #head
     def addUniqueIDsFromHeaderToOutgoingOrgLinkTargets(self):
@@ -2977,7 +2974,9 @@ class OrgFile(LocalFile):
         assert not self.inHeader, 'unwanted method call on file from link in machine-generated header'
 
         if self.fullRepresentation and self.headerMainlineNode:  #if this OrgFile contains a machine-generated header node
-            node1=traverse_nodes_to_reach_desired_node(self.headerMainlineNode,'outgoing links to org files')
+            node0=traverse_nodes_to_reach_desired_node(self.headerMainlineNode,'list of links',maxLevel=2)
+            #TODO is it an error if header does not have list of links?
+            node1=traverse_nodes_to_reach_desired_node(node0,'outgoing links to org files',maxLevel=3)
             if node1:
                 for child in node1.childNodeList:
                     #each child node should contain an outgoing link to an org file, optionally followed by a blurb with unique ID
@@ -2987,13 +2986,20 @@ class OrgFile(LocalFile):
                         b=LinkToOrgFile.myUniqueIDRegex.search(child.blurb[0])
                         if b:
                             #in this case there should be one and only one link; an instance of LinkToOrgFile
+                            assert child.linksToOrgFiles[0], 'malformed Node in header of %s; lacks LinkToOrgFile object' % self.filenameAP
+                            assert len(child.linksToOrgFiles)==1, 'malformed Node in header of %s; wrong number of LinkToOrgFile objects' % self.filenameAP
+
                             headerLink=child.linksToOrgFiles[0]
                             headerLinkUniqueID=b.group('uniqueID')
+                            #TODO was it desirable to assign unique ID to an attribute of headerLink target object?
 
                             #go through body node links and assign unique IDs on file
                             for link1 in self.linksToOrgFilesList:  #for each body node link to an org file
                                 if link1.targetObj.filenameAP==headerLink.targetObj.filenameAP:
                                     link1.targetObj.uniqueIDFromHeader=headerLinkUniqueID
+            else:
+                pass
+                #TODO is it an error if header does not have section of outgoing links to org files?
 
     def checkConsistencyOfThreeUniqueIDDataItems(self):
         '''
@@ -3046,7 +3052,8 @@ class OrgFile(LocalFile):
             if self.uniqueID != self.uniqueIDFromDatabase:
                 logging.warning('mismatch: unique ID from database and unique ID inside file %s' % self.filenameAP)
 
-        logging.debug('three unique ID parameters for %s have been found to be mutually consistent',self.filenameAP)
+        # logging.debug('three unique ID parameters for %s have been found to be mutually consistent',self.filenameAP)
+
     #head
     def makeListOfOrgFilesThatLinkToMe(self):
         '''OrgFile class'''

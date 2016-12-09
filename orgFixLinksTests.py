@@ -2163,15 +2163,185 @@ class Test_OFL_OrgFile(unittest.TestCase):
         os.remove(testFilename)
 
 
-    #head TODO test traverseNodesToFillLists
-    #head skip test addNodesToFillLists; included in traverseNodesToFillLists
-    #head skip test addNodeLinksAndTagsToMyLists
     #head
-    #head TODO test lookInsideForUniqueID?
-    #head TODO test generateAndInsertMyUniqueID?
-    #head TODO test addUniqueIDsFromHeaderToOutgoingOrgLinkTargets?
-    #head TODO test checkConsistencyOfThreeUniqueIDDataItems?
-    #head TODO test makeListOfOrgFilesThatLinkToMe?
+    def test1_traverseNodesToFillLists(self):
+        '''test OrgFile.traverseNodesToFillLists'''
+        tagList=['tag1','tag2','tag3','tag4','tag5']
+        orgLinkTextList=['file:org1.org','file:org2.org','file:org3.org','file:org4.org','file:org5.org']
+        nonOrgLinkTextList=['file:text1.txt','file:text2.txt','file:text3.txt','file:text4.txt','file:text5.txt',]
+
+        testFileLines=['* status\n']
+        testFileLines.append('* second %s node %s \t:%s:%s:\n' % (orgLinkTextList[0],nonOrgLinkTextList[0],tagList[0],tagList[1]))
+        testFileLines.append('blurb1 %s %s \t\n' % (nonOrgLinkTextList[1],orgLinkTextList[1]))
+        testFileLines.append('* third %s node %s \t:%s:\n' % (orgLinkTextList[2],nonOrgLinkTextList[2],tagList[2]))
+        testFileLines.append('** child of third %s node %s \t:%s:\n' % (orgLinkTextList[3],nonOrgLinkTextList[3],tagList[3]))
+        testFileLines.append('*** grandchild of third %s node %s \t:%s:\n' % (orgLinkTextList[4],nonOrgLinkTextList[4],tagList[4]))
+        testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        testFile=open(testFilename,'w')
+        testFile.writelines(testFileLines)
+        testFile.close()
+
+        orgFile=OFL.OrgFile(testFilename,inHeader=False)
+        orgFile.readLines()
+        orgFile.createNodeRepresentation()
+        orgFile.traverseNodesToFillLists(orgFile.bodyMainlineNodes)
+
+        self.assertEqual(len(orgFile.linksToOrgFilesList),5)
+        self.assertEqual(len(orgFile.linksToNonOrgFilesList),5)
+        self.assertEqual(len(orgFile.tagList),5)
+
+        os.remove(testFilename)
+
+    #head skip test addNodeLinksAndTagsToMyLists; included in traverseNodesToFillLists
+    #head
+    def test1_lookInsideForUniqueID(self):
+        '''test OrgFile.lookInsideForUniqueID'''
+
+        testFileLines=['* status\n']
+        testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9812   \n')
+        testFileLines.append('* second node\n')
+        testFileLines.append('** child of second node\n')
+        testFileLines.append('* third node\n')
+        testFileLines.append('** child of third node\n')
+        testFileLines.append('*** grandchild of third node\n')
+        testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        testFile=open(testFilename,'w')
+        testFile.writelines(testFileLines)
+        testFile.close()
+
+        orgFile=OFL.OrgFile(testFilename,inHeader=False)
+        orgFile.createFullRepresentation()  #includes call to lookInsideForUniqueID
+
+        self.failUnless(orgFile.statusNode)
+        self.failUnless(orgFile.statusNode.uniqueID)
+        self.assertEqual(orgFile.uniqueID,'2016-05-19_17-15-59-9812')
+        self.failUnless(orgFile.lookedInsideForUniqueID)
+        self.assertEqual(orgFile.uniqueID,orgFile.lookInsideForUniqueID())  #checks that lookInsideForUniqueID returns the unique ID
+        os.remove(testFilename)
+
+    def test2_lookInsideForUniqueID(self):
+        '''test OrgFile.lookInsideForUniqueID'''
+
+        testFileLines=['* status\n']
+        testFileLines.append('# MyUniqueID 2016-05-19_17-15-59-9812   \n')
+        testFileLines.append('* second node\n')
+        testFileLines.append('** child of second node\n')
+        testFileLines.append('* third node\n')
+        testFileLines.append('** child of third node\n')
+        testFileLines.append('*** grandchild of third node\n')
+        testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        testFile=open(testFilename,'w')
+        testFile.writelines(testFileLines)
+        testFile.close()
+
+        orgFile=OFL.OrgFile(testFilename,inHeader=False)
+        orgFile.createFullRepresentation()  #includes call to lookInsideForUniqueID
+
+        self.failUnless(orgFile.statusNode)
+        self.failIf(orgFile.statusNode.uniqueID)
+        self.failIf(orgFile.uniqueID)
+        self.failUnless(orgFile.lookedInsideForUniqueID)
+
+        os.remove(testFilename)
+
+    #head
+    def test1_generateAndInsertMyUniqueID(self):
+        '''test OrgFile.generateAndInsertMyUniqueID'''
+
+        testFileLines=['* status\n']
+        testFileLines.append('* second node\n')
+        testFileLines.append('** child of second node\n')
+        testFileLines.append('* third node\n')
+        testFileLines.append('** child of third node\n')
+        testFileLines.append('*** grandchild of third node\n')
+        testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        testFile=open(testFilename,'w')
+        testFile.writelines(testFileLines)
+        testFile.close()
+
+        orgFile=OFL.OrgFile(testFilename,inHeader=False)
+        orgFile.createFullRepresentation()
+
+        self.failUnless(orgFile.statusNode)
+        self.failIf(orgFile.statusNode.uniqueID)
+        self.failIf(orgFile.uniqueID)
+        self.failUnless(orgFile.lookedInsideForUniqueID)
+
+        orgFile.generateAndInsertMyUniqueID()
+
+        self.failUnless(orgFile.statusNode.uniqueID)
+        self.failUnless(orgFile.uniqueID)
+        self.failUnless(orgFile.insertedUniqueID)
+
+        uniqueID_1=orgFile.uniqueID
+
+        self.assertEqual(orgFile.lookInsideForUniqueID(),uniqueID_1)  #check that lookInsideForUniqueID can detect the ID inserted by generateAndInsertMyUniqueID
+
+        os.remove(testFilename)
+
+    #head
+    def test1_addUniqueIDsFromHeaderToOutgoingOrgLinkTargets(self):
+        '''test OrgFile.addUniqueIDsFromHeaderToOutgoingOrgLinkTargets'''
+
+        testFileLines=['* machine-generated indices;  READ ONLY\n']
+        testFileLines.append('** list of links\n')
+        testFileLines.append('*** outgoing links to org files\n')
+        testFileLines.append('**** file:fakeFile.org\n')
+        testFileLines.append('#LinkUniqueID2016-10-02_12-43-15-3532\n')
+        testFileLines.append('* status\n')
+        testFileLines.append('* body node with link file:fakeFile.org\n')
+
+        testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        testFile=open(testFilename,'w')
+        testFile.writelines(testFileLines)
+        testFile.close()
+
+        orgFile=OFL.OrgFile(testFilename,inHeader=False)
+        orgFile.createFullRepresentation()
+
+        self.failUnless(orgFile.headerMainlineNode)
+        self.assertEqual(len(orgFile.linksToOrgFilesList),1)
+        outgoingOrgLinkTarget=orgFile.linksToOrgFilesList[0].targetObj
+        self.failIf(outgoingOrgLinkTarget.uniqueIDFromHeader)
+
+        orgFile.addUniqueIDsFromHeaderToOutgoingOrgLinkTargets()
+
+        self.assertEqual(outgoingOrgLinkTarget.uniqueIDFromHeader,'2016-10-02_12-43-15-3532')
+
+        os.remove(testFilename)
+
+    def test2_addUniqueIDsFromHeaderToOutgoingOrgLinkTargets(self):
+        '''test OrgFile.addUniqueIDsFromHeaderToOutgoingOrgLinkTargets'''
+
+        testFileLines=['* machine-generated indices;  READ ONLY\n']
+        testFileLines.append('** list of links\n')
+        testFileLines.append('*** outgoing links to org files\n')
+        testFileLines.append('**** file:fakeFile.org\n')
+        testFileLines.append('#LinkUniqueID2016-10-02_12-43-15-3532\n')
+        testFileLines.append('* status\n')
+        testFileLines.append('* body node with link file:fakeFile2.org\n')
+
+        testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        testFile=open(testFilename,'w')
+        testFile.writelines(testFileLines)
+        testFile.close()
+
+        orgFile=OFL.OrgFile(testFilename,inHeader=False)
+        orgFile.createFullRepresentation()
+
+        self.failUnless(orgFile.headerMainlineNode)
+        self.assertEqual(len(orgFile.linksToOrgFilesList),1)
+        outgoingOrgLinkTarget=orgFile.linksToOrgFilesList[0].targetObj
+        self.failIf(outgoingOrgLinkTarget.uniqueIDFromHeader)
+
+        orgFile.addUniqueIDsFromHeaderToOutgoingOrgLinkTargets()
+
+        self.failIf(outgoingOrgLinkTarget.uniqueIDFromHeader)
+
+        os.remove(testFilename)
+
+    #head skip test checkConsistencyOfThreeUniqueIDDataItems; challenging; requires database use
+    #head skip test makeListOfOrgFilesThatLinkToMe; this is entirely a database lookup
     #head TODO test makeSetsOfLinksForHeader?
     #head TODO test makeNewHeader?
     #head TODO test fullRepresentationToNewLines?  this would be good sanity check: input lines match output lines, as long as header could be turned off
@@ -3091,16 +3261,16 @@ class TestTraverseNodesToReachDesiredNode(unittest.TestCase):
 #head TODO test remove_tags_from_text
 #head TODO test add_brackets_to_match
 #head skip test of set_up_logging
-#head TODO test remove_old_logs
+#head skip test remove_old_logs
 #head skip test of turn_off_logging, or TODO use test-first to get it working, then use it when wanted to suppress logging for files in header
 #head skip test of turn_logging_back_on_at_initial_level
-#head TODO test walk_files_looking_for_name_match
-#head TODO test walk_org_files_looking_for_unique_id_match
-#head TODO test find_all_name_matches_via_bash
-#head TODO test find_all_name_matches_via_bash_for_directories
+#head skip test walk_files_looking_for_name_match
+#head skip test walk_org_files_looking_for_unique_id_match
+#head skip test find_all_name_matches_via_bash
+#head skip test find_all_name_matches_via_bash_for_directories
 #head skip test of set_up_database 
-#head TODO test user_chooses_element_from_list_or_rejects_all
-#head test of get_past_interactive_repairs_dict: dictionary is either empty or has nonempty keys/values?
+#head skip test user_chooses_element_from_list_or_rejects_all; how to simulate user typing something at a prompt?
+#head TODO test of get_past_interactive_repairs_dict: dictionary is either empty or has nonempty keys/values?
 #head skip test of store_past_interactive_repairs
 #head skip test of print_and_log_traceback
 class TestFindUniqueIDInsideFile(unittest.TestCase):
@@ -3178,8 +3348,8 @@ class TestFindUniqueIDInsideFile(unittest.TestCase):
         self.assertEqual(uniqueID,'2016-05-19_17-15-59-9812')
         os.remove(testFilename)
 
-#head TODO test clean_up_on_error_in_operate_on_fileA 
-#head TODO test operate_on_fileA
+#head TODO test clean_up_on_error_in_operate_on_fileA? 
+#head TODO test operate_on_fileA?
 #head skip test user_says_stop_spidering
 #head skip test clean_up_before_ending_spidering_run
 #head skip test spider_starting_w_fileA
