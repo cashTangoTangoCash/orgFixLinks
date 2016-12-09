@@ -1,1 +1,0 @@
-* other text [[file:./symlinkTo20160817TestFileLinkTarget.org]] other text
