@@ -1,9 +1,1 @@
-* Related Files
-* incoming search terms
-* status
-** [2016-08-17 Wed] start
-* next actionable step
-* More to Do
-* ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((
-* other text [[./symlinkTo20160817TestFileLinkTarget.org::8]] other text
-
+* other text [[file:./symlinkTo20160817TestFileLinkTarget.org]] other text

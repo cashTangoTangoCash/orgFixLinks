@@ -10,7 +10,7 @@ import pudb
 
 def operate_on_fileA_w(filename,runDebugger=False,isDryRun=False,showLog=False,runWPauses=True):
     '''operate on file A wrapper'''
-    OFL.db1=OFL.set_up_database()
+    # OFL.db1=OFL.set_up_database()
     if showLog and runWPauses:
         wait_on_user_input('pausing to allow you to read text on screen before file is operated on and log file displayed')
     return OFL.operate_on_fileA(filename=filename,runDebugger=runDebugger,isDryRun=isDryRun,showLog=showLog)
@@ -2153,13 +2153,9 @@ OFL.set_up_logging()  #log at all levels
 #head files for test of repair of links to org file
 filename1='20160817TestFile.org'
 filename2='20160817TestFileLinkTarget.org'
-filename1Orig='20160817TestFile.org.original'  #these are never to be overwritten
-filename2Orig='20160817TestFileLinkTarget.org.original'
 #head files for test of repair of links to non-org file
 filename3='20160825TestFile.org'
 filename4='20160825TestFileLinkTarget.txt'
-filename3Orig='20160825TestFile.org.original'  #these are never to be overwritten
-filename4Orig='20160825TestFileLinkTarget.txt.original'
 #head set up a test folder (a place to move certain test files to as part of test)
 DocumentsFolderAP=os.path.join(os.path.expanduser('~'),'Documents')
 assert os.path.exists(DocumentsFolderAP), 'Cannot proceed since assuming the folder %s exists' % DocumentsFolderAP
@@ -2168,12 +2164,6 @@ if not os.path.exists(anotherFolder):
     os.makedirs(anotherFolder)
 assert os.path.exists(anotherFolder), 'Cannot proceed since assuming the folder %s exists' % anotherFolder
 #head
-for file1 in [filename1,filename2,filename1Orig,filename2Orig,filename3,filename4,filename3Orig,filename4Orig]:
-    assert os.path.exists(file1), 'file %s does not exist on disk' % file1
-shutil.copy2(filename1Orig,filename1)
-shutil.copy2(filename2Orig,filename2)
-shutil.copy2(filename3Orig,filename3)
-shutil.copy2(filename4Orig,filename4)
 #head MAIN
 if __name__=="__main__":
     #TODO change to command line inputs.  inputs: which test to run, logging level, runDebuggerOnlyInRepairStep, runWithPauses

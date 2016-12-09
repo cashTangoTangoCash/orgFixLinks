@@ -3685,6 +3685,16 @@ def set_up_database():
     logging.debug('Database set up; database file in use is %s' % dryRunDatabaseName)
     return db1
 
+def set_up_blank_database():
+    '''used for a separate test script'''
+
+    if os.path.exists(dryRunDatabaseName): 
+        os.remove(dryRunDatabaseName)
+
+    db1=Database1(dryRunDatabaseName)  #always starting with dry run database and only copy to real database if script completes with no errors
+    logging.debug('Database set up; database file in use is %s' % dryRunDatabaseName)
+    return db1
+
 #head
 def user_chooses_element_from_list_or_rejects_all(aList,nameOfElementInList='element',doubleSpaced=False):
     '''

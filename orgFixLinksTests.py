@@ -42,6 +42,7 @@ class Test_OFL_Link(unittest.TestCase):
         #more parameters but seems unecessary to test them all
 
     def test2(self):
+        
         initialLink='file:aFile.txt'
         initialDescription='a description a description'
         initialText='[['+initialLink+']['+initialDescription+']]'
@@ -55,6 +56,7 @@ class Test_OFL_Link(unittest.TestCase):
         #more parameters but seems unecessary to test them all
 
     def test3(self):
+        
         initialLink=' file:aFile.txt'
         initialDescription='a description a description'
         initialText='[['+initialLink+']['+initialDescription+']]'
@@ -72,6 +74,7 @@ class Test_OFL_Link(unittest.TestCase):
         #more parameters but seems unecessary to test them all
 
     def test4(self):
+        
         initialLink='file:aFile.txt '
         initialDescription='a description a description'
         initialText='[['+initialLink+']['+initialDescription+']]'
@@ -93,6 +96,7 @@ class Test_OFL_Link(unittest.TestCase):
     #head test Link.regenTextFromLinkAndDescription
     def test5(self):
         '''a test of Link.regenTextFromLinkAndDescription'''
+        
         initialLink='file:aFile.txt'
         initialDescription='a description a description'
         initialText='[['+initialLink+']['+initialDescription+']]'
@@ -114,6 +118,7 @@ class Test_OFL_Link(unittest.TestCase):
 
     def test5(self):
         '''a test of Link.regenTextFromLinkAndDescription'''
+        
         initialLink='file:aFile.txt'
         initialDescription='a description a description'
         initialText='[['+initialLink+']['+initialDescription+']]'
@@ -136,6 +141,7 @@ class Test_OFL_Link(unittest.TestCase):
     def test6(self):
         '''a test of Link.regenTextFromLinkAndDescription'''
 
+        
         initialLink='file:aFile.txt'
         initialDescription=None
         initialText=initialLink
@@ -160,6 +166,8 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
     #head test LinkToLocalFile.__init__
     def test1(self):
         '''link1=file:OrgModeFileCrawlerMain.org'''
+        
+
         hasBrackets=False
         preFilename1='file:'
         filename1='OrgModeFileCrawlerMain.org'
@@ -184,6 +192,8 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
     def test1B(self):
         '''link1=file:OrgModeFileCrawlerMain.org'''
+        
+
         hasBrackets=True
         preFilename1='file:'
         filename1='OrgModeFileCrawlerMain.org'
@@ -208,6 +218,8 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
     def test1BD(self):
         '''link1=file:OrgModeFileCrawlerMain.org'''
+        
+
         hasBrackets=True
         preFilename1='file:'
         filename1='OrgModeFileCrawlerMain.org'
@@ -232,6 +244,8 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
     def test2B(self):
         '''link1=/OrgModeFileCrawlerMain.org'''
+        
+
         hasBrackets=True
         preFilename1=''
         filename1='/OrgModeFileCrawlerMain.org'
@@ -256,6 +270,8 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
     def test2BD(self):
         '''link1=/OrgModeFileCrawlerMain.org'''
+        
+
         hasBrackets=True
         preFilename1=''
         filename1='/OrgModeFileCrawlerMain.org'
@@ -280,6 +296,8 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
     def test3(self):
         '''link1=file:/OrgModeFileCrawlerMain.org'''
+        
+
         hasBrackets=False
         preFilename1='file:'
         filename1='/OrgModeFileCrawlerMain.org'
@@ -304,6 +322,8 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
     def test3B(self):
         '''link1=file:/OrgModeFileCrawlerMain.org'''
+        
+
         hasBrackets=True
         preFilename1='file:'
         filename1='/OrgModeFileCrawlerMain.org'
@@ -328,6 +348,8 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
     def test3BD(self):
         '''link1=file:/OrgModeFileCrawlerMain.org'''
+        
+
         hasBrackets=True
         preFilename1='file:'
         filename1='/OrgModeFileCrawlerMain.org'
@@ -352,6 +374,8 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
     def test4B(self):
         '''link1=~/OrgModeFileCrawlerMain.org'''
+        
+
         hasBrackets=True
         preFilename1=''
         filename1='~/OrgModeFileCrawlerMain.org'
@@ -376,6 +400,8 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
     def test4BD(self):
         '''link1=~/OrgModeFileCrawlerMain.org'''
+        
+
         hasBrackets=True
         preFilename1=''
         filename1='~/OrgModeFileCrawlerMain.org'
@@ -400,6 +426,8 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
     def test5(self):
         '''link1=file:~/OrgModeFileCrawlerMain.org'''
+        
+
         hasBrackets=False
         preFilename1='file:'
         filename1='~/OrgModeFileCrawlerMain.org'
@@ -424,6 +452,8 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
     def test5B(self):
         '''link1=file:~/OrgModeFileCrawlerMain.org'''
+        
+
         hasBrackets=True
         preFilename1='file:'
         filename1='~/OrgModeFileCrawlerMain.org'
@@ -448,6 +478,8 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
     def test5BD(self):
         '''link1=file:~/OrgModeFileCrawlerMain.org'''
+        
+
         hasBrackets=True
         preFilename1='file:'
         filename1='~/OrgModeFileCrawlerMain.org'
@@ -472,6 +504,8 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
     def test6(self):
         '''link1=file:OrgModeFileCrawlerMain.org::searchTerm'''
+        
+
         hasBrackets=False #searchTerm could not contain spaces if hasBrackets==False
         preFilename1='file:'
         filename1='OrgModeFileCrawlerMain.org'
@@ -496,6 +530,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
     def test6B(self):
         '''link1=file:OrgModeFileCrawlerMain.org::searchTerm'''
+        
         hasBrackets=True
         preFilename1='file:'
         filename1='OrgModeFileCrawlerMain.org'
@@ -520,6 +555,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
     def test6BD(self):
         '''link1=file:OrgModeFileCrawlerMain.org::searchTerm'''
+        
         hasBrackets=True
         preFilename1='file:'
         filename1='OrgModeFileCrawlerMain.org'
@@ -543,7 +579,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         self.assertEqual(postFilename1,aLink.postFilename)
 
     def test7B(self):
-
+        
         hasBrackets=True
         preFilename1=''
         filename1=os.path.join(os.path.expanduser('~'),'Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py')
@@ -567,7 +603,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         self.assertEqual(postFilename1,aLink.postFilename)
 
     def test7BD(self):
-
+        
         hasBrackets=True
         preFilename1=''
         filename1=os.path.join(os.path.expanduser('~'),'Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py')
@@ -592,7 +628,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
 
     def test8(self):
-
+        
         hasBrackets=False
         preFilename1='file:'
         filename1=os.path.join(os.path.expanduser('~'),'Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py')
@@ -616,7 +652,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         self.assertEqual(postFilename1,aLink.postFilename)
 
     def test8B(self):
-
+        
         hasBrackets=True
         preFilename1='file:'
         filename1=os.path.join(os.path.expanduser('~'),'Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py')
@@ -641,7 +677,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         self.assertEqual(postFilename1,aLink.postFilename)
 
     def test8BD(self):
-
+        
         hasBrackets=True
         preFilename1='file:'
         filename1=os.path.join(os.path.expanduser('~'),'Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py')
@@ -666,7 +702,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         self.assertEqual(postFilename1,aLink.postFilename)
 
     def test9B(self):
-
+        
         hasBrackets=True
         preFilename1=''
         filename1='./20160908ExceptionTest.py' #without brackets, this link would not be clickable in org
@@ -691,7 +727,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         self.assertEqual(postFilename1,aLink.postFilename)
 
     def test9BD(self):
-
+        
         hasBrackets=True
         preFilename1=''
         filename1='./20160908ExceptionTest.py' #without brackets, this link would not be clickable in org
@@ -716,7 +752,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         self.assertEqual(postFilename1,aLink.postFilename)
 
     def test10(self):
-
+        
         hasBrackets=False
         preFilename1='file:'
         filename1='./20160908ExceptionTest.py' #without brackets, this link would not be clickable in org
@@ -741,7 +777,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         self.assertEqual(postFilename1,aLink.postFilename)
 
     def test10B(self):
-
+        
         hasBrackets=True
         preFilename1='file:'
         filename1='./20160908ExceptionTest.py' #without brackets, this link would not be clickable in org
@@ -766,7 +802,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         self.assertEqual(postFilename1,aLink.postFilename)
 
     def test10BD(self):
-
+        
         hasBrackets=True
         preFilename1='file:'
         filename1='./20160908ExceptionTest.py' #without brackets, this link would not be clickable in org
@@ -791,7 +827,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         self.assertEqual(postFilename1,aLink.postFilename)
 
     def test11B(self):
-
+        
         hasBrackets=True
         preFilename1=''
         filename1='./20160908Exception Test.py' #without brackets, this link would not be clickable in org
@@ -816,7 +852,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         self.assertEqual(postFilename1,aLink.postFilename)
 
     def test11BD(self):
-
+        
         hasBrackets=True
         preFilename1=''
         filename1='./20160908Exception Test.py' #without brackets, this link would not be clickable in org
@@ -841,7 +877,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         self.assertEqual(postFilename1,aLink.postFilename)
 
     def test12B(self):
-
+        
         hasBrackets=True
         preFilename1='file:'
         filename1='OrgModeFileCrawlerMain.org'
@@ -865,7 +901,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         self.assertEqual(postFilename1,aLink.postFilename)
 
     def test12BD(self):
-
+        
         hasBrackets=True
         preFilename1='file:'
         filename1='OrgModeFileCrawlerMain.org'
@@ -889,7 +925,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         self.assertEqual(postFilename1,aLink.postFilename)
 
     def test13B(self):
-
+        
         hasBrackets=True
         preFilename1='file:'
         filename1='./20160908Exception Test.py' #note the space
@@ -914,7 +950,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         self.assertEqual(postFilename1,aLink.postFilename)
 
     def test13BD(self):
-
+        
         hasBrackets=True
         preFilename1='file:'
         filename1='./20160908Exception Test.py' #note the space
@@ -940,7 +976,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
 
     def test14B(self):
-
+        
         hasBrackets=True
         preFilename1=''
         filename1='~/20160908ExceptionTest.py' #not clickable in org mode without brackets
@@ -965,7 +1001,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         self.assertEqual(postFilename1,aLink.postFilename)
 
     def test14BD(self):
-
+        
         hasBrackets=True
         preFilename1=''
         filename1='~/20160908ExceptionTest.py' #not clickable in org mode without brackets
@@ -990,7 +1026,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         self.assertEqual(postFilename1,aLink.postFilename)
 
     def test15(self):
-
+        
         hasBrackets=False
         preFilename1='file:'
         filename1='~/20160908ExceptionTest.py'
@@ -1015,7 +1051,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         self.assertEqual(postFilename1,aLink.postFilename)
 
     def test15B(self):
-
+        
         hasBrackets=True
         preFilename1='file:'
         filename1='~/20160908ExceptionTest.py'
@@ -1040,7 +1076,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         self.assertEqual(postFilename1,aLink.postFilename)
 
     def test15BD(self):
-
+        
         hasBrackets=True
         preFilename1='file:'
         filename1='~/20160908ExceptionTest.py'
@@ -1066,7 +1102,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
 
     def test17(self):
-
+        
         hasBrackets=False
         preFilename1='file:'
         filename1='20160908ExceptionTest.py' #does not need brackets in org mode to be clickable
@@ -1091,7 +1127,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         self.assertEqual(postFilename1,aLink.postFilename)
 
     def test17B(self):
-
+        
         hasBrackets=True
         preFilename1='file:'
         filename1='20160908ExceptionTest.py' #does not need brackets in org mode to be clickable
@@ -1116,7 +1152,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         self.assertEqual(postFilename1,aLink.postFilename)
 
     def test17BD(self):
-
+        
         hasBrackets=True
         preFilename1='file:'
         filename1='20160908ExceptionTest.py' #does not need brackets in org mode to be clickable
@@ -1141,7 +1177,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         self.assertEqual(postFilename1,aLink.postFilename)
 
     def test18(self):
-
+        
         hasBrackets=False
         preFilename1='file:'
         filename1='PythonScriptOldVersions' #clickable in org mode without brackets
@@ -1166,7 +1202,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         self.assertEqual(postFilename1,aLink.postFilename)
 
     def test18B(self):
-
+        
         hasBrackets=True
         preFilename1='file:'
         filename1='PythonScriptOldVersions' #clickable in org mode without brackets
@@ -1192,7 +1228,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
 
     def test18BD(self):
-
+        
         hasBrackets=True
         preFilename1='file:'
         filename1='PythonScriptOldVersions' #clickable in org mode without brackets
@@ -1218,7 +1254,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
 
     def test19(self):
-
+        
         hasBrackets=False
         preFilename1='file:'
         filename1='20160908ExceptionTest.py'
@@ -1243,7 +1279,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         self.assertEqual(postFilename1,aLink.postFilename)
 
     def test19B(self):
-
+        
         hasBrackets=True
         preFilename1='file:'
         filename1='20160908ExceptionTest.py'
@@ -1268,7 +1304,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         self.assertEqual(postFilename1,aLink.postFilename)
 
     def test19BD(self):
-
+        
         hasBrackets=True
         preFilename1='file:'
         filename1='20160908ExceptionTest.py'
@@ -1294,6 +1330,8 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
     def test20B(self):
         '''test trailing slash removal feature'''
+
+        
         hasBrackets=True
         preFilename1=''
         filename1=os.path.join(os.path.expanduser('~'),'Documents/')  #trailing slash
@@ -1322,6 +1360,8 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
     def test20BD(self):
         '''test trailing slash removal feature'''
+
+        
         hasBrackets=True
         preFilename1=''
         filename1=os.path.join(os.path.expanduser('~'),'Documents/')  #trailing slash
@@ -1353,7 +1393,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
     #head skipping test of testIfWorking
     def test1_RegenDescription(self):
         '''no change should be made to a long description that still matches the current link target'''
-
+        
         oldSetting=OFL.maxLengthOfVisibleLinkText
         OFL.maxLengthOfVisibleLinkText=1000
 
@@ -1380,7 +1420,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
     def test1B_RegenDescription(self):
         '''no change should be made to a long description that still matches the current link target'''
-
+        
         oldSetting=OFL.maxLengthOfVisibleLinkText
         OFL.maxLengthOfVisibleLinkText=1
 
@@ -1407,7 +1447,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
     def test2_RegenDescription(self):
         '''no change should be made to a long description that still matches the current link target'''
-
+        
         oldSetting=OFL.maxLengthOfVisibleLinkText
         OFL.maxLengthOfVisibleLinkText=1000
 
@@ -1434,7 +1474,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
     def test2B_RegenDescription(self):
         '''no change should be made to a long description that still matches the current link target'''
-
+        
         oldSetting=OFL.maxLengthOfVisibleLinkText
         OFL.maxLengthOfVisibleLinkText=1
 
@@ -1462,6 +1502,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
     #head
     def test3_RegenDescription(self):
         '''filename of target is changed; old link description was old filename; link description changes to new filename'''
+        
         oldSetting=OFL.maxLengthOfVisibleLinkText
         OFL.maxLengthOfVisibleLinkText=1000
 
@@ -1497,6 +1538,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
     def test3B_RegenDescription(self):
         '''filename of target is changed; old link description was old filename; link description changes to new filename'''
+        
         oldSetting=OFL.maxLengthOfVisibleLinkText
         OFL.maxLengthOfVisibleLinkText=1
 
@@ -1533,6 +1575,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
     def test4_RegenDescription(self):
         '''filename of target is changed; old link description was old basename; link description changes to new basename'''
+        
         oldSetting=OFL.maxLengthOfVisibleLinkText
         OFL.maxLengthOfVisibleLinkText=1000
 
@@ -1568,6 +1611,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
     def test4B_RegenDescription(self):
         '''filename of target is changed; old link description was old basename; link description changes to new basename'''
+        
         oldSetting=OFL.maxLengthOfVisibleLinkText
         OFL.maxLengthOfVisibleLinkText=1
 
@@ -1633,6 +1677,7 @@ class Test_OFL_LinkToOrgFile(unittest.TestCase):
 class Test_OFL_Node(unittest.TestCase):
     def test1_NodeInit(self):
         '''test OFL.Node.__init__ for a node with tags and one child node'''
+        
         lines=['* tags \t\t:tag1:tag2:\n','blurb 1\n','** tags  \t\t :tag3:tag4:\n','blurb\t2\n']
         aNode=OFL.Node(lines,sourceFile=None)
         self.failIf(aNode.inHeader)
@@ -1650,6 +1695,7 @@ class Test_OFL_Node(unittest.TestCase):
     def test2_NodeInit(self):
         '''test OFL.Node.__init__ for a node with links'''
 
+        
         link1Text='file:aFirstFakeFile.txt'
         link2Text='file:aSecondFakeFile.txt'
         link3Text='[[file:aThirdFakeFile.txt]]'
@@ -1674,6 +1720,7 @@ class Test_OFL_Node(unittest.TestCase):
     def test3_NodeInit(self):
         '''test OFL.Node.__init__ for a node with links'''
 
+        
         link1Text='file:aFirstFakeFile.org~'
         link1TextCorrected='file:aFirstFakeFile.org'
 
@@ -1690,6 +1737,7 @@ class Test_OFL_Node(unittest.TestCase):
     def test4_NodeInit(self):
         '''test OFL.Node.__init__ for a node with links'''
 
+        
         link1Text='file:aFirstFakeFile.org~'
         link1TextCorrected='file:aFirstFakeFile.org'
 
@@ -1706,6 +1754,7 @@ class Test_OFL_Node(unittest.TestCase):
     #head test regenAfterLinkUpdates
     def test1_NodeRegenAfterLinkUpdates(self):
         '''OFL.Node.regenAfterLinkUpdates'''
+        
         lines=['* tags \t\t:tag1:tag2:\n','blurb 1\n','** tags  \t\t :tag3:tag4:\n','blurb\t2\n']
         linesInNode1=lines[0:2]
 
@@ -1715,6 +1764,7 @@ class Test_OFL_Node(unittest.TestCase):
 
     def test2_NodeRegenAfterLinkUpdates(self):
         '''OFL.Node.regenAfterLinkUpdates'''
+        
         lines=['* tags \t\t:tag1:tag2:\n','blurb 1\n','** tags  \t\t :tag3:tag4:\n','blurb\t2\n']
 
         node1=OFL.Node(lines,sourceFile=None)
@@ -1727,8 +1777,7 @@ class Test_OFL_Node(unittest.TestCase):
 
     def test3_NodeRegenAfterLinkUpdates(self):
         '''OFL.Node.regenAfterLinkUpdates'''
-
-        pass
+        
 
         #TODO script changes the links to absolute path filenames, so will not see equality of input and output lines
 
@@ -1750,6 +1799,8 @@ class Test_OFL_Node(unittest.TestCase):
     def test1_NodeFindUniqueID(self):
         '''test Node.findUniqueID (uniqueIDRegexObj is set to OrgFile.myUniqueIDRegex)'''
 
+        
+
         testLines1=['* status\n','#MyUniqueID2016-05-19_17-15-59-9812   \n']
         node1=OFL.Node(testLines1,sourceFile=None)
         node1.findUniqueID(OFL.OrgFile.myUniqueIDRegex)
@@ -1759,6 +1810,7 @@ class Test_OFL_Node(unittest.TestCase):
     def test2_NodeFindUniqueID(self):
         '''test Node.findUniqueID (uniqueIDRegexObj set to OrgFile.myUniqueIDRegex)'''
 
+        
         testLines1=['* status\n','** #MyUniqueID2016-05-19_17-15-59-9812   \n']
         node1=OFL.Node(testLines1,sourceFile=None)
         node1.findUniqueID(OFL.OrgFile.myUniqueIDRegex)
@@ -1766,6 +1818,7 @@ class Test_OFL_Node(unittest.TestCase):
 
     #head test addUniqueID
     def test1_NodeAddUniqueID(self):
+        
         lines=['* status\n']
         aNode=OFL.Node(lines,sourceFile=None)
         self.failIf(aNode.uniqueID)
@@ -1800,6 +1853,7 @@ class Test_OFL_LocalFile(unittest.TestCase):
     def test1_testIfExists(self):
         '''test LocalFileMethods.testIfExists'''
 
+        
         #put a file on disk; file is known to exist
         #file is created in current working directory
         testFileLines=['* status\n']
@@ -1816,12 +1870,14 @@ class Test_OFL_LocalFile(unittest.TestCase):
     def test2_testIfExists(self):
         '''test LocalFileMethods.testIfExists'''
 
+        
         orgFile=OFL.OrgFile('fileThatDoesNotExist.org',inHeader=False)
         self.failIf(orgFile.testIfExists())
 
     def test3_testIfExists(self):
         '''test LocalFileMethods.testIfExists'''
 
+        
         #put a file on disk; file is known to exist
         #put file in different folder than current working directory
         testFileLines=['* status\n']
@@ -1839,6 +1895,7 @@ class Test_OFL_LocalFile(unittest.TestCase):
     def test1_testSymlinkHandling(self):
         '''test LocalFile methods handling of symlinks'''
   
+        
         #create a file on disk to be a symlink target
         testFileLines=['* status\n']
         testFileLines.append('blurb\n')
@@ -1868,6 +1925,7 @@ class Test_OFL_LocalFile(unittest.TestCase):
     def test2_testSymlinkHandling(self):
         '''test LocalFile methods handling of symlinks'''
 
+        
         #create a file on disk; it will be symlink target
         testFileLines=['* status\n']
         testFileLines.append('blurb\n')
@@ -1905,6 +1963,7 @@ class Test_OFL_LocalFile(unittest.TestCase):
     def test3_testSymlinkHandling(self):
         '''test LocalFile methods handling of symlinks'''
 
+        
         #create a file on disk; it will be symlink target
         testFileLines=['* status\n']
         testFileLines.append('blurb\n')
@@ -1939,6 +1998,7 @@ class Test_OFL_LocalFile(unittest.TestCase):
     def test4_testSymlinkHandling(self):
         '''test LocalFile methods handling of symlinks'''
 
+        
         #create a file on disk; it will be target of symlink
         testFileLines=['* status\n']
         testFileLines.append('blurb\n')
@@ -1979,6 +2039,7 @@ class Test_OFL_LocalFile(unittest.TestCase):
     #head TODO could write a test with a target, a first symlink pointing to it, and a 2nd symlink pointing to first symlink.  delete the 1st two files; now what about symlink #2?
     #head
     def test1_readLines(self):
+        
         testFileLines=['* status\n']
         testFileLines.append('* second node\n')
         testFileLines.append('** child of second node\n')
@@ -2006,12 +2067,14 @@ class Test_OFL_OrgFile(unittest.TestCase):
     #head skip test of __init__; material beyond LocalFile.__init__ appears to be all simple initialization statements that should need no testing
     def test1_endsInDotOrg(self):
         '''test OrgFile.endsInDotOrg'''
+        
         filenameAP=os.path.join(DocumentsFolderAP,'fakeFile.org')
         orgFile=OFL.OrgFile(filenameAP,inHeader=False)
         self.failUnless(orgFile.endsInDotOrg())
 
     def test2_endsInDotOrg(self):
         '''test OrgFile.endsInDotOrg'''
+        
         filenameAP=os.path.join(DocumentsFolderAP,'fakeFile.txt')
         orgFile=OFL.OrgFile(filenameAP,inHeader=False)
         self.failIf(orgFile.endsInDotOrg())
@@ -2019,7 +2082,7 @@ class Test_OFL_OrgFile(unittest.TestCase):
     #head skip test createFullRepresentation; broke it up into subroutines below, which can be tested individually
     def test1_createNodeRepresentation(self):
         '''test OrgFile.createNodeRepresentation'''
-
+        
         #writing tests for this method is pretty tiresome but did uncover bugs
 
         #file starts out with status node but no header node
@@ -2056,6 +2119,7 @@ class Test_OFL_OrgFile(unittest.TestCase):
     def test2_createNodeRepresentation(self):
         '''test OrgFile.createNodeRepresentation'''
 
+        
         #file starts out with header node and status node
         testFileLines=['* machine-generated indices;  READ ONLY\n']
         testFileLines.append('* status\n')
@@ -2085,6 +2149,7 @@ class Test_OFL_OrgFile(unittest.TestCase):
     def test3_createNodeRepresentation(self):
         '''test OrgFile.createNodeRepresentation'''
 
+        
         #file starts out without status node and without header node
 
         testFileLines=['* a first node\n']
@@ -2124,6 +2189,7 @@ class Test_OFL_OrgFile(unittest.TestCase):
     def test4_createNodeRepresentation(self):
         '''test OrgFile.createNodeRepresentation'''
 
+        
         #file starts out with header node and without status node
 
         testFileLines=['* machine-generated indices;  READ ONLY\n']
@@ -2166,6 +2232,7 @@ class Test_OFL_OrgFile(unittest.TestCase):
     #head
     def test1_traverseNodesToFillLists(self):
         '''test OrgFile.traverseNodesToFillLists'''
+        
         tagList=['tag1','tag2','tag3','tag4','tag5']
         orgLinkTextList=['file:org1.org','file:org2.org','file:org3.org','file:org4.org','file:org5.org']
         nonOrgLinkTextList=['file:text1.txt','file:text2.txt','file:text3.txt','file:text4.txt','file:text5.txt',]
@@ -2197,6 +2264,7 @@ class Test_OFL_OrgFile(unittest.TestCase):
     def test1_lookInsideForUniqueID(self):
         '''test OrgFile.lookInsideForUniqueID'''
 
+        
         testFileLines=['* status\n']
         testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9812   \n')
         testFileLines.append('* second node\n')
@@ -2222,6 +2290,7 @@ class Test_OFL_OrgFile(unittest.TestCase):
     def test2_lookInsideForUniqueID(self):
         '''test OrgFile.lookInsideForUniqueID'''
 
+        
         testFileLines=['* status\n']
         testFileLines.append('# MyUniqueID 2016-05-19_17-15-59-9812   \n')
         testFileLines.append('* second node\n')
@@ -2248,6 +2317,7 @@ class Test_OFL_OrgFile(unittest.TestCase):
     def test1_generateAndInsertMyUniqueID(self):
         '''test OrgFile.generateAndInsertMyUniqueID'''
 
+        
         testFileLines=['* status\n']
         testFileLines.append('* second node\n')
         testFileLines.append('** child of second node\n')
@@ -2283,6 +2353,7 @@ class Test_OFL_OrgFile(unittest.TestCase):
     def test1_addUniqueIDsFromHeaderToOutgoingOrgLinkTargets(self):
         '''test OrgFile.addUniqueIDsFromHeaderToOutgoingOrgLinkTargets'''
 
+        
         testFileLines=['* machine-generated indices;  READ ONLY\n']
         testFileLines.append('** list of links\n')
         testFileLines.append('*** outgoing links to org files\n')
@@ -2313,6 +2384,7 @@ class Test_OFL_OrgFile(unittest.TestCase):
     def test2_addUniqueIDsFromHeaderToOutgoingOrgLinkTargets(self):
         '''test OrgFile.addUniqueIDsFromHeaderToOutgoingOrgLinkTargets'''
 
+        
         testFileLines=['* machine-generated indices;  READ ONLY\n']
         testFileLines.append('** list of links\n')
         testFileLines.append('*** outgoing links to org files\n')
@@ -2347,6 +2419,7 @@ class Test_OFL_OrgFile(unittest.TestCase):
     def test1_fullRepresentationToNewLines(self):
         '''test OrgFile.fullRepresentationToNewLines'''
 
+        
         #goal is to write a simple file that will not experience transformation in the body Nodes
         #all links are fake and are initially absolute path filenames
 
@@ -2385,6 +2458,98 @@ class Test_OFL_OrgFile(unittest.TestCase):
     #head skip test rewriteFileFromNewLines
     #head skip test useDatabaseToGetOutwardLinks
 
+#head
+class TestsOfRepairingLinks(unittest.TestCase):
+    def test1(self):
+        '''fileA links to fileB;  fileB is an org file; move fileB while keeping its basename the same; fileB never contains a unique ID'''
+
+        reset_database()
+
+        runDebuggerOnlyInRepairStep=False
+        runDebuggerInEveryStep=False
+        runWithPauses=False
+
+        filenameA='20160817TestFile.org'
+        filenameB='20160817TestFileLinkTarget.org'
+        symlinkToFileB_Name='symlinkTo'+filenameB
+
+        fileALines=['* other text [[file:./'+symlinkToFileB_Name+']] other text\n']
+
+        fileA=open(filenameA,'w')
+        fileA.writelines(fileALines)
+        fileA.close()
+
+        fileBLines=['* some text [[file:./'+filenameA+']] some other text']
+
+        fileB=open(filenameB,'w')
+        fileB.writelines(fileBLines)
+        fileB.close()
+
+        os.symlink(filenameB,symlinkToFileB_Name) #target comes first
+
+        #TODO rewrite all this for unit testing
+        self.failUnless(os.path.exists(filenameA))
+        self.failUnless(os.path.exists(filenameB))
+        self.failUnless(os.path.exists(symlinkToFileB_Name))
+
+        # blurbList=['fileB is an org file','fileA and fileB start out without unique IDs','fileA gets a unique ID','fileB does not get a unique ID']
+        # blurbList.extend(['fileB is moved to another folder','basename of fileB is kept the same','an attempt is made to repair broken link to fileB in fileA'])
+        # blurb1="\n".join(blurbList)
+        # print blurb1
+
+        # print 'fileA is %s and fileB is %s' % (filenameA,filenameB)
+    
+        if runWithPauses:
+            wait_on_user_input('Now pausing to review nature of test')
+
+        #####################################################
+
+        # print 'Now analyzing fileA %s; unique ID will be inserted' % filenameA
+    
+        showLog1=True
+        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+
+        self.assertEqual(len(fileA.linksToOrgFilesList),1) # 'fileA has a single link to an org file'
+        self.assertEqual(fileA.linksToOrgFilesList[0].targetObj.filenameAP,os.path.join(os.getcwd(),filenameB)) # a link to fileB is found in fileA
+
+        if runWithPauses and (not showLog1):
+            wait_on_user_input()
+
+        #####################################################
+    
+        origFolder=os.path.split(fileA.filenameAP)[0]
+    
+        #move fileB but keep basename the same
+        os.rename(filenameB,os.path.join(anotherFolder,filenameB))
+        # print 'Just Moved fileB %s to folder %s while keeping basenameB the same' % (filenameB,anotherFolder)
+
+        #####################################################
+
+        # print 'Now analyzing fileA %s a second time after moving fileB without changing basenameB; look for successful repair of link to fileB' % filenameA
+
+        showLog1=True
+        fileA=operate_on_fileA_w(filenameA,runDebugger=(runDebuggerOnlyInRepairStep or runDebuggerInEveryStep),isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+
+        self.failUnless(fileA.linksToOrgFilesList[0].targetObj.repaired)
+
+        expectedRepairMethod='attemptRepairViaBasenameMatchOnDisk'
+        repairMethod=fileA.linksToOrgFilesList[0].targetObj.repairedVia
+
+        self.assertEqual(repairMethod,expectedRepairMethod)
+
+        if runWithPauses and (not showLog1):
+            wait_on_user_input()
+    
+        #####################################################
+
+        # print 'Finally, restoring files on disk to original configuration; deleting database\n'
+
+        os.remove(filenameA)
+        os.remove(os.path.join(anotherFolder,filenameB))
+        os.remove(symlinkToFileB_Name)
+
+#head
+#head
 #head
 #head test standalone functions
 class TestAllUpperToAllLowercase(unittest.TestCase):
@@ -3314,6 +3479,8 @@ class TestFindUniqueIDInsideFile(unittest.TestCase):
     '''
     def test1(self):
         '''test find_unique_id_inside_file: file contains status node but does not contain unique ID'''
+
+        
         
         testFileLines=['* status\n']
         testFileLines.append('blurb\n')
@@ -3329,6 +3496,7 @@ class TestFindUniqueIDInsideFile(unittest.TestCase):
     def test2(self):
         '''test find_unique_id_inside_file: file contains status node but does not contain unique ID'''
         
+        
         testFileLines=['* status\n']
         testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9812   \n')
         testFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org')
@@ -3342,6 +3510,7 @@ class TestFindUniqueIDInsideFile(unittest.TestCase):
 
     def test3(self):
 
+        
         testFileLines=['* status\n']
         testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9812   \n')
         testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9813   \n')
@@ -3356,6 +3525,7 @@ class TestFindUniqueIDInsideFile(unittest.TestCase):
 
     def test4(self):
 
+        
         testFileLines=[]
         testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9812   \n')
         testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9813   \n')
@@ -3370,6 +3540,7 @@ class TestFindUniqueIDInsideFile(unittest.TestCase):
 
     def test5(self):
 
+        
         testFileLines=['one line\n','another line\n']
         testFileLines.append('* status\n')
         testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9812   \n')
@@ -3393,6 +3564,31 @@ class TestFindUniqueIDInsideFile(unittest.TestCase):
 #head skip test usage
 #head
 #head
+def reset_database():
+    #if reset_database is inserted at the beginning of every single test, runtime of this script goes up drastically
+    #something like .4s to 9s
+    #just use it where it is really needed
+    if OFL.db1:
+        del OFL.db1
+    OFL.db1=OFL.set_up_blank_database()
+    OFL.db1.setUpOrgTables()
+    OFL.db1.setUpNonOrgTables()
+
+def operate_on_fileA_w(filename,runDebugger=False,isDryRun=False,showLog=False,runWPauses=True):
+    '''operate on file A wrapper'''
+
+    if showLog and runWPauses:
+        wait_on_user_input('pausing to allow you to read text on screen before file is operated on and log file displayed')
+    return OFL.operate_on_fileA(filename=filename,runDebugger=runDebugger,isDryRun=isDryRun,showLog=showLog)
+
+def wait_on_user_input(comment1='Now pausing to allow you to examine database with command line tool; examine files with emacs;  or otherwise look at what is happening'):
+    print comment1
+    prompt1='Enter c or a single space to continue with script\n'
+    # with OFL.keyboardInputLock:  #this is not necessary since no spidering in this script?
+    resp=raw_input(prompt1)
+    while (resp != "c") and (resp != " "):
+        resp=raw_input(prompt1)
+
 #head
 DocumentsFolderAP=os.path.join(os.path.expanduser('~'),'Documents')
 assert os.path.exists(DocumentsFolderAP), 'Cannot proceed since assuming the folder %s exists' % DocumentsFolderAP
