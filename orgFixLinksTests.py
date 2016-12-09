@@ -2340,13 +2340,49 @@ class Test_OFL_OrgFile(unittest.TestCase):
 
         os.remove(testFilename)
 
-    #head skip test checkConsistencyOfThreeUniqueIDDataItems; challenging; requires database use
+    #head skip test checkConsistencyOfThreeUniqueIDDataItems; requires database use
     #head skip test makeListOfOrgFilesThatLinkToMe; this is entirely a database lookup
-    #head TODO test makeSetsOfLinksForHeader?
-    #head TODO test makeNewHeader?
-    #head TODO test fullRepresentationToNewLines?  this would be good sanity check: input lines match output lines, as long as header could be turned off
-    #head TODO test sanityChecksBeforeRewriteFile?
-    #head TODO test rewriteFileFromNewLines?
+    #head skip test makeSetsOfLinksForHeader
+    #head skip test makeNewHeader; simple meaningful tests are not coming to mind
+    def test1_fullRepresentationToNewLines(self):
+        '''test OrgFile.fullRepresentationToNewLines'''
+
+        #goal is to write a simple file that will not experience transformation in the body Nodes
+        #all links are fake and are initially absolute path filenames
+
+        tagList=['tag1','tag2','tag3','tag4','tag5']
+
+        orgNames1=['org1.org','org2.org','org3.org','org4.org','org5.org']
+        orgNames2=[os.path.join(anotherFolder,a) for a in orgNames1]
+        orgLinkTextList=['file:'+a for a in orgNames2]
+
+        nonOrgNames1=['text1.txt','text2.txt','text3.txt','text4.txt','text5.txt']
+        nonOrgNames2=[os.path.join(anotherFolder,a) for a in nonOrgNames1]
+        nonOrgLinkTextList=['file:'+a for a in nonOrgNames2]
+
+        testFileLines=['* status\n']
+        testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9812   \n')
+        testFileLines.append('* second %s node %s \t:%s:%s:\n' % (orgLinkTextList[0],nonOrgLinkTextList[0],tagList[0],tagList[1]))
+        testFileLines.append('blurb1 %s %s \t\n' % (nonOrgLinkTextList[1],orgLinkTextList[1]))
+        testFileLines.append('* third %s node %s \t:%s:\n' % (orgLinkTextList[2],nonOrgLinkTextList[2],tagList[2]))
+        testFileLines.append('** child of third %s node %s \t:%s:\n' % (orgLinkTextList[3],nonOrgLinkTextList[3],tagList[3]))
+        testFileLines.append('*** grandchild of third %s node %s \t:%s:\n' % (orgLinkTextList[4],nonOrgLinkTextList[4],tagList[4]))
+        testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        testFile=open(testFilename,'w')
+        testFile.writelines(testFileLines)
+        testFile.close()
+
+        orgFile=OFL.OrgFile(testFilename,inHeader=False)
+        orgFile.createFullRepresentation()
+        orgFile.makeNewHeader()
+        orgFile.fullRepresentationToNewLines()
+
+        self.assertEqual(orgFile.newLinesMinusHeader,testFileLines)
+
+        os.remove(testFilename)
+
+    #head skip test sanityChecksBeforeRewriteFile
+    #head skip test rewriteFileFromNewLines
     #head skip test useDatabaseToGetOutwardLinks
 
 #head
@@ -3258,8 +3294,6 @@ class TestTraverseNodesToReachDesiredNode(unittest.TestCase):
         foundNode=OFL.traverse_nodes_to_reach_desired_node(childNodeList,'second')
         self.assertEqual(foundNode.myLines[0],lines[1])
 
-#head TODO test remove_tags_from_text
-#head TODO test add_brackets_to_match
 #head skip test of set_up_logging
 #head skip test remove_old_logs
 #head skip test of turn_off_logging, or TODO use test-first to get it working, then use it when wanted to suppress logging for files in header
@@ -3270,7 +3304,7 @@ class TestTraverseNodesToReachDesiredNode(unittest.TestCase):
 #head skip test find_all_name_matches_via_bash_for_directories
 #head skip test of set_up_database 
 #head skip test user_chooses_element_from_list_or_rejects_all; how to simulate user typing something at a prompt?
-#head TODO test of get_past_interactive_repairs_dict: dictionary is either empty or has nonempty keys/values?
+#head skip test of get_past_interactive_repairs_dict
 #head skip test of store_past_interactive_repairs
 #head skip test of print_and_log_traceback
 class TestFindUniqueIDInsideFile(unittest.TestCase):
@@ -3348,7 +3382,7 @@ class TestFindUniqueIDInsideFile(unittest.TestCase):
         self.assertEqual(uniqueID,'2016-05-19_17-15-59-9812')
         os.remove(testFilename)
 
-#head TODO test clean_up_on_error_in_operate_on_fileA? 
+#head skip test clean_up_on_error_in_operate_on_fileA
 #head TODO test operate_on_fileA?
 #head skip test user_says_stop_spidering
 #head skip test clean_up_before_ending_spidering_run

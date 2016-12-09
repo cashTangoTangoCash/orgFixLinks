@@ -2801,6 +2801,8 @@ class OrgFile(LocalFile):
 
         self.tagList=[]
 
+        self.orgFilesThatLinkToMe=[]
+
         #turn_logging_back_on_at_initial_level()
 
     def endsInDotOrg(self):
@@ -2837,6 +2839,7 @@ class OrgFile(LocalFile):
 
         self.lookInsideForUniqueID()  #self.uniqueID could still be None
 
+    #head
     def createNodeRepresentation(self):
         #list of Node objects representing mainline (* ) nodes
         #this recursively creates a representation of an org file as a tree-like structure of Node objects
@@ -2887,6 +2890,7 @@ class OrgFile(LocalFile):
                 # logging.debug('no status node detected for %s; inserted a new one' % self.filenameAP)
             self.bodyMainlineNodes.insert(0,self.statusNode)
 
+    #head
     def traverseNodesToFillLists(self,nodeList1):
         ''' a function that enables
         a recursive walk of a tree of Nodes belonging to an OrgFile,
@@ -3080,14 +3084,14 @@ class OrgFile(LocalFile):
     def makeNewHeader(self):
         '''
         OrgFile Class
-        make a new header node and descendants
+        make a new header node and its descendants
         '''
 
         assert not self.inHeader, 'unwanted method call on file from link in machine-generated header'
 
         self.makeSetsOfLinksForHeader()
 
-        #the way I wrote Node seems to require generating a list of lines before creating Nodes
+        #generate a list of lines before creating Nodes
 
         headerLines=[Node.headerText1+'\n']
 
@@ -3097,13 +3101,14 @@ class OrgFile(LocalFile):
         if self.linksToOrgFilesList:
             for link1 in self.linksToOrgFilesList:
                 if not link1.targetObj.exists:
-                    headerLines.append('**** '+link1.text+'    :broken_link:\n')
+                    headerLines.append('**** [['+link1.link+']]    :broken_link:\n')  #make sure link is clickable by adding brackets; also no need of description here
                 else:
-                    headerLines.append('**** '+link1.text+'\n')
+                    headerLines.append('**** [['+link1.link+']]\n')
                 if link1.targetObj.uniqueID:
                     headerLines.append('#LinkUniqueID'+link1.targetObj.uniqueID+'\n')
 
                 # #child node with clickable link to node where link is found
+                #stuck: was not getting this to work; quit on it
                 # textForInternalLink=link1.genOrgInternalLinkToMyNode()
                 # if textForInternalLink:
                 #     headerLines.append('***** '+textForInternalLink+'\n')
@@ -3120,17 +3125,17 @@ class OrgFile(LocalFile):
         if self.linksToNonOrgFilesList:
             for link1 in self.linksToNonOrgFilesList:
                 if not link1.targetObj.exists:
-                    headerLines.append('**** '+link1.text+'    :broken_link:\n')
+                    headerLines.append('**** [['+link1.link+']]    :broken_link:\n')
                 else:
-                    headerLines.append('**** '+link1.text+'\n')
+                    headerLines.append('**** [['+link1.link+']]\n')
 
 
         headerLines.append('** sets of links\n')
 
         headerLines.append('*** outgoing links to org files\n')
         if self.setOfLinksToOrgFiles:
-            for filenameAP1 in self.setOfLinksToOrgFiles:
-                headerLines.append('**** '+filenameAP1+'\n')
+            for linkText in self.setOfLinksToOrgFiles:
+                headerLines.append('**** '+linkText+'\n')
 
         headerLines.append('*** incoming links from org files\n')
 
@@ -3142,13 +3147,13 @@ class OrgFile(LocalFile):
             setOfIncomingLinksFromOrgFiles=None
 
         if setOfIncomingLinksFromOrgFiles:
-            for link1 in setOfIncomingLinksFromOrgFiles:
-                headerLines.append('**** '+link1+'\n')
+            for linkText in setOfIncomingLinksFromOrgFiles:
+                headerLines.append('**** '+linkText+'\n')
 
         headerLines.append('*** links to local non-org files\n')
         if self.setOfLinksToNonOrgFiles:
-            for filenameAP1 in self.setOfLinksToNonOrgFiles:
-                headerLines.append('**** '+filenameAP1+'\n')
+            for linkText in self.setOfLinksToNonOrgFiles:
+                headerLines.append('**** '+linkText+'\n')
 
         headerLines.append('** list of tags\n')
 
@@ -3165,7 +3170,7 @@ class OrgFile(LocalFile):
         self.numOfHeaderLines=len(headerLines)
 
         self.headerMainlineNode=list_of_child_nodes_from_lines(headerLines,self)[0]
-        self.mainlineNodes=[self.headerMainlineNode]+self.bodyMainlineNodes
+        self.mainlineNodes=[self.headerMainlineNode]+self.bodyMainlineNodes  #if there was an original header, it is discarded
 
     def fullRepresentationToNewLines(self):
         '''
@@ -3174,14 +3179,16 @@ class OrgFile(LocalFile):
         '''
         assert not self.inHeader, 'unwanted method call on file from link in machine-generated header'
 
-        assert self.fullRepresentation, 'have not first generated full representation of this OrgFile'
+        assert self.fullRepresentation, 'have not first generated full representation of %s' % self.filenameAP
+
+        assert self.headerMainlineNode, 'forgot to generate header for %s' % self.filenameAP
 
         self.newLines=[]
         #the following will recursively walk the tree of nodes, assembling line list
         traverse_nodes_to_recover_line_list(self.mainlineNodes,self.newLines)
 
         self.newLinesMinusHeader=[]
-        traverse_nodes_to_recover_line_list(self.mainlineNodes[1:],self.newLinesMinusHeader)
+        traverse_nodes_to_recover_line_list(self.bodyMainlineNodes,self.newLinesMinusHeader)
 
     def sanityChecksBeforeRewriteFile(self):
         '''OrgFile Class'''
@@ -3193,20 +3200,25 @@ class OrgFile(LocalFile):
         else:
             return True
 
+        if (len(self.newLinesMinusHeader)<len(self.oldBodyLines)):
+            return False
+        else:
+            return True
+
     def rewriteFileFromNewLines(self,keepBackup=False):
         '''OrgFile Class'''
 
         assert not self.inHeader, 'unwanted method call on file from link in machine-generated header'
 
         if keepBackup:
-            #this is pretty useless since the same .bak file will keep getting overwritten; need time-series backup but that would fill disk
+            #this is pretty useless since the same .bak file will keep getting overwritten; need time-series backup but that seems expensive in terms of disk space
             shutil.copy2(self.filenameAP,self.filenameAP+'.bak')
-            logging.debug('Copied %s to %s as a backup' % (self.filenameAP,self.filenameAP+'.bak'))
+            # logging.debug('Copied %s to %s as a backup' % (self.filenameAP,self.filenameAP+'.bak'))
         #this should overwrite existing file
         fp=open(self.filenameAP,'w')
         fp.writelines(self.newLines)
         fp.close()
-        logging.debug('Overwrote %s with new lines generated from full representation' % self.filenameAP)
+        # logging.debug('Overwrote %s with new lines generated from full representation' % self.filenameAP)
 
     #head
     def useDatabaseToGetOutwardLinks(self):
@@ -3469,32 +3481,6 @@ def traverse_nodes_to_reach_desired_node(nodeList1,textToMatch,maxLevel=100):
                 return res1
 
 #head
-def remove_tags_from_text(inputText):
-    '''
-    given a line of text from an org file
-    remove the tags
-    '''
-
-    if inputText.split()[-1].startswith(':') and inputText.split()[-1].endswith(':'): 
-        #need to remove the tags
-        a=' '.join(inputText.split()[:-1])
-        return a.strip()
-    else:
-        #there are no tags to remove
-        return inputText
-
-#head
-def add_brackets_to_match(match):
-    '''
-    given an input match object (re module)
-    put double square brackets on match.group()
-    purpose: convert links without square brackets to links with square brackets
-    '''
-
-    # use strip() to get rid of leading or trailing whitespace
-    return '[['+match.group().strip()+']]'
-
-#head
 def set_up_logging(loggingLevel=None):
     global doNotLogAtOrBelow
     global logFilename
@@ -3737,7 +3723,7 @@ def get_past_interactive_repairs_dict():
     this function reads past repair data from local disk into a dictionary.
     this dictionary maps filenameAP of missing file to filenameAP of found file
     '''
-    #oops: shelve module is failing; change to csv file data storage
+    #oops: not having success with shelve module; change to csv file data storage
     # shelfFile=shelve.open('pastInteractiveRepairs.shelve')
 
     # #get the dictionary out of the shelved file, or else get an empty dictionary
@@ -3750,7 +3736,7 @@ def get_past_interactive_repairs_dict():
     try:
         f=open('pastInteractiveRepairs.csv','rt')
     except IOError:
-        logging.debug('No file of past interactive repairs found')
+        # logging.debug('No file of past interactive repairs found')
         return {}
 
     reader=csv.reader(f)
