@@ -3106,6 +3106,7 @@ class OrgFile(LocalFile):
                     headerLines.append('**** [['+link1.link+']]\n')
                 if link1.targetObj.uniqueID:
                     headerLines.append('#LinkUniqueID'+link1.targetObj.uniqueID+'\n')
+                    #TODO since a unique ID is now in header, link1.targetObj.uniqueIDFromHeader could be set?
 
                 # #child node with clickable link to node where link is found
                 #stuck: was not getting this to work; quit on it

@@ -1,9 +1,16 @@
-* Related Files
-* incoming search terms
+* machine-generated indices;  READ ONLY
+** list of links
+*** outgoing links to org files
+*** incoming links from org files
+*** links to local non-org files
+**** [[file:./symlinkTo20160825TestFileLinkTarget.txt]]
+** sets of links
+*** outgoing links to org files
+*** incoming links from org files
+*** links to local non-org files
+**** file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160825TestFileLinkTarget.txt
+** list of tags
+** set of tags
 * status
-** [2016-08-17 Wed] start
-* next actionable step
-* More to Do
-* ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((
-* [[file:symlinkTo20160825TestFileLinkTarget.txt]]
-
+#MyUniqueID2016-12-11_23-48-14-5171
+* other text [[file:./symlinkTo20160825TestFileLinkTarget.txt]] other text
