@@ -3493,7 +3493,8 @@ def set_up_logging(loggingLevel=None):
         doNotLogAtOrBelow=None
 
     #http://stackoverflow.com/questions/9135936/want-datetime-in-logfile-name
-    logFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MOrgFixLinks.log')
+    # logFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MOrgFixLinks.log')
+    logFilename=os.path.join(os.getcwd(),datetime.datetime.now().strftime('%Y%m%d_%H%MOrgFixLinks.log'))
 
     print 'Log file is %s' % logFilename
 
@@ -4632,11 +4633,11 @@ def usage():
     flags with no input argument:
     -h, --help: show this help blurb
     -u, --userFixesLinks: when automatic link repair fails and it makes sense to do so, prompt user to fix broken links manually (menu-driven)
-    -n, --noSpideringStopViaKeystroke: disable stopping spidering via typing anything then hitting enter key.  also set by -d.
+    -n, --noSpideringStopViaKeystroke: normally spidering can be stopped via typing anything then hitting enter key; -n disables this.  also set by -d.
     -d, --debug:  run script in pudb.  additionally sets -n.
-    -D, --dryRun:  make no changes to org files on disk.  make a copy of database and make changes to the copy.  suggestion: alternate between dry run and normal mode in a test sequence.
+    -D, --dryRun:  make no changes to org files on disk.  make a copy of database and make changes to the copy.
     -l, --showLog:  use pager less to display log file after operating on each org file; this gives you time to inspect a rewritten org file in dry run mode before it's reverted to original
-    -b, --noBackup: do not make .bak copy of org file before replacing it on disk
+    -b, --noBackup: do not make .bak copy of each org file before replacing it on disk
     -q, --quickMode: when a file has been recently spidered, just look up outward links in database and move to next file to spider, rather than making full representation, repairing links, etc;  intention is to speed things up
 
     flags that require input argument:

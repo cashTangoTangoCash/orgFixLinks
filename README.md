@@ -1,11 +1,15 @@
 # orgFixLinks, a Python Utility
 
+Be sure to check out
+the [wiki](https://github.com/cashTangoTangoCash/orgFixLinks/wiki).  There is a
+cookbook section.
+
 This is a script in this category: <http://orgmode.org/worg/org-tools/>
 
 I wrote over *800 org files*, which reside on my local disk.  They consist of
 simple notes with links to websites and other files on local disk.  **_Broken
 links_** would naturally occur as I made changes to files on local disk.  Files
-for some of my favorite subjects would often be replete with broken links,
+for some of my favorite subjects would gradually become full of broken links,
 leaving me unable to make more notes.  I could not find a solution online.  I am
 an **amateur** who has been spending some time learning python, but still has a
 lot to learn, and this project seemed like the next thing to try.
@@ -20,7 +24,7 @@ The goals of this script:
 
 1.  repair links (inside an org file) to files on local disk
 
-2.  add a [header](header.md) to an org file; header is a list of incoming links, outgoing
+2.  add a [header](header.md) to an org file; this header is a list of incoming links, outgoing
     links, and tags
 
 
@@ -29,7 +33,8 @@ The script is a command line utility to be used in the terminal.
 ## Warnings and State of Development
 **WARNING** this python script is amateur work
 
-**WARNING** bugs are still regularly appearing.  Comprehensively testing this code is not easy.
+**WARNING** bugs are still regularly appearing.  Comprehensively testing this
+code is not easy; there is now a test script.
 
 **WARNING** it can screw up your org files (backup first;
 dry run mode first)
@@ -41,12 +46,12 @@ them (backup first; dry run mode first)
 
 **WARNING** intended for experienced users only
 
-**WARNING** script does not self-test in any way
+**WARNING** script does not test itself; there is a separate script with tests.
 
 **WARNING** tags that are all caps are changed to all lowercase; if you know
 python, this is easy to change
 
-It's amateur work that overwrites files on your local disk.  **_If you are not
+The script is amateur work that overwrites files on your local disk.  **_If you are not
 ready, willing, and able to restore all your files from backups, don't run this._**
 
 ## Installation
@@ -130,11 +135,11 @@ In terminal, typing `orgFixLinks -h` prints the usage message:
 
 >-u, --userFixesLinks: when automatic link repair fails and it makes sense to do so, prompt user to fix broken links manually (menu-driven)
 
->-n, --noSpideringStopViaKeystroke: disable stopping spidering via typing anything then hitting enter key
+>-n, --noSpideringStopViaKeystroke: normally spidering can be stopped via typing anything then hitting enter key; -n disables this.  also set by -d.
 
->-d, --debug:  run script in pudb.  require -n flag to enable pudb (pudb cannot do multithreading, which is required for stopping spidering by hitting return)
+>-d, --debug:  run script in pudb.  additionally sets -n.
 
->-D, --dryRun:  make no changes to org files on disk.  make a copy of database and make changes to the copy.  suggestion: alternate between dry run and normal mode in a test sequence.
+>-D, --dryRun:  make no changes to org files on disk.  make a copy of database and make changes to the copy.
 
 >-l, --showLog:  use pager less to display log file after operating on each org file; this gives you time to inspect a rewritten org file in dry run mode before it's reverted to original
 
@@ -171,7 +176,7 @@ In terminal, typing `orgFixLinks -h` prints the usage message:
 >python -O OrgModeFileCrawler01.py -uD -f /home/userName/Documents/myOrgFilename.org -N 20 -t 300
 
 
-For further details, please see the Github wiki for this project.
+For further details, please check out the [wiki](https://github.com/cashTangoTangoCash/orgFixLinks/wiki).
 
 ## Contributing
 
@@ -190,20 +195,22 @@ Boilerplate from <https://gist.github.com/zenorocha/4526327>:
 > 
 > 5. Submit a pull request :D
 
-I am a total beginner with Github.  I make no promises in terms of maintaining
-anything.  You can at least fork.  If I can comprehend your changes (far more likely
-if verbosely documented), I am much more likely to accept a pull request.
-Submissions must respect intellectual property rights of work they are
-derived from (e.g. citing stackexchange).
+I am a beginner with Github.  I make no promises in terms of maintaining
+anything.  The phrase 'the code is free, people are not' applies.  You can at
+least fork.  If I can comprehend your changes (far more likely if verbosely
+documented), I am much more likely to accept a pull request.  Any change should
+get a corresponding test in the test script.  Submissions must respect
+intellectual property rights of work they are derived from (e.g. citing
+stackexchange).
 
-I put this project on Github because it would make me happy if someone got use
-from it.  It would be exciting to see a better programmer improve it.  I am not
-offering no-cost tech support or no-cost tutoring.
+I put this project on Github because it would make me happy if someone found it
+useful.  It would be exciting to see a better programmer improve on it.  There
+is nothing promised here except for the free code.
 
 ## Credits
 
-This is an **amateur** python script originally developed by the github user
-cashTangoTangoCash.
+This is an **amateur** `python` script originally developed by the github user
+[cashTangoTangoCash](https://github.com/cashTangoTangoCash).
 
 The script contains comments which credit sources of code snippets
 found on e.g. <http://programmers.stackexchange.com/>.
@@ -212,7 +219,7 @@ found on e.g. <http://programmers.stackexchange.com/>.
 
 GNU General Public License v3.0
 
-See: LICENSE.txt
+See: [LICENSE.txt](https://github.com/cashTangoTangoCash/orgFixLinks/blob/master/LICENSE.txt)
 
 ## Acknowledgments
 
