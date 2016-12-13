@@ -1381,7 +1381,7 @@ class LinkToLocalFile(Link):
 
         Link.associateWTargetObj(self,self.targetClassObj(self.filename,self.inHeader))  #target object is instantiated here
         self.originalTargetObj=self.targetObj
-        self.__regenOnChangedFilenameAP
+        self.__regenOnChangedFilenameAP()
 
     #head
     def testIfWorking(self):
