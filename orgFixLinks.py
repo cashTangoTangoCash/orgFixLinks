@@ -3500,11 +3500,17 @@ def set_up_logging(loggingLevel=None):
 
     logging.basicConfig(filename=logFilename,filemode="w",level=logging.DEBUG,format='%(asctime)s - %(levelname)s - %(message)s')
 
+    # logging.debug('is it working here?')
+
     logging.error=CallCounted(logging.error)
     logging.warning=CallCounted(logging.warning)
 
+    # logging.debug('is it working here 2?')
+
     if doNotLogAtOrBelow:
         logging.disable(doNotLogAtOrBelow) #quickly disable logging below a chosen level; see sweigart
+
+    # logging.debug('is it working here 3?')
 
 def remove_old_logs(globPattern,N_to_keep=1):
     "Remove old .log files that match globPattern"
@@ -3679,9 +3685,10 @@ def set_up_database():
     if os.path.exists(databaseName):  #if real run (not dry run) database file exists
         shutil.copyfile(databaseName,dryRunDatabaseName)
         logging.debug('Initializing dry run database to actual database: %s copied to %s' % (databaseName,dryRunDatabaseName))
-    elif os.path.exists(dryRunDatabaseName): 
-        os.remove(dryRunDatabaseName)
-        logging.debug('Starting with blank dry run database because no real run database file has been found: %s deleted' % dryRunDatabaseName)
+    else:
+        if os.path.exists(dryRunDatabaseName): 
+            os.remove(dryRunDatabaseName)
+            logging.debug('Starting with blank dry run database because no real run database file has been found: %s deleted' % dryRunDatabaseName)
 
     db1=Database1(dryRunDatabaseName)  #always starting with dry run database and only copy to real database if script completes with no errors
     logging.debug('Database set up; database file in use is %s' % dryRunDatabaseName)
@@ -4654,8 +4661,8 @@ def usage():
     print messg1
 
 #head module-level stuff that will always execute even when this module is imported by another script/module
-databaseName=os.path.join(os.getcwd(),'orgFiles.sqlite')
-dryRunDatabaseName=os.path.join(os.getcwd(),'orgFilesDryRunCopy.sqlite')
+databaseName=os.path.join(os.getcwd(),'orgFiles.sqlite')  #'real run' database
+dryRunDatabaseName=os.path.join(os.getcwd(),'orgFilesDryRunCopy.sqlite') #dry run database
 globalStartTime=time.time()
 keyboardInputLock=threading.Lock()
 origFolder=os.getcwd()
@@ -4689,16 +4696,16 @@ maxLinesInANodeToAnalyze=1000  #setting  idea is that sometimes a user will past
 # only purpose is to avoid errors where this script reacts improperly to a line of text.
 # if set too small, will not be able to get uniqueIDs in header when header contains many links
 secondsSinceFullyAnalyzedCutoff=2*24*60*60  #setting elapsed seconds since org file last fully analyzed; cutoff to be considered recently analyzed  24 hr/day * 60 min/hr * 60 sec/min
-maxLengthOfVisibleLinkText=5  #setting that affects length of visible text in a link to a local file
-
-db1=set_up_database()
-db1.setUpOrgTables()
-db1.setUpNonOrgTables()
+maxLengthOfVisibleLinkText=5  #setting that affects length of visible text (length of description in [[link][description]]) in a link to a local file
 
 #head
 if __name__ <> "__main__":
     #want to be able to import things from this module for testing, without logging taking place
     logging.disable(logging.CRITICAL)  #disables all logging messages; see sweigart
+
+    db1=set_up_database()
+    db1.setUpOrgTables()
+    db1.setUpNonOrgTables()
 
 #head MAIN
 if __name__=="__main__":
@@ -4798,6 +4805,10 @@ if __name__=="__main__":
         debuggerAlreadyRunning=True
 
     set_up_logging(loggingLevel)
+
+    db1=set_up_database()
+    db1.setUpOrgTables()
+    db1.setUpNonOrgTables()
 
     if fileA1:  #user has supplied a file to start spidering with via command line
         spider_starting_w_fileA(filename=fileA1,maxTime=maxTime,maxN=maxN,hitReturnToStop=hitReturnToStop,userFixesLinksManually=userFixesLinksManually,runDebugger=runDebugger,debuggerAlreadyRunning=debuggerAlreadyRunning,isDryRun=isDryRun,showLog=showLog,keepBackup=keepBackup,skipIfRecentlySpidered=skipIfRecentlySpidered)
