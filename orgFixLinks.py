@@ -69,10 +69,14 @@ class CallCounted(object):
         self.counter+=1
         return self.method(*args,**kwargs)
 
+#head
+#head
 #head  Database-related classes:
 class Database1():
     def __init__(self,filename):
         '''Database1 Class'''
+
+        #TODO is there any issue with filename vs absolute path filename?
         self.filename=filename
 
         self.conn=sqlite3.connect(filename)
@@ -100,7 +104,7 @@ class Database1():
         '''Database1 Class'''
         if name:  #don't try adding None to database tables
             self.filenameAPsOrgTable.addName(name)
-            self.pathToBasenameOrgTable.addName(os.path.split(name)[0])
+            self.pathToBasenameOrgTable.addName(os.path.split(name)[0])  #TODO is there a possibility that argument could turn out to be None?  is that a problem?
             self.basenameOrgTable.addName(os.path.basename(name))
 
     def setUpNonOrgTables(self):
@@ -125,12 +129,11 @@ class Database1():
         '''Database1 Class'''
         if name:  #don't try adding None to database tables
             self.filenameAPsNonOrgTable.addName(name)
-            self.pathToBasenameNonOrgTable.addName(os.path.split(name)[0])
+            self.pathToBasenameNonOrgTable.addName(os.path.split(name)[0])  #TODO could argument end up being None and is that a problem?
             self.basenameNonOrgTable.addName(os.path.basename(name))
 
     def execCommitLog(self,command1):
-        '''newer python has this feature'''
-
+        #goal is to log what was done database-wise
         #TODO instead of editing this long file to use this function, go to apsw, which apparently has logging
         self.cur.execute(command1)
         self.conn.commit()
@@ -152,6 +155,7 @@ class MyFilesTable():
     #head
     def updateTimeField(self,file1,timeFieldName):
         '''MyFilesTable Class
+        the specified time field is set to the current time
         '''
         assert not file1.inHeader, 'script attempting database operation on file from header link'
         assert file1.myFilesTableID, 'file1 lacks myFilesTableID'
@@ -170,7 +174,7 @@ class MyFilesTable():
         assert (BooleanFieldName in self.listOfBooleanFieldNames), 'unknown BooleanFieldName %s' % BooleanFieldName
 
         if TrueOrFalse==None:
-            #None is how to specify status=unknown
+            #convention used in this script: None means unknown
             BoolIn1=None
         else:
             if TrueOrFalse:
@@ -1238,6 +1242,8 @@ class PreviousFilenamesNonOrgTable(PreviousFilenamesTable):
 
         PreviousFilenamesTable.__init__(self,'previousFilenamesNonOrg')
 
+#head
+#head
 #head  Classes for links found in org files
 class Link():
     '''
@@ -2776,6 +2782,8 @@ class OrgFile(LocalFile):
             db1.addFilenameToThreeOrgTables(self.filenameAP)
             db1.addFilenameToThreeOrgTables(self.originalFilenameAP)
             db1.addFilenameToThreeOrgTables(self.originalTargetFilenameAP)
+
+        self.leaveAsSymlink=leaveAsSymlink
 
         self.fullRepresentation=False
 
@@ -4657,6 +4665,8 @@ def usage():
 
     example call:
     python -O orgFixLinks.py -uD -f /home/userName/Documents/myOrgFilename.org -N 20 -t 300
+
+    a separate script that carries out some automated tests of this script is orgFixLinksTests.py
     '''
     print messg1
 
