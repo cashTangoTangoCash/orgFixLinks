@@ -335,7 +335,7 @@ class MyFilesTable():
         newName_filenameAP_id=self.filenameAPsTable.lookupID(newName)
         assert newName_filenameAP_id, 'unable to lookup newName_filenameAP_id'
 
-        newPathToBasename_id=self.pathToBasenameTable.lookupID(os.path.split(newName)[0])
+        newPathToBasename_id=self.pathToBasenameTable.lookupID(os.path.split(newName)[0])  #TODO any issue with argument evaluating to None?
         assert newPathToBasename_id, 'unable to lookup newPathToBasename_id'
 
         newBasename_id=self.basenameTable.lookupID(os.path.basename(newName))
@@ -386,7 +386,7 @@ class MyFilesTable():
         folder_id=self.pathToBasenameTable.lookupID(folder)
 
         if not folder_id:
-            return None
+            return None  #TODO this looks undesirable; maybe log a warning?  #no way to tell if no matches found in folder vs folder not in database
 
         # #TODO I can imagine problems with slashes and so forth; /home/userName will not lookup /home/userName/
         # assert folder_id, 'folder %s not found in %s table' % (folder,self.pathToBasenameTable.tableName)
@@ -1110,6 +1110,8 @@ class LinksToOrgTable(LinksToTable):
         '''LinksToOrgTable Class
         given an org file, use database to make a list of org files that link to it
         '''
+        #this method is restricted to looking files that link to an org file because there is no need in this script for making a list of files that link to a non-org file
+
         assert isinstance(orgFile,OrgFile), "org file must be of class OrgFile; %s is not" % orgFile.filenameAP
         assert orgFile.myFilesTableID, "org file must be in table myOrgFiles; %s is not" % orgFile.filenameAP
 
@@ -1161,7 +1163,7 @@ class PreviousFilenamesTable():
         # the time doesn't reflect when the actual change took place; just tells when a broken link was fixed
 
         if oldName==file1.filenameAP:
-            return None
+            return None  #TODO seems like method should log a warning or ?
 
         if not myFilesTableID:
             myFilesTableID=file1.myFilesTableID
@@ -1179,7 +1181,7 @@ class PreviousFilenamesTable():
         argDict1['timeOfChange']=int(time.time())
 
         valList=[argDict1[a] for a in argList]  #list comprehension
-        valTuple=tuple(a for a in valList)  #google: tuple comprehension; simply making a tuple from valList
+        valTuple=tuple(a for a in valList)  #google: tuple comprehension; simply making a tuple from a list
 
         db1.cur.execute('INSERT OR IGNORE INTO '+self.tableName+' (myFiles_id, prevFilenameAP_id, timeOfChange) VALUES (?,?,?)',valTuple)
 
@@ -2584,6 +2586,7 @@ class LocalFile():
         self.addedToDatabase=False  #did script just add this file to the database?
         self.myFilesTableID=None
 
+    #head
     def testIfExists(self):
         '''LocalFile Class
         use this function when ignoring symlinks and just working with the file itself in case of non-symlink and missing file,
@@ -2679,6 +2682,7 @@ class LocalFile():
         self.oldLines=f1.readlines()
         f1.close()
 
+    #head
     def changeFromSymlinkToNonSymlink(self):
         '''LocalFile Class'''
 
@@ -2729,6 +2733,7 @@ class LocalFile():
 
         #turn_logging_back_on_at_initial_level()
 
+    #head
     def checkMaxRepairAttempts(self):
         '''
         LocalFile Class
@@ -2748,6 +2753,15 @@ class LocalFile():
         else:
             logging.debug('number of failed repair attempts %s is less than allowable %s for %s at id %s in table %s' % (self.numFailedRepairsFromDatabase,maxFailedRepairAttempts,self.filenameAP,self.myFilesTableID,self.myFilesTable.tableName))
             return False
+
+    #head
+    def changeToMyDirectory(self):
+        '''
+        LocalFile Class
+        '''
+        myDir=os.path.split(self.filenameAP)[0]
+        os.chdir(myDir)
+        return myDir
 
 class NonOrgFile(LocalFile):
     def __init__(self,filename1,inHeader,leaveAsSymlink=False):
@@ -3880,16 +3894,22 @@ def operate_on_fileA(filename,userFixesLinksManually=False,runDebugger=False,deb
         
         assert fileA.endsInDotOrg(), '\nInput filename %s does not end with .org; quitting\n' % fileA.filenameAP
 
+        dirNow=os.getcwd()
+
+        if dirNow<>origFolder:
+            logging.warning('Current working directory %s is not the expected %s' % (dirNow,origFolder))
+
         #need to change directory for relative links in org file to make sense
-        os.chdir(os.path.split(fileA.filenameAP)[0])
-        logging.debug('Changed directory from %s to %s' % (origFolder,os.path.split(fileA.filenameAP)[0]))
+        fileADir=fileA.changeToMyDirectory()
+
+        logging.debug('Changed directory from %s to %s' % (dirNow,fileADir))
 
         fileA.lookInsideForUniqueID()  #does not require full representation
 
         idA=None
 
         if fileA.uniqueID:
-            idA=fileA.myFilesTable.findBestMatchForExistingFileUsingUniqueID(fileA)  #does not assume there is a unique ID inside file
+            idA=fileA.myFilesTable.findBestMatchForExistingFileUsingUniqueID(fileA)
 
         if not idA:
             idA=fileA.myFilesTable.lookupID_UsingName(fileA)
@@ -4641,6 +4661,29 @@ def make_regex_dicts():
 
     return regexDict1Brackets,regexDict1NoBrackets
 
+def make_regex_ordered_lists():
+    '''
+    lists of compiled regex for identifying class of link; has particular order for identifying link in [[link][description]]
+    '''
+
+    rOLB=[LinkToOrgFile.linkRegexesBrackets['file:anyFilename.org::anything or file+sys:anyFilename.org::anything or file+emacs:anyFilename.org::anything or docview:anyFilename.org::anything']]
+    rOLB.append(LinkToOrgFile.linkRegexesBrackets['/anyFilename.org::anything  or  ./anyFilename.org::anything  or  ~/anyFilename.org::anything'])
+    rOLB.append(LinkToNonOrgFile.linkRegexesBrackets['file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything'])
+    rOLB.append(LinkToNonOrgFile.linkRegexesBrackets['/anyFilename::anything  or  ./anyFilename::anything  or  ~/anyFilename::anything'])
+
+    rOLB.append(LinkToOrgFile.linkRegexesBrackets['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org'])
+    rOLB.append(LinkToOrgFile.linkRegexesBrackets['/anyFilename.org  or  ./anyFilename.org  or  ~/anyFilename.org'])
+    rOLB.append(LinkToNonOrgFile.linkRegexesBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
+    rOLB.append(LinkToNonOrgFile.linkRegexesBrackets['/anyFilename  or  ./anyFilename  or  ~/anyFilename'])
+
+    rOLNB=[LinkToOrgFile.linkRegexesNoBrackets['file:anyFilename.org::anything or file+sys:anyFilename.org::anything or file+emacs:anyFilename.org::anything or docview:anyFilename.org::anything']]
+    rOLNB.append(LinkToNonOrgFile.linkRegexesNoBrackets['file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything'])
+
+    rOLNB.append(LinkToOrgFile.linkRegexesNoBrackets['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org'])
+    rOLNB.append(LinkToNonOrgFile.linkRegexesNoBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
+
+    return rOLB,rOLNB
+
 #head
 def usage():
 
@@ -4680,23 +4723,7 @@ pastInteractiveRepairs=get_past_interactive_repairs_dict()  # a dictionary for s
 asteriskRegex=re.compile('(?P<asterisks>^\*+) ')
 
 #list of compiled regex for identifying class of link; has particular order for identifying link in [[link][description]]
-
-regexOrderedListBrackets=[LinkToOrgFile.linkRegexesBrackets['file:anyFilename.org::anything or file+sys:anyFilename.org::anything or file+emacs:anyFilename.org::anything or docview:anyFilename.org::anything']]
-regexOrderedListBrackets.append(LinkToOrgFile.linkRegexesBrackets['/anyFilename.org::anything  or  ./anyFilename.org::anything  or  ~/anyFilename.org::anything'])
-regexOrderedListBrackets.append(LinkToNonOrgFile.linkRegexesBrackets['file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything'])
-regexOrderedListBrackets.append(LinkToNonOrgFile.linkRegexesBrackets['/anyFilename::anything  or  ./anyFilename::anything  or  ~/anyFilename::anything'])
-
-regexOrderedListBrackets.append(LinkToOrgFile.linkRegexesBrackets['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org'])
-regexOrderedListBrackets.append(LinkToOrgFile.linkRegexesBrackets['/anyFilename.org  or  ./anyFilename.org  or  ~/anyFilename.org'])
-regexOrderedListBrackets.append(LinkToNonOrgFile.linkRegexesBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
-regexOrderedListBrackets.append(LinkToNonOrgFile.linkRegexesBrackets['/anyFilename  or  ./anyFilename  or  ~/anyFilename'])
-
-
-regexOrderedListNoBrackets=[LinkToOrgFile.linkRegexesNoBrackets['file:anyFilename.org::anything or file+sys:anyFilename.org::anything or file+emacs:anyFilename.org::anything or docview:anyFilename.org::anything']]
-regexOrderedListNoBrackets.append(LinkToNonOrgFile.linkRegexesNoBrackets['file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything'])
-
-regexOrderedListNoBrackets.append(LinkToOrgFile.linkRegexesNoBrackets['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org'])
-regexOrderedListNoBrackets.append(LinkToNonOrgFile.linkRegexesNoBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
+regexOrderedListBrackets,regexOrderedListNoBrackets=make_regex_ordered_lists()
 
 #dictionary that matches compiled regex in regexOrderedListBrackets/regexOrderedListNoBrackets to class it belongs to
 regexDictBrackets,regexDictNoBrackets=make_regex_dicts()

@@ -18,6 +18,19 @@ import pudb
 #head skip test of user-defined exception classes
 #head skip test of CallCounted
 #head skip test of database-related classes (Database1 through PreviousFilenamesNonOrgTable); TODO write tests for these
+class Test_OFL_MyOrgFilesTable(unittest.TestCase):
+    #head TODO test __init__
+    #head TODO test createTable
+    #head TODO test addFile
+    #head TODO test lookupID_UsingUniqueID
+    #head TODO test lookupID_UsingUniqueIDFromHeader
+    #head TODO test lookupID_UsingUniqueIDFromDatabase
+    #head TODO test lookupUniqueID_UsingID
+    #head TODO test lookupTimeLastFullyAnalyzed_UsingID
+    #head skip test of findBestMatchForExistingFileUsingUniqueID
+    #head TODO test updateUniqueID
+    #head TODO test syncTableToFile
+
 #head
 class Test_OFL_Link(unittest.TestCase):
     #head test Link.__init__
@@ -2051,6 +2064,32 @@ class Test_OFL_LocalFile(unittest.TestCase):
     #head skip test of changeFromSymlinkToNonSymlink; already tested as parts of tests above
     #head skip test of changeBackToSymlink, or TODO use test-first approach to write this method
     #head skip test of checkMaxRepairAttempts; how would the reading be verified?
+    def test_1_changeToMyDirectory(self):
+        '''test 1 of OFL.LocalFile.changeToMyDirectory'''        
+
+        testFileLines=['* status\n']
+        testFileLines.append('* second node\n')
+        testFileLines.append('** child of second node\n')
+        testFileLines.append('* third node\n')
+        testFileLines.append('** child of third node\n')
+        testFileLines.append('*** grandchild of third node\n')
+        testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        testFile=open(testFilename,'w')
+        testFile.writelines(testFileLines)
+        testFile.close()
+
+        orgFile=OFL.OrgFile(testFilename,inHeader=False)
+
+        origFolder=os.getcwd()
+
+        myDirectory=orgFile.changeToMyDirectory()
+        self.assertEqual(myDirectory,anotherFolder)
+        self.assertEqual(os.getcwd(),anotherFolder)
+
+        os.chdir(origFolder)
+        self.assertEqual(os.getcwd(),origFolder)
+
+        os.remove(testFilename)
 
 #head skip test NonOrgFile
 class Test_OFL_OrgFile(unittest.TestCase):
@@ -4923,6 +4962,7 @@ class TestFindUniqueIDInsideFile(unittest.TestCase):
 #head skip test get_list_of_all_repairable_org_files
 #head skip test operate_on_all_org_files
 #head skip test make_regex_dicts
+#head skip test make regex_ordered_lists
 #head skip test usage
 #head
 #head
