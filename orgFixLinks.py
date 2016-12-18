@@ -3704,6 +3704,7 @@ def find_all_name_matches_via_bash_for_directories(textToMatch):
 
 #head
 def set_up_database():
+    global db1
     if os.path.exists(databaseName):  #if real run (not dry run) database file exists
         shutil.copyfile(databaseName,dryRunDatabaseName)
         logging.debug('Initializing dry run database to actual database: %s copied to %s' % (databaseName,dryRunDatabaseName))
@@ -3712,19 +3713,26 @@ def set_up_database():
             os.remove(dryRunDatabaseName)
             logging.debug('Starting with blank dry run database because no real run database file has been found: %s deleted' % dryRunDatabaseName)
 
+    #global variable db1 instantiated here
     db1=Database1(dryRunDatabaseName)  #always starting with dry run database and only copy to real database if script completes with no errors
+    db1.setUpOrgTables()
+    db1.setUpNonOrgTables()
+
     logging.debug('Database set up; database file in use is %s' % dryRunDatabaseName)
-    return db1
 
 def set_up_blank_database():
+    global db1
     '''used for a separate test script'''
 
     if os.path.exists(dryRunDatabaseName): 
         os.remove(dryRunDatabaseName)
 
+    #global variable db1 instantiated here
     db1=Database1(dryRunDatabaseName)  #always starting with dry run database and only copy to real database if script completes with no errors
+    db1.setUpOrgTables()
+    db1.setUpNonOrgTables()
+
     logging.debug('Database set up; database file in use is %s' % dryRunDatabaseName)
-    return db1
 
 #head
 def user_chooses_element_from_list_or_rejects_all(aList,nameOfElementInList='element',doubleSpaced=False):
@@ -4716,10 +4724,15 @@ def usage():
 #head module-level stuff that will always execute even when this module is imported by another script/module
 databaseName=os.path.join(os.getcwd(),'orgFiles.sqlite')  #'real run' database
 dryRunDatabaseName=os.path.join(os.getcwd(),'orgFilesDryRunCopy.sqlite') #dry run database
+#head
 globalStartTime=time.time()
+#head
 keyboardInputLock=threading.Lock()
+#head
 origFolder=os.getcwd()
+#head
 pastInteractiveRepairs=get_past_interactive_repairs_dict()  # a dictionary for storing past interactive repairs of broken links
+#head
 asteriskRegex=re.compile('(?P<asterisks>^\*+) ')
 
 #list of compiled regex for identifying class of link; has particular order for identifying link in [[link][description]]
@@ -4740,9 +4753,7 @@ if __name__ <> "__main__":
     #want to be able to import things from this module for testing, without logging taking place
     logging.disable(logging.CRITICAL)  #disables all logging messages; see sweigart
 
-    db1=set_up_database()
-    db1.setUpOrgTables()
-    db1.setUpNonOrgTables()
+    set_up_blank_database()
 
 #head MAIN
 if __name__=="__main__":
@@ -4843,9 +4854,7 @@ if __name__=="__main__":
 
     set_up_logging(loggingLevel)
 
-    db1=set_up_database()
-    db1.setUpOrgTables()
-    db1.setUpNonOrgTables()
+    set_up_database()
 
     if fileA1:  #user has supplied a file to start spidering with via command line
         spider_starting_w_fileA(filename=fileA1,maxTime=maxTime,maxN=maxN,hitReturnToStop=hitReturnToStop,userFixesLinksManually=userFixesLinksManually,runDebugger=runDebugger,debuggerAlreadyRunning=debuggerAlreadyRunning,isDryRun=isDryRun,showLog=showLog,keepBackup=keepBackup,skipIfRecentlySpidered=skipIfRecentlySpidered)

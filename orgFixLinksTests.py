@@ -14,12 +14,51 @@ import pudb
 
 #TODO test the many sqlite database operations
 
+#head
+class Test_ConditionsUponImportOf_OFL(unittest.TestCase):
+    def test_1(self):
+        self.failUnless(OFL.db1) #orgFixLinks uses a global variable to hold its single database
+        self.failUnless(isinstance(OFL.db1,OFL.Database1))
+        self.assertEqual(OFL.db1.filename,OFL.dryRunDatabaseName) #testing this due to constant anxiety over overwriting the 'real' database file
+
+        #test that required number of tables are in database
+        OFL.db1.cur.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        rows=OFL.db1.cur.fetchall()
+        tableNames=[a[0] for a in rows]
+        self.assertEqual(len(tableNames),14)
+
+        #test that tables are blank
+        for tableName in tableNames:
+            OFL.db1.cur.execute('SELECT * FROM '+tableName)
+            rowList=OFL.db1.cur.fetchall()
+            self.failIf(rowList)
+
 #head test operation of classes
 #head skip test of user-defined exception classes
 #head skip test of CallCounted
-#head skip test of database-related classes (Database1 through PreviousFilenamesNonOrgTable); TODO write tests for these
+#head skip test of Database1
+class Test_OFL_MyFilesTable(unittest.TestCase):
+    #head skip test of __init__
+    #head skip test of updateTimeField
+    #head skip test of updateBooleanField
+    #head TODO test of incrNumFailedRepairAttempts
+    def test_1_incrNumFailedRepairAttempts(self):
+        pass
+    #head TODO test of zeroOutNumFailedRepairAttempts
+    #head TODO test of lookupID_UsingName
+    #head TODO test of lookupName_UsingID
+    #head TODO test of lookupNumFailedRepairAttemptsByID
+    #head TODO test of findBestMatchForMissingFile
+    #head TODO test of updateNameAndLogChange
+    #head TODO test of syncTableToFile
+    #head TODO test of lookupBasenamesInFolder
+    #head TODO test of constructFileFromTable
+
 class Test_OFL_MyOrgFilesTable(unittest.TestCase):
-    #head TODO test __init__
+    #head skip test of test __init__
+    def test_1_init(self):
+        pass
+
     #head TODO test createTable
     #head TODO test addFile
     #head TODO test lookupID_UsingUniqueID
@@ -30,6 +69,23 @@ class Test_OFL_MyOrgFilesTable(unittest.TestCase):
     #head skip test of findBestMatchForExistingFileUsingUniqueID
     #head TODO test updateUniqueID
     #head TODO test syncTableToFile
+
+class Test_OFL_MyNonOrgFilesTable(unittest.TestCase):
+    #head TODO test of __init__
+    def test_1_init(self):
+        pass
+    #head TODO test of createTable
+    #head TODO test of addFile
+
+#head
+class Test_OFL_FilenameAPsTable(unittest.TestCase):
+    #head skip test of __init__
+    #head TODO test of addName
+    def test_1_addName(self):
+        pass
+        #TODO seems like each table should have an attribute that holds the database it belongs to (OFL.db1)
+    #head TODO test of lookupID
+    #head TODO test of lookupName
 
 #head
 class Test_OFL_Link(unittest.TestCase):
@@ -4976,6 +5032,7 @@ def reset_database():
     OFL.db1.setUpOrgTables()
     OFL.db1.setUpNonOrgTables()
 
+#head
 def operate_on_fileA_w(filename,runDebugger=False,isDryRun=False,showLog=False,runWPauses=True):
     '''operate on file A wrapper'''
 
@@ -4991,6 +5048,7 @@ def wait_on_user_input(comment1='Now pausing to allow you to examine database wi
     while (resp != "c") and (resp != " "):
         resp=raw_input(prompt1)
 
+#head
 #head functions used by TestsOfRepairingLinksToOrgFiles
 #TODO figure out how to incorporate into that class
 def set_up_fileA_fileB_linkToFileB_org():
