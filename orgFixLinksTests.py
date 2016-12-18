@@ -15,6 +15,8 @@ import pudb
 #head
 class Test_ConditionsUponImportOf_OFL(unittest.TestCase):
     def test_1(self):
+        reset_database()  #appears that this test is not the first test run, so can't really test the conditions on import
+
         self.failUnless(OFL.db1) #orgFixLinks uses a global variable to hold its single database
         self.failUnless(isinstance(OFL.db1,OFL.Database1))
         self.assertEqual(OFL.db1.filename,OFL.dryRunDatabaseName) #testing this due to constant anxiety over overwriting the 'real' database file
@@ -54,6 +56,8 @@ class Test_OFL_MyFilesTable(unittest.TestCase):
     #head TODO test of constructFileFromTable
 
 class Test_OFL_MyOrgFilesTable(unittest.TestCase):
+    #head see TestOperateOnFileA
+    #head
     #head skip test of test __init__
     def test_1_init(self):
         pass
@@ -2273,7 +2277,35 @@ class Test_OFL_OrgFile(unittest.TestCase):
         self.assertEqual(anOrgFile.myFilesTable.getNRows(),0)
         self.assertEqual(anOrgFile.myFilesTable,OFL.db1.myOrgFilesTable)
 
-    #head skip test of __init__; material beyond LocalFile.__init__ appears to be all simple initialization statements that should need no testing
+        #no other database table will be added to
+        self.assertEqual(anOrgFile.symlinksTable.getNRows(),0)
+        self.assertEqual(anOrgFile.previousFilenamesTable.getNRows(),0)
+
+        self.assertEqual(OFL.db1.linksToOrgTable.getNRows(),0)
+
+    def test_2_init(self):
+        #check the database-related behavior
+        reset_database()
+
+        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
+
+        #instantiate but do not create full representation
+        fileA=OFL.OrgFile(filenameA,inHeader=False)
+        fileB=OFL.OrgFile(filenameB,inHeader=False)
+        symlinkB=OFL.OrgFile(symlinkToFileB_Name,inHeader=False)
+
+        #database tables that hold filenameAP-type strings will get records; not obvious how many
+
+        #other database tables will get no records
+        self.assertEqual(OFL.db1.myOrgFilesTable.getNRows(),0)
+        self.assertEqual(OFL.db1.symlinksOrgTable.getNRows(),0)  #TODO this one could get a record
+        self.assertEqual(OFL.db1.linksToOrgTable.getNRows(),0)
+        self.assertEqual(OFL.db1.previousFilenamesOrgTable.getNRows(),0)
+
+        os.remove(filenameA)
+        os.remove(filenameB)
+        os.remove(symlinkToFileB_Name)
+
     def test_1_endsInDotOrg(self):
         '''test OrgFile.endsInDotOrg'''
         
@@ -2837,6 +2869,7 @@ class Test_OFL_OrgFile(unittest.TestCase):
 class TestsOfRepairingLinksToOrgFiles(unittest.TestCase):
     #these tests require much more time to run than the rest
     #head TODO expecting some mistakes in print statements; too much duplicate code;  study unittest and see how to rewrite to reduce duplicate code
+    #head TODO test repairing a broken link that cannot be fixed: keep trying until max tries setting exceeded; use database commands etc to check that script stops trying to fix link LEFTOFF
     def test_1(self):
         '''fileA links to fileB; fileB is an org file; move fileB while keeping its basename the same; fileB never contains a unique ID'''
 
@@ -5135,7 +5168,66 @@ class TestFindUniqueIDInsideFile(unittest.TestCase):
         os.remove(testFilename)
 
 #head skip test clean_up_on_error_in_operate_on_fileA
-#head TODO test operate_on_fileA?
+class TestOperateOnFileA(unittest.TestCase):
+    def test_1(self):
+
+        #goal is to check on what happened in database
+
+        reset_database()
+
+        runDebuggerOnlyInRepairStep=False
+        runDebuggerInEveryStep=False
+        runWithPauses=False
+
+        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
+    
+        showLog1=False
+        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileB=operate_on_fileA_w(filenameB,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+
+        self.failUnless(fileA.uniqueID)
+        self.failUnless(fileB.uniqueID)
+      
+        self.assertEqual(fileA.myFilesTable,fileB.myFilesTable)
+        self.assertEqual(fileA.myFilesTable.getNRows(),2)
+
+        self.assertEqual(fileA.myFilesTable.lookupID_UsingUniqueID(fileA),fileA.myFilesTableID)
+        self.assertEqual(fileB.myFilesTable.lookupID_UsingUniqueID(fileB),fileB.myFilesTableID)
+
+        self.assertEqual(fileA.myFilesTable.lookupUniqueID_UsingID(fileA.myFilesTableID),fileA.uniqueID)
+        self.assertEqual(fileB.myFilesTable.lookupUniqueID_UsingID(fileB.myFilesTableID),fileB.uniqueID)
+
+        #http://stackoverflow.com/questions/3501382/checking-whether-a-variable-is-an-integer-or-not
+        self.failUnless(isinstance(fileA.myFilesTable.lookupTimeLastFullyAnalyzed_UsingID(fileA.myFilesTableID),(int,long)))
+
+        os.remove(filenameA)
+        os.remove(filenameB)
+        os.remove(symlinkToFileB_Name)
+
+    def test_2(self):
+
+        reset_database()
+
+        runDebuggerOnlyInRepairStep=False
+        runDebuggerInEveryStep=False
+        runWithPauses=False
+
+        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
+    
+        showLog1=False
+        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileB=operate_on_fileA_w(filenameB,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+
+        #focus on symlinks table
+        self.assertEqual(fileA.symlinksTable.lookupTarget(os.path.abspath(symlinkToFileB_Name)),fileB.myFilesTableID)
+        self.assertEqual(fileA.symlinksTable.lookupSymlinks(fileB),[os.path.abspath(symlinkToFileB_Name)])
+
+        os.remove(filenameA)
+        os.remove(filenameB)
+        os.remove(symlinkToFileB_Name)
+
 #head skip test user_says_stop_spidering
 #head skip test clean_up_before_ending_spidering_run
 #head skip test spider_starting_w_fileA
@@ -5199,6 +5291,7 @@ def set_up_fileA_fileB_linkToFileB_org():
         os.symlink(filenameB,symlinkToFileB_Name) # target comes first
 
     return filenameA,filenameB,symlinkToFileB_Name
+    # return os.path.abspath(filenameA),os.path.abspath(filenameB),os.path.abspath(symlinkToFileB_Name)  #should have done this, but now too many tests assume otherwise
 
 #head
 def set_up_fileA_fileB_linkToFileB_non_org():
@@ -5226,6 +5319,7 @@ def set_up_fileA_fileB_linkToFileB_non_org():
         os.symlink(filenameB,symlinkToFileB_Name) # target comes first
 
     return filenameA,filenameB,symlinkToFileB_Name
+    # return os.path.abspath(filenameA),os.path.abspath(filenameB),os.path.abspath(symlinkToFileB_Name)  #should have done this, but now too many tests assume otherwise
 
 #head
 DocumentsFolderAP=os.path.join(os.path.expanduser('~'),'Documents')

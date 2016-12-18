@@ -97,6 +97,7 @@ class Database1():
         self.linksToOrgTable=LinksToOrgTable()
         self.previousFilenamesOrgTable=PreviousFilenamesOrgTable()
 
+        #create tables
         self.myOrgFilesTable.createTable(self.filenameAPsOrgTable,self.pathToBasenameOrgTable,self.basenameOrgTable)
 
         self.symlinksOrgTable.createTable(self.filenameAPsOrgTable,self.myOrgFilesTable)
@@ -122,6 +123,7 @@ class Database1():
         self.linksToNonOrgTable=LinksToNonOrgTable()
         self.previousFilenamesNonOrgTable=PreviousFilenamesNonOrgTable()
 
+        #create tables
         self.myNonOrgFilesTable.createTable(self.filenameAPsNonOrgTable,self.pathToBasenameNonOrgTable,self.basenameNonOrgTable)
 
         self.symlinksNonOrgTable.createTable(self.filenameAPsNonOrgTable,self.myNonOrgFilesTable)
@@ -581,6 +583,7 @@ class MyOrgFilesTable(MyFilesTable):
         '''
         return self.lookupID_UsingUniqueID(orgFile,uniqueIDName='uniqueIDFromDatabase')
 
+    #head
     def lookupUniqueID_UsingID(self,id):
         '''MyOrgFiles Class
         given id, return uniqueID
@@ -595,6 +598,7 @@ class MyOrgFilesTable(MyFilesTable):
 
         return uniqueID
 
+    #head
     def lookupTimeLastFullyAnalyzed_UsingID(self,id):
         '''MyOrgFiles Class
         given id, return tLastFullyAnalyzed
