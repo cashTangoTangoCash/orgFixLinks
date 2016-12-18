@@ -10,9 +10,7 @@ import pudb
 #TODO some tests assume certain settings; should add statement that tests that settings are as assumed
 
 #NOTE did not start learning about unit testing until long after an entire working version of orgFixLinks was written;
-#it's hard to write tests after code is already written...
-
-#TODO test the many sqlite database operations
+#it's difficult to write tests after code is already written...
 
 #head
 class Test_ConditionsUponImportOf_OFL(unittest.TestCase):
@@ -36,6 +34,7 @@ class Test_ConditionsUponImportOf_OFL(unittest.TestCase):
 #head test operation of classes
 #head skip test of user-defined exception classes
 #head skip test of CallCounted
+#head writing tests after having first written orgFixLinks.py: it is difficult to write database tests since database commands are hidden inside many other classes
 #head skip test of Database1
 class Test_OFL_MyFilesTable(unittest.TestCase):
     #head skip test of __init__
@@ -82,11 +81,116 @@ class Test_OFL_FilenameAPsTable(unittest.TestCase):
     #head skip test of __init__
     #head TODO test of addName
     def test_1_addName(self):
-        pass
-        #TODO seems like each table should have an attribute that holds the database it belongs to (OFL.db1)
-    #head TODO test of lookupID
-    #head TODO test of lookupName
+        reset_database()
+        table1=OFL.db1.filenameAPsOrgTable
+        self.assertEqual(table1.getNRows(),0)
+        table1.addName('junkName.org')
+        self.assertEqual(table1.getNRows(),1)
 
+    def test_2_addName(self):
+        reset_database()
+        table1=OFL.db1.filenameAPsOrgTable
+        self.assertEqual(table1.getNRows(),0)
+        table1.addName('junkName.org')
+        self.assertEqual(table1.getNRows(),1)
+
+        #should not allow adding of duplicate name
+        table1.addName('junkName.org')
+        self.assertEqual(table1.getNRows(),1)
+
+    def test_3_addName(self):
+        reset_database()
+        table1=OFL.db1.filenameAPsOrgTable
+        self.assertEqual(table1.getNRows(),0)
+        table1.addName('')
+        self.assertEqual(table1.getNRows(),1)  #table will accept an empty string for name
+
+    def test_4_addName(self):
+        reset_database()
+        table1=OFL.db1.filenameAPsOrgTable
+        self.assertEqual(table1.getNRows(),0)
+        table1.addName(None)
+        self.assertEqual(table1.getNRows(),0) #table will not accept None for name
+
+    def test_1_lookupID(self):
+        reset_database()
+        table1=OFL.db1.filenameAPsOrgTable
+        self.assertEqual(table1.getNRows(),0)
+
+        table1.addName('junkName.org')
+        self.assertEqual(table1.getNRows(),1)
+
+        id=table1.lookupID('junkName.org')
+        self.assertEqual(id,1)  #warning id is integer, which is unexpected; would have thought string
+
+    def test_2_lookupID(self):
+        reset_database()
+        table1=OFL.db1.filenameAPsOrgTable
+        self.assertEqual(table1.getNRows(),0)
+
+        table1.addName('junkName.org')
+        self.assertEqual(table1.getNRows(),1)
+
+        id=table1.lookupID('junkName2.org')
+        self.assertEqual(id,None)
+
+    def test_1_lookupName(self):
+        reset_database()
+        table1=OFL.db1.filenameAPsOrgTable
+        self.assertEqual(table1.getNRows(),0)
+
+        table1.addName('junkName.org')
+        self.assertEqual(table1.getNRows(),1)
+
+        name1=table1.lookupName(1)
+        self.assertEqual(name1,'junkName.org')
+
+    def test_2_lookupName(self):
+        reset_database()
+        table1=OFL.db1.filenameAPsOrgTable
+        self.assertEqual(table1.getNRows(),0)
+
+        table1.addName('junkName.org')
+        self.assertEqual(table1.getNRows(),1)
+
+        name1=table1.lookupName(0)
+        self.assertEqual(name1,None)
+
+    def test_3_lookupName(self):
+        reset_database()
+        table1=OFL.db1.filenameAPsOrgTable
+        self.assertEqual(table1.getNRows(),0)
+
+        table1.addName('')
+        self.assertEqual(table1.getNRows(),1)
+
+        name1=table1.lookupName(1)
+        self.assertEqual(name1,'')  #put in an empty string, get out an empty string
+
+#head skip test of OFL_FilenameAPsOrgTable
+#head skip test of OFL_FilenameAPsNonOrgTable
+#head
+#head skip test of OFL_PathToBasenameTable
+#head skip test of OFL_PathToBasenameOrgTable
+#head skip test of OFL_PathToBasenameNonOrgTable
+#head
+#head skip test of OFL_BasenameTable
+#head skip test of OFL_BasenameOrgTable
+#head skip test of OFL_BasenameNonOrgTable
+#head
+#head TODO test of OFL_SymlinksTable
+#head skip test of OFL_SymlinksOrgTable
+#head skip test of OFL_SymlinksNonOrgTable
+#head
+#head TODO test of OFL_LinksToTable
+#head TODO test of OFL_LinksToOrgTable
+#head TODO test of OFL_LinksToNonOrgTable
+#head
+#head TODO test of OFL_PreviousFilenamesTable
+#head TODO test of OFL_PreviousFilenamesOrgTable
+#head TODO test of OFL_PreviousFilenamesNonOrgTable
+#head
+#head
 #head
 class Test_OFL_Link(unittest.TestCase):
     #head test Link.__init__
@@ -1734,6 +1838,7 @@ class Test_OFL_LinkToOrgFile(unittest.TestCase):
     #head skip test of databaseHousekeepingForWorkingLink
 
 #head
+#head
 class Test_OFL_Node(unittest.TestCase):
     def test_1_NodeInit(self):
         '''test OFL.Node.__init__ for a node with tags and one child node'''
@@ -2149,6 +2254,25 @@ class Test_OFL_LocalFile(unittest.TestCase):
 
 #head skip test NonOrgFile
 class Test_OFL_OrgFile(unittest.TestCase):
+    def test_1_init(self):
+        #check the database-related behavior
+        reset_database()
+
+        currentWorkingDir=os.getcwd()
+
+        filename1='noName.org'
+        anOrgFile=OFL.OrgFile(filename1,inHeader=False)  #instantiate but do not create full representation
+
+        #database tables that hold filenameAP-type strings will get records
+        self.assertEqual(OFL.db1.filenameAPsOrgTable.lookupID(anOrgFile.filenameAP),1)
+        self.assertEqual(OFL.db1.pathToBasenameOrgTable.lookupID(currentWorkingDir),1)
+        self.assertEqual(OFL.db1.basenameOrgTable.lookupID(filename1),1)
+
+        #myFilesTable will not get a record
+        self.failIf(anOrgFile.myFilesTable.lookupID_UsingName(anOrgFile))  #ugly syntax
+        self.assertEqual(anOrgFile.myFilesTable.getNRows(),0)
+        self.assertEqual(anOrgFile.myFilesTable,OFL.db1.myOrgFilesTable)
+
     #head skip test of __init__; material beyond LocalFile.__init__ appears to be all simple initialization statements that should need no testing
     def test_1_endsInDotOrg(self):
         '''test OrgFile.endsInDotOrg'''
@@ -5026,11 +5150,10 @@ def reset_database():
     #if reset_database is inserted at the beginning of every single test, runtime of this script goes up drastically
     #something like .4s to 9s
     #just use it where it is really needed
-    if OFL.db1:
+    if OFL.db1:  #TODO if there is no OFL.db1, an error will be raised here
         del OFL.db1
-    OFL.db1=OFL.set_up_blank_database()
-    OFL.db1.setUpOrgTables()
-    OFL.db1.setUpNonOrgTables()
+
+    OFL.set_up_blank_database()
 
 #head
 def operate_on_fileA_w(filename,runDebugger=False,isDryRun=False,showLog=False,runWPauses=True):

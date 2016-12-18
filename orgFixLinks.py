@@ -84,6 +84,9 @@ class Database1():
 
     def setUpOrgTables(self):
         '''Database1 Class'''
+
+        #TODO would prefer a dictionary self.tables, with keys the string names of tables and values the table objects
+
         self.filenameAPsOrgTable=FilenameAPsOrgTable()
         self.pathToBasenameOrgTable=PathToBasenameOrgTable()
         self.basenameOrgTable=BasenameOrgTable()
@@ -140,7 +143,22 @@ class Database1():
         logging.debug('database command: '+command1)
 
 #head
-class MyFilesTable():
+class DatabaseTable():
+    def __init__(self,tableName):
+        self.tableName=tableName
+
+    def getRowList(self):
+        db1.cur.execute('SELECT * FROM '+self.tableName)
+        rowList=db1.cur.fetchall()
+        #seems pointless to have self.rowList since it will become outdated as rows are added/deleted
+        return rowList
+
+    def getNRows(self):
+        rowList=self.getRowList()
+        return len(rowList)
+
+#head
+class MyFilesTable(DatabaseTable):
     def __init__(self,tableName,listOfTimeFieldNames,listOfBooleanFieldNames):
         '''MyFilesTable Class; ancestor class for MyOrgFilesTable, MyNonOrgFilesTable
         there should be no instance of MyFilesTable in this script; should only inherit from this class
@@ -148,7 +166,8 @@ class MyFilesTable():
         #this table is for non-symlinks; put target of symlink in here as long as it is not also a symlink
         #sqlite will throw syntax error if you mix the FOREIGN KEY pieces in with the other pieces
 
-        self.tableName=tableName
+        DatabaseTable.__init__(self,tableName)
+
         self.listOfTimeFieldNames=listOfTimeFieldNames
         self.listOfBooleanFieldNames=listOfBooleanFieldNames
 
@@ -730,11 +749,12 @@ class MyNonOrgFilesTable(MyFilesTable):
         return file1.myFilesTableID
 
 #head
-class FilenameAPsTable():
+class FilenameAPsTable(DatabaseTable):
     def __init__(self,tableName):
         '''FilenameAPsTable Class'''
 
-        self.tableName=tableName
+        DatabaseTable.__init__(self,tableName)
+
         db1.cur.execute('CREATE TABLE IF NOT EXISTS '+tableName+'(id INTEGER PRIMARY KEY, name TEXT UNIQUE NOT NULL)')
 
     def addName(self,name):
@@ -787,11 +807,12 @@ class FilenameAPsNonOrgTable(FilenameAPsTable):
         FilenameAPsTable.__init__(self,'filenameAPsNonOrg')
 
 #head
-class PathToBasenameTable():
+class PathToBasenameTable(DatabaseTable):
     def __init__(self,tableName):
         '''PathToBasenameTable Class'''
 
-        self.tableName=tableName
+        DatabaseTable.__init__(self,tableName)
+
         db1.cur.execute('CREATE TABLE IF NOT EXISTS '+tableName+'(id INTEGER PRIMARY KEY, absPathToFile TEXT UNIQUE NOT NULL)')
 
     def addName(self,name):
@@ -844,11 +865,12 @@ class PathToBasenameNonOrgTable(PathToBasenameTable):
         PathToBasenameTable.__init__(self,'pathToBasenameNonOrg')
 
 #head
-class BasenameTable():
+class BasenameTable(DatabaseTable):
     def __init__(self,tableName):
         '''BasenameTable Class'''
 
-        self.tableName=tableName
+        DatabaseTable.__init__(self,tableName)
+
         db1.cur.execute('CREATE TABLE IF NOT EXISTS '+tableName+'(id INTEGER PRIMARY KEY, basename TEXT UNIQUE NOT NULL)')
 
     def addName(self,name):
@@ -901,12 +923,11 @@ class BasenameNonOrgTable(BasenameTable):
         BasenameTable.__init__(self,'basenameNonOrg')
 
 #head
-class SymlinksTable():
+class SymlinksTable(DatabaseTable):
     def __init__(self,tableName):
         '''SymlinksTable Class
         '''
-
-        self.tableName=tableName
+        DatabaseTable.__init__(self,tableName)
 
     def createTable(self,filenameAPsTable,myFilesTable):
         '''SymlinksTable Class
@@ -1005,11 +1026,12 @@ class SymlinksNonOrgTable(SymlinksTable):
         SymlinksTable.__init__(self,'symlinksNonOrg')
 
 #head
-class LinksToTable():
+class LinksToTable(DatabaseTable):
     def __init__(self,tableName,targetClass):
         '''LinksToTable Class'''
 
-        self.tableName=tableName
+        DatabaseTable.__init__(self,tableName)
+
         self.targetClass=targetClass
 
         assert (targetClass in [OrgFile,NonOrgFile]),'targetClass is not one of OrgFile, NonOrgFile'
@@ -1137,11 +1159,11 @@ class LinksToNonOrgTable(LinksToTable):
         LinksToTable.__init__(self,'linksToNonOrg',NonOrgFile)
 
 #head
-class PreviousFilenamesTable():
+class PreviousFilenamesTable(DatabaseTable):
     def __init__(self,tableName):
         '''PreviousFilenamesTable Class'''
 
-        self.tableName=tableName
+        DatabaseTable.__init__(self,tableName)
 
     def createTable(self,myFilesTable,filenameAPsTable):
         '''PreviousFilenamesTable Class'''
@@ -3705,6 +3727,9 @@ def find_all_name_matches_via_bash_for_directories(textToMatch):
 #head
 def set_up_database():
     global db1
+
+    #TODO if db1 already exists, delete it
+
     if os.path.exists(databaseName):  #if real run (not dry run) database file exists
         shutil.copyfile(databaseName,dryRunDatabaseName)
         logging.debug('Initializing dry run database to actual database: %s copied to %s' % (databaseName,dryRunDatabaseName))
@@ -3723,6 +3748,8 @@ def set_up_database():
 def set_up_blank_database():
     global db1
     '''used for a separate test script'''
+
+    #TODO if db1 already exists, delete it
 
     if os.path.exists(dryRunDatabaseName): 
         os.remove(dryRunDatabaseName)
