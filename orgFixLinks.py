@@ -3602,6 +3602,13 @@ def turn_logging_back_on_at_initial_level():
         logging.disable(logging.NOTSET)
 
 #head
+def display_log_file():
+    '''use system pager less to display log file'''
+    cmd1='less '+logFilename
+    with keyboardInputLock:
+        subprocess.Popen(cmd1.split(),shell=False).wait()
+
+#head
 def walk_files_looking_for_name_match(nameAP):
     '''
     nameAP is absolute path filename
@@ -3904,9 +3911,7 @@ def clean_up_on_error_in_operate_on_fileA(fileA,err1,deleteOldLogs,isDryRun,show
     db1.conn.commit()
 
     if showLog:
-        cmd1='less '+logFilename
-        with keyboardInputLock:
-            subprocess.Popen(cmd1.split(),shell=False).wait()
+        display_log_file()
 
 def operate_on_fileA(filename,userFixesLinksManually=False,runDebugger=False,debuggerAlreadyRunning=False,isDryRun=False,showLog=False,repairLinks=True,keepBackup=True,deleteOldLogs=True,doLessIfRecentlyFullyAnalyzed=False):
     '''analyze a chosen org file
@@ -4028,7 +4033,7 @@ def operate_on_fileA(filename,userFixesLinksManually=False,runDebugger=False,deb
 
         logging.debug('Now analyzing outward links to org files in %s' % fileA.filenameAP)
 
-        linkBlacklistStrings=['/env/','/venv/','/PStuff/']
+        linkBlacklistStrings=['/env/','/venv/','/PStuff/']  #TODO setting modify for your own usage
 
         DocumentsFoldernameAP=os.path.join(os.path.expanduser('~'),'Documents')
 
@@ -4210,14 +4215,12 @@ def operate_on_fileA(filename,userFixesLinksManually=False,runDebugger=False,deb
                         db1.conn.commit()
                         # db1.cur.close()
 
-                        if not isDryRun:
+                        if (not isDryRun) and (__name__=="__main__"):
                             shutil.copy2(dryRunDatabaseName,databaseName)
                             logging.debug('Real run not dry run: Copied %s to %s' % (dryRunDatabaseName,databaseName))
 
                         if showLog:
-                            cmd1='less '+logFilename
-                            with keyboardInputLock:
-                                subprocess.Popen(cmd1.split(),shell=False).wait()
+                            display_log_file()
 
                         return 'Quit'
 
@@ -4341,14 +4344,12 @@ def operate_on_fileA(filename,userFixesLinksManually=False,runDebugger=False,deb
                     db1.conn.commit()
                     # db1.cur.close()
 
-                    if not isDryRun:
+                    if (not isDryRun) and (__name__=="__main__"):
                         shutil.copy2(dryRunDatabaseName,databaseName)
                         logging.debug('Real run not dry run: Copied %s to %s' % (dryRunDatabaseName,databaseName))
 
                     if showLog:
-                        cmd1='less '+logFilename
-                        with keyboardInputLock:
-                            subprocess.Popen(cmd1.split(),shell=False).wait()
+                        display_log_file()
 
                     return 'Quit'
                 fileB=linkB.targetObj
@@ -4393,7 +4394,7 @@ def operate_on_fileA(filename,userFixesLinksManually=False,runDebugger=False,deb
     db1.conn.commit()
     # db1.cur.close()
 
-    if not isDryRun:
+    if (not isDryRun) and (__name__=="__main__"):
         shutil.copy2(dryRunDatabaseName,databaseName)
         logging.debug('Real run not dry run: Copied %s to %s' % (dryRunDatabaseName,databaseName))
 
@@ -4403,9 +4404,7 @@ def operate_on_fileA(filename,userFixesLinksManually=False,runDebugger=False,deb
 
     if showLog:
         #this gives you time to inspect rewritten org file before it gets reverted to original in a dry run
-        cmd1='less '+logFilename
-        with keyboardInputLock:
-            subprocess.Popen(cmd1.split(),shell=False).wait()
+        display_log_file()
 
     endTime=time.time()
     logging.debug('Analyzed %s in %s seconds' % (filename,endTime-startTime))

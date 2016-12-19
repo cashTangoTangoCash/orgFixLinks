@@ -37,6 +37,8 @@ class Test_ConditionsUponImportOf_OFL(unittest.TestCase):
 #head skip test of user-defined exception classes
 #head skip test of CallCounted
 #head writing tests after having first written orgFixLinks.py: it is difficult to write database tests since database commands are hidden inside many other classes
+#head
+#head for database-related tests, see class TestOperateOnFileA
 #head skip test of Database1
 class Test_OFL_MyFilesTable(unittest.TestCase):
     #head skip test of __init__
@@ -2653,7 +2655,7 @@ class Test_OFL_OrgFile(unittest.TestCase):
 
         os.remove(testFilename)
 
-    #head skip test checkConsistencyOfThreeUniqueIDDataItems; requires database use
+    #head skip test checkConsistencyOfThreeUniqueIDDataItems; appears non-obvious how to construct tests
     def test_1_makeListOfOrgFilesThatLinkToMe(self):
         '''test OrgFile.makeListOfOrgFilesThatLinkToMe'''
 
@@ -2811,59 +2813,67 @@ class Test_OFL_OrgFile(unittest.TestCase):
     #head skip test sanityChecksBeforeRewriteFile
     #head skip test rewriteFileFromNewLines
     def test_1_useDatabaseToGetOutwardLinks(self):
-        pass
-        #TODO this test is failing, and it appears to be an issue with database-related code
-        #TODO really need to concentrate on the database and testing it, before releasing this code to github
 
-        # #create two org files that link to one another
-        # reset_database()
+        #create two org files that link to one another
+        reset_database()
 
-        # #lately have preferred to just insert pudb.set_trace() in this script
-        # runDebuggerOnlyInRepairStep=False
-        # runDebuggerInEveryStep=False
-        # runWithPauses=False
+        #lately have preferred to just insert pudb.set_trace() in this script
+        runDebuggerOnlyInRepairStep=False
+        runDebuggerInEveryStep=False
+        runWithPauses=False
 
-        # filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
+        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
 
-        # self.failUnless(os.path.exists(filenameA))
-        # self.failUnless(os.path.exists(filenameB))
-        # self.failUnless(os.path.exists(symlinkToFileB_Name))
-
-        # #####################################################
+        #####################################################
     
-        # showLog1=False
-        # fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        showLog1=False
+        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
 
-        # self.failIf(fileA.leaveAsSymlink)
+        self.failIf(fileA.leaveAsSymlink)
 
-        # #####################################################
+        #####################################################
 
-        # showLog1=False
-        # fileB=operate_on_fileA_w(filenameB,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        showLog1=False
+        fileB=operate_on_fileA_w(filenameB,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
 
-        # self.failIf(fileB.leaveAsSymlink)
+        self.failIf(fileB.leaveAsSymlink)
 
-        # #####################################################
+        #####################################################
 
-        # showLog1=False
-        # fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        showLog1=False
+        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
 
-        # #the previous was used to populate the database.  now use this method as intended.
-        # del fileA
-        # del fileB
+        #the previous was used to populate the database
 
-        # fileA=OFL.OrgFile(filenameA,inHeader=False)
-        # fileA.useDatabaseToGetOutwardLinks()
+        del fileA
+        del fileB
 
-        # self.assertEqual(len(fileA.linksToOrgFilesList),1)
+        fileA=OFL.OrgFile(filenameA,inHeader=False)
+        fileA.lookInsideForUniqueID()
+        self.failUnless(fileA.uniqueID)
+        fileA.myFilesTable.lookupID_UsingUniqueID(fileA)
 
-        # fileB=OFL.OrgFile(filenameB,inHeader=False)
+        fileA.useDatabaseToGetOutwardLinks()
 
-        # self.assertEqual(fileA.linksToOrgFilesList[0].filenameAP,fileB.filenameAP)
+        self.assertEqual(len(fileA.linksToOrgFilesList),1)
 
-        # os.remove(filenameA)
-        # os.remove(filenameB)
-        # os.remove(symlinkToFileB_Name)
+
+        fileB=OFL.OrgFile(filenameB,inHeader=False)
+        fileB.lookInsideForUniqueID()
+        self.failUnless(fileB.uniqueID)
+        fileB.myFilesTable.lookupID_UsingUniqueID(fileB)
+
+        fileB.useDatabaseToGetOutwardLinks()
+
+        self.assertEqual(len(fileB.linksToOrgFilesList),1)
+
+
+        self.assertEqual(fileA.linksToOrgFilesList[0].targetObj.filenameAP,fileB.filenameAP)
+        self.assertEqual(fileB.linksToOrgFilesList[0].targetObj.filenameAP,fileA.filenameAP)
+
+        os.remove(filenameA)
+        os.remove(filenameB)
+        os.remove(symlinkToFileB_Name)
 
 #head
 class TestsOfRepairingLinksToOrgFiles(unittest.TestCase):
@@ -5077,6 +5087,7 @@ class TestTraverseNodesToReachDesiredNode(unittest.TestCase):
 #head skip test remove_old_logs
 #head skip test of turn_off_logging, or TODO use test-first to get it working, then use it when wanted to suppress logging for files in header
 #head skip test of turn_logging_back_on_at_initial_level
+#head skip test of display_log_file
 #head skip test walk_files_looking_for_name_match
 #head skip test walk_org_files_looking_for_unique_id_match
 #head skip test find_all_name_matches_via_bash
@@ -5170,7 +5181,6 @@ class TestFindUniqueIDInsideFile(unittest.TestCase):
 #head skip test clean_up_on_error_in_operate_on_fileA
 class TestOperateOnFileA(unittest.TestCase):
     def test_1(self):
-
         #goal is to check on what happened in database
 
         reset_database()
@@ -5198,6 +5208,9 @@ class TestOperateOnFileA(unittest.TestCase):
         self.assertEqual(fileA.myFilesTable.lookupUniqueID_UsingID(fileA.myFilesTableID),fileA.uniqueID)
         self.assertEqual(fileB.myFilesTable.lookupUniqueID_UsingID(fileB.myFilesTableID),fileB.uniqueID)
 
+        self.assertEqual(fileA.myFilesTable.lookupID_UsingName(fileA),fileA.myFilesTableID)
+        self.assertEqual(fileB.myFilesTable.lookupID_UsingName(fileB),fileB.myFilesTableID)
+
         #http://stackoverflow.com/questions/3501382/checking-whether-a-variable-is-an-integer-or-not
         self.failUnless(isinstance(fileA.myFilesTable.lookupTimeLastFullyAnalyzed_UsingID(fileA.myFilesTableID),(int,long)))
 
@@ -5206,6 +5219,7 @@ class TestOperateOnFileA(unittest.TestCase):
         os.remove(symlinkToFileB_Name)
 
     def test_2(self):
+        '''focus on symlinksOrgTable'''
 
         reset_database()
 
@@ -5223,6 +5237,54 @@ class TestOperateOnFileA(unittest.TestCase):
         #focus on symlinks table
         self.assertEqual(fileA.symlinksTable.lookupTarget(os.path.abspath(symlinkToFileB_Name)),fileB.myFilesTableID)
         self.assertEqual(fileA.symlinksTable.lookupSymlinks(fileB),[os.path.abspath(symlinkToFileB_Name)])
+
+        os.remove(filenameA)
+        os.remove(filenameB)
+        os.remove(symlinkToFileB_Name)
+
+    def test_3(self):
+        '''focus on linksToOrgTable'''
+
+        reset_database()
+
+        runDebuggerOnlyInRepairStep=False
+        runDebuggerInEveryStep=False
+        runWithPauses=False
+
+        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
+    
+        showLog1=False
+        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileB=operate_on_fileA_w(filenameB,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+
+        #focus on linksTo table
+
+        files_A_LinksTo=OFL.db1.linksToOrgTable.makeListOfFilesAFileLinksTo(fileA)
+        self.assertEqual(len(files_A_LinksTo),1)
+        self.assertEqual(files_A_LinksTo[0].filenameAP,fileB.filenameAP)
+
+        filesLinkingToFileA=OFL.db1.linksToOrgTable.makeListOfFilesThatLinkToAFile(fileA)
+        self.assertEqual(len(filesLinkingToFileA),1)
+        self.assertEqual(filesLinkingToFileA[0].filenameAP,fileB.filenameAP)
+
+        files_B_LinksTo=OFL.db1.linksToOrgTable.makeListOfFilesAFileLinksTo(fileB)
+        self.assertEqual(len(files_B_LinksTo),1)
+        self.assertEqual(files_B_LinksTo[0].filenameAP,fileA.filenameAP)
+
+        filesLinkingToFileB=OFL.db1.linksToOrgTable.makeListOfFilesThatLinkToAFile(fileB)
+        self.assertEqual(len(filesLinkingToFileB),1)
+        self.assertEqual(filesLinkingToFileB[0].filenameAP,fileA.filenameAP)
+
+        OFL.db1.linksToOrgTable.removeEntriesMatchingFromFile(fileB)
+        files_B_LinksTo=OFL.db1.linksToOrgTable.makeListOfFilesAFileLinksTo(fileB)
+        self.failIf(files_B_LinksTo)
+
+        OFL.db1.linksToOrgTable.removeEntriesMatchingFromFile(fileA)
+        files_A_LinksTo=OFL.db1.linksToOrgTable.makeListOfFilesAFileLinksTo(fileA)
+        self.failIf(files_A_LinksTo)
+
+        self.assertEqual(OFL.db1.linksToOrgTable.getNRows(),0)
 
         os.remove(filenameA)
         os.remove(filenameB)
