@@ -1,5 +1,7 @@
 # orgFixLinks, a Python Utility
 
+**20161219: code under construction; currently debugging**
+
 Be sure to check out
 the [wiki](https://github.com/cashTangoTangoCash/orgFixLinks/wiki).  There is a
 cookbook section.
