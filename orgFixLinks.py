@@ -4410,7 +4410,7 @@ def operate_on_fileA(filename,userFixesLinksManually=False,runDebugger=False,deb
     logging.debug('Analyzed %s in %s seconds' % (filename,endTime-startTime))
 
     if isDryRun:
-        shutil.copy2(self.filenameAP+'.bak',self.filenameAP)
+        shutil.copy2(fileA.filenameAP+'.bak',fileA.filenameAP)
         # os.rename(fileA.filenameAP+'.bak',fileA.filenameAP)  #replace the rewritten file with original
         # logging.debug('Dry run: moved %s to %s' % (fileA.filenameAP+'.bak',fileA.filenameAP))
 

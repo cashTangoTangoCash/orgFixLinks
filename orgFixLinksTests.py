@@ -3999,53 +3999,199 @@ class TestOperateOnFileA(unittest.TestCase):
 
     def test_4(self):
         '''focus on the org files on disk: .bak, isDryRun, keepBackup'''
-        pass
 
-        # reset_database()
+        reset_database()
 
-        # runDebuggerOnlyInRepairStep=False
-        # runDebuggerInEveryStep=False
-        # runWithPauses=False
+        runDebuggerOnlyInRepairStep=False
+        runDebuggerInEveryStep=False
+        runWithPauses=False
 
-        # self.failUnless(OFL.keepBackup) #keepBackup should be True by default
-        # self.failIf(OFL.isDryRun) #isDryRun should be False by default
+        keepBackup=True  #keepBackup should be True by default
+        isDryRun=False  #isDryRun should be False by default
 
-        # filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
+        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
 
-        # filenameA_AP=os.path.abspath(filenameA)
+        filenameA_AP=os.path.abspath(filenameA)
+
+        if os.path.exists(filenameA_AP+'.bak'):
+            os.remove(filenameA_AP+'.bak')
+
+        # shutil.copy2(filenameA_AP,filenameA_AP+'.bak')
+
+        hashA1=get_hash(filenameA_AP)
+        # hashA1bak=get_hash(filenameA_AP+'.bak')
+    
+        showLog1=False
+        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=isDryRun,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses,keepBackup=keepBackup)
+
+        self.failUnless(os.path.exists(fileA.filenameAP))
+
+        self.assertEqual(filenameA_AP,fileA.filenameAP)
+
+        hashA2=get_hash(fileA.filenameAP)
+
+        self.failIf(hashA1==hashA2)  #the contents of fileA will have been changed
+        self.failUnless(os.path.exists(filenameA_AP+'.bak'))  #a backup of fileA would have been made
+
+        hashA2bak=get_hash(fileA.filenameAP+'.bak')
+
+        self.assertEqual(hashA1,hashA2bak)  #the contents of the backup of fileA must be identical to the contents of fileA before OFL operated on fileA
+
+        os.remove(filenameA)
+        os.remove(filenameA_AP+'.bak')
+        os.remove(filenameB)
+        os.remove(symlinkToFileB_Name)
+
+    def test_5(self):
+        '''focus on the org files on disk: .bak, isDryRun, keepBackup'''
+
+        reset_database()
+
+        runDebuggerOnlyInRepairStep=False
+        runDebuggerInEveryStep=False
+        runWithPauses=False
+
+        keepBackup=True  #keepBackup should be True by default
+        isDryRun=False  #isDryRun should be False by default
+
+        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
+
+        filenameA_AP=os.path.abspath(filenameA)
 
         # if os.path.exists(filenameA_AP+'.bak'):
         #     os.remove(filenameA_AP+'.bak')
 
-        # # shutil.copy2(filenameA_AP,filenameA_AP+'.bak')
+        shutil.copy2(filenameA_AP,filenameA_AP+'.bak')
 
-        # hashA1=get_hash(filenameA_AP)
-        # # hashA1bak=get_hash(filenameA_AP+'.bak')
+        hashA1=get_hash(filenameA_AP)
+        hashA1bak=get_hash(filenameA_AP+'.bak')
+
+        self.failUnless(hashA1==hashA1bak)
     
-        # showLog1=False
-        # fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        showLog1=False
+        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=isDryRun,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses,keepBackup=keepBackup)
 
-        # self.failUnless(os.path.exists(fileA.filenameAP))
+        self.failUnless(os.path.exists(fileA.filenameAP))
 
-        # self.assertEqual(filenameA_AP,fileA.filenameAP)
+        self.assertEqual(filenameA_AP,fileA.filenameAP)
 
-        # hashA2=get_hash(fileA.filenameAP)
+        hashA2=get_hash(fileA.filenameAP)
 
-        # self.failIf(hashA1==hashA2)
-        # self.failUnless(os.path.exists(filenameA_AP+'.bak'))
+        self.failIf(hashA1==hashA2)  #the contents of fileA will have been changed
 
-        # hashA2bak=get_hash(fileA.filenameAP+'.bak')
+        self.failUnless(os.path.exists(filenameA_AP+'.bak'))  #a backup of fileA would have been made
 
-        # self.assertEqual(hashA1,hashA2bak)
+        hashA2bak=get_hash(fileA.filenameAP+'.bak')
 
-        # #restore defaults
-        # OFL.keepBackup=True
-        # OFL.isDryRun=False
+        self.assertEqual(hashA1,hashA2bak)  #the contents of the backup of fileA must be identical to the contents of fileA before OFL operated on fileA
 
-        # os.remove(filenameA)
-        # os.remove(filenameA_AP+'.bak')
-        # os.remove(filenameB)
-        # os.remove(symlinkToFileB_Name)
+        os.remove(filenameA)
+        os.remove(filenameA_AP+'.bak')
+        os.remove(filenameB)
+        os.remove(symlinkToFileB_Name)
+
+    def test_6(self):
+        '''focus on the org files on disk: .bak, isDryRun, keepBackup'''
+
+        reset_database()
+
+        runDebuggerOnlyInRepairStep=False
+        runDebuggerInEveryStep=False
+        runWithPauses=False
+
+        keepBackup=True  #keepBackup should be True by default
+        isDryRun=True  #isDryRun should be False by default
+
+        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
+
+        filenameA_AP=os.path.abspath(filenameA)
+
+        if os.path.exists(filenameA_AP+'.bak'):
+            os.remove(filenameA_AP+'.bak')
+
+        # shutil.copy2(filenameA_AP,filenameA_AP+'.bak')
+
+        hashA1=get_hash(filenameA_AP)
+        # hashA1bak=get_hash(filenameA_AP+'.bak')
+    
+        showLog1=False
+        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=isDryRun,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses,keepBackup=keepBackup)
+
+        self.failUnless(os.path.exists(fileA.filenameAP))
+
+        self.assertEqual(filenameA_AP,fileA.filenameAP)  #filename of fileA does not change
+
+        hashA2=get_hash(fileA.filenameAP)
+
+        self.failUnless(hashA1==hashA2)  #dry run: the contents of fileA must not change
+        self.failUnless(os.path.exists(filenameA_AP+'.bak'))  #a backup of fileA would have been made
+
+        hashA2bak=get_hash(fileA.filenameAP+'.bak')
+
+        self.assertEqual(hashA1,hashA2bak)  #the contents of the backup of fileA must be identical to the contents of fileA before OFL operated on fileA
+
+        os.remove(filenameA)
+        os.remove(filenameA_AP+'.bak')
+        os.remove(filenameB)
+        os.remove(symlinkToFileB_Name)
+
+    def test_7(self):
+        '''focus on the org files on disk: .bak, isDryRun, keepBackup'''
+
+        reset_database()
+
+        runDebuggerOnlyInRepairStep=False
+        runDebuggerInEveryStep=False
+        runWithPauses=False
+
+        keepBackup=True  #keepBackup should be True by default
+        isDryRun=True  #isDryRun should be False by default
+
+        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
+
+        filenameA_AP=os.path.abspath(filenameA)
+
+        # if os.path.exists(filenameA_AP+'.bak'):
+        #     os.remove(filenameA_AP+'.bak')
+
+        #make an initial .bak file for fileA that is different than fileA
+        fileALines=['* other text [[file:./'+symlinkToFileB_Name+']] other text\n']
+
+        fileA=open(filenameA,'r')
+        linesA1=fileA.readlines()
+        fileA.close()
+        linesA1.append('another line to make contents of .bak of fileA initially different\n')
+
+        fileAbak=open(filenameA+'.bak','w')
+        fileAbak.writelines(linesA1)
+        fileAbak.close()
+
+        hashA1=get_hash(filenameA_AP)
+        hashA1bak=get_hash(filenameA_AP+'.bak')
+
+        self.failIf(hashA1==hashA1bak) #contents of initial fileA and its initial .bak file must differ
+    
+        showLog1=False
+        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=isDryRun,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses,keepBackup=keepBackup)
+
+        self.failUnless(os.path.exists(fileA.filenameAP))
+
+        self.assertEqual(filenameA_AP,fileA.filenameAP) #filename of fileA does not change
+
+        hashA2=get_hash(fileA.filenameAP)
+
+        self.failUnless(hashA1==hashA2)  #dry run: the contents of fileA will not change
+
+        self.failUnless(os.path.exists(filenameA_AP+'.bak'))  #a backup of fileA would have been made
+
+        hashA2bak=get_hash(fileA.filenameAP+'.bak')
+
+        self.assertEqual(hashA1,hashA2bak)  #the contents of the backup of fileA must be identical to the contents of fileA before OFL operated on fileA
+
+        os.remove(filenameA)
+        os.remove(filenameA_AP+'.bak')
+        os.remove(filenameB)
+        os.remove(symlinkToFileB_Name)
 
 #head skip test user_says_stop_spidering
 #head skip test clean_up_before_ending_spidering_run
@@ -5369,12 +5515,14 @@ def reset_database():
     OFL.set_up_blank_database()
 
 #head
-def operate_on_fileA_w(filename,runDebugger=False,isDryRun=False,showLog=False,runWPauses=True):
+def operate_on_fileA_w(filename,runDebugger=False,isDryRun=False,showLog=False,runWPauses=True,keepBackup=True):
     '''operate on file A wrapper'''
+
+    #TODO this wrapper is a bad idea since the default inputs can easily diverge from the default inputs in OFL
 
     if showLog and runWPauses:
         wait_on_user_input('pausing to allow you to read text on screen before file is operated on and log file displayed')
-    return OFL.operate_on_fileA(filename=filename,runDebugger=runDebugger,isDryRun=isDryRun,showLog=showLog)
+    return OFL.operate_on_fileA(filename=filename,runDebugger=runDebugger,isDryRun=isDryRun,showLog=showLog,keepBackup=keepBackup)
 
 def wait_on_user_input(comment1='Now pausing to allow you to examine database with command line tool; examine files with emacs;  or otherwise look at what is happening'):
     print comment1
