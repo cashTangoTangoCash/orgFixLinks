@@ -1473,7 +1473,7 @@ class LinkToLocalFile(Link):
                     self.description=os.path.basename(fileB.filenameAP)
 
                     if len(self.description)>maxLengthOfVisibleLinkText:
-                        logging.warning('Basename %s is longer than max visible link text %s' % (os.path.basename(fileB.filenameAP),maxLengthOfVisibleLinkText))
+                        logging.info('Basename %s is longer than max visible link text %s' % (os.path.basename(fileB.filenameAP),maxLengthOfVisibleLinkText))
                     return None
                 else:
                     #description still makes sense, so leave it alone
@@ -1487,7 +1487,7 @@ class LinkToLocalFile(Link):
 
                     self.description=os.path.basename(fileB.filenameAP)
                     if len(self.description)>maxLengthOfVisibleLinkText:
-                        logging.warning('Basename %s is longer than max visible link text %s' % (os.path.basename(fileB.filenameAP),maxLengthOfVisibleLinkText))
+                        logging.info('Basename %s is longer than max visible link text %s' % (os.path.basename(fileB.filenameAP),maxLengthOfVisibleLinkText))
                     return None
                 else:
                     #description still makes sense, so leave it alone
@@ -1501,7 +1501,7 @@ class LinkToLocalFile(Link):
 
                     self.description=os.path.basename(fileB.filenameAP)        
                     if len(self.description)>maxLengthOfVisibleLinkText:
-                        logging.warning('Basename %s is longer than max visible link text %s' % (os.path.basename(fileB.filenameAP),maxLengthOfVisibleLinkText))
+                        logging.info('Basename %s is longer than max visible link text %s' % (os.path.basename(fileB.filenameAP),maxLengthOfVisibleLinkText))
 
                     return None
                 else:
@@ -3038,17 +3038,19 @@ class OrgFile(LocalFile):
                         b=LinkToOrgFile.myUniqueIDRegex.search(child.blurb[0])
                         if b:
                             #in this case there should be one and only one link; an instance of LinkToOrgFile
-                            assert child.linksToOrgFiles[0], 'malformed Node in header of %s; lacks LinkToOrgFile object' % self.filenameAP
-                            assert len(child.linksToOrgFiles)==1, 'malformed Node in header of %s; wrong number of LinkToOrgFile objects' % self.filenameAP
+                            #20161219: have to relax this error trapping with assert because definition of a link changed in this script and now my existing org files have nonconforming headers
+                            # assert child.linksToOrgFiles[0], 'malformed Node in header of %s; lacks LinkToOrgFile object' % self.filenameAP
+                            # assert len(child.linksToOrgFiles)==1, 'malformed Node in header of %s; wrong number of LinkToOrgFile objects' % self.filenameAP
 
-                            headerLink=child.linksToOrgFiles[0]
-                            headerLinkUniqueID=b.group('uniqueID')
-                            #TODO was it desirable to assign unique ID to an attribute of headerLink target object?
+                            if len(child.linksToOrgFiles)==1:  #TODO want to log when this is not met, but will get too many errors in log file with my existing org files
+                                headerLink=child.linksToOrgFiles[0]
+                                headerLinkUniqueID=b.group('uniqueID')
+                                #TODO was it desirable to assign unique ID to an attribute of headerLink target object?
 
-                            #go through body node links and assign unique IDs on file
-                            for link1 in self.linksToOrgFilesList:  #for each body node link to an org file
-                                if link1.targetObj.filenameAP==headerLink.targetObj.filenameAP:
-                                    link1.targetObj.uniqueIDFromHeader=headerLinkUniqueID
+                                #go through body node links and assign unique IDs on file
+                                for link1 in self.linksToOrgFilesList:  #for each body node link to an org file
+                                    if link1.targetObj.filenameAP==headerLink.targetObj.filenameAP:
+                                        link1.targetObj.uniqueIDFromHeader=headerLinkUniqueID
             else:
                 pass
                 #TODO is it an error if header does not have section of outgoing links to org files?
