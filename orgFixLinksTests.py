@@ -3,6 +3,8 @@ import orgFixLinks as OFL
 import datetime
 import os
 import pudb
+import shutil
+import hashlib
 
 #must know how to do a single test: see http://stackoverflow.com/questions/15971735/running-single-test-from-unittest-testcase-via-command-line
 #reason: this entire script runs for approx 40 seconds
@@ -2876,6 +2878,1187 @@ class Test_OFL_OrgFile(unittest.TestCase):
         os.remove(symlinkToFileB_Name)
 
 #head
+
+#head
+#head
+#head
+#head test standalone functions
+class TestAllUpperToAllLowercase(unittest.TestCase):
+    def test_1(self):
+        someText='I AM ALL UPPER CASE'
+        result='i am all upper case'
+        self.assertEqual(OFL.all_upper_to_all_lowercase(someText),result)
+
+    def test_2(self):
+        someText='I AM not ALL UPPER CASE'
+        result=someText
+        self.assertEqual(OFL.all_upper_to_all_lowercase(someText),result)
+
+#head figure out how to test rand_int_as_string
+class TestGetAsteriskLevel(unittest.TestCase):
+    def test_1(self):
+        '''test get_asterisk_level'''
+        line='* junk text\n'
+        self.assertEqual(OFL.get_asterisk_level(line),1)
+
+    def test_2(self):        
+        '''test get_asterisk_level'''
+        line='*** junk text\n'
+        self.assertEqual(OFL.get_asterisk_level(line),3)
+
+    def test_3(self):        
+        '''test get_asterisk_level'''
+        line='junk text\n'
+        self.assertEqual(OFL.get_asterisk_level(line),0)
+
+    def test_4(self):        
+        '''test get_asterisk_level'''
+        line='junk *** text ***\n'
+        self.assertEqual(OFL.get_asterisk_level(line),0)
+
+class TestGetBaseAsteriskLevel(unittest.TestCase):
+    def test_1(self):
+        '''test get_base_asterisk_level'''
+        lines=['line1\n','line2\n','line3\n']
+        self.assertEqual(OFL.get_base_asterisk_level(lines),0)
+
+    def test_2(self):
+        '''test get_base_asterisk_level'''
+        lines=['* line1\n','line2\n','line3\n']
+        self.assertEqual(OFL.get_base_asterisk_level(lines),1)
+
+    def test_3(self):
+        '''test get_base_asterisk_level'''
+        lines=['* line1\n','** line2\n','*** line3\n']
+        self.assertEqual(OFL.get_base_asterisk_level(lines),1)
+
+    def test_4(self):
+        '''test get_base_asterisk_level'''
+        lines=['*** line1\n','** line2\n','* line3\n']
+        self.assertEqual(OFL.get_base_asterisk_level(lines),1)
+
+    def test_5(self):
+        '''test get_base_asterisk_level'''
+        lines=['*** line1\n','line2\n','** line3\n','line4\n','* line5\n','line6\n']
+        self.assertEqual(OFL.get_base_asterisk_level(lines),1)
+
+    def test_6(self):
+        '''test get_base_asterisk_level'''
+        lines=['***   line1\n','**   line2\n','**   line3\n']  #extra spaces after leading asterisks
+        self.assertEqual(OFL.get_base_asterisk_level(lines),2)
+
+class TestSeparateParentLinesDescendantLines(unittest.TestCase):
+    def test_1(self):
+        '''test separate_parent_lines_descendant_lines'''
+        lines=['* line1','** line2','*** line3']
+        parentLines,descendantLines=OFL.separate_parent_lines_descendant_lines(lines)
+        self.assertEqual(parentLines,['* line1'])
+        self.assertEqual(descendantLines,['** line2','*** line3'])
+
+    def test_2(self):
+        '''test separate_parent_lines_descendant_lines'''
+        lines=['line1','line2','line3']
+        parentLines,descendantLines=OFL.separate_parent_lines_descendant_lines(lines)
+        self.assertEqual(parentLines,lines)
+        self.assertEqual(descendantLines,None)
+
+    def test_3(self):
+        '''test separate_parent_lines_descendant_lines'''
+        lines=['* line1','line2','line3']
+        parentLines,descendantLines=OFL.separate_parent_lines_descendant_lines(lines)
+        self.assertEqual(parentLines,lines)
+        self.assertEqual(descendantLines,None)
+
+    def test_4(self):
+        '''test separate_parent_lines_descendant_lines'''
+        lines=['* line1','line2','** line3','line 4']
+        parentLines,descendantLines=OFL.separate_parent_lines_descendant_lines(lines)
+        self.assertEqual(parentLines,['* line1','line2'])
+        self.assertEqual(descendantLines,['** line3','line 4'])
+
+    def test_5(self):
+        '''test separate_parent_lines_descendant_lines'''
+        lines=['* line1','** line2','*** line3']
+        parentLines,descendantLines=OFL.separate_parent_lines_descendant_lines(lines)
+        self.assertEqual(parentLines,['* line1'])
+        self.assertEqual(descendantLines,['** line2','*** line3'])
+
+        lines=['* line1','blurb 1','** line2','blurb 2','*** line3']
+        self.assertEqual(parentLines,['* line1'])
+        self.assertEqual(descendantLines,['** line2','*** line3'])
+
+class TestListOfChildNodesFromLines(unittest.TestCase):
+    def test_1(self):
+        '''test list_of_child_nodes_from_lines: no line starts with asterisk'''
+        lines=['first\n','second\n','third\n']
+        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
+        self.assertEqual([],childNodeList)
+
+    def test_2(self):
+        '''test list_of_child_nodes_from_lines: no line starts with asterisk'''
+        lines=['* first\n','second\n','* third\n','fourth\n']
+        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
+
+        expectedList=[OFL.Node(lines[0:2],sourceFile=None),OFL.Node(lines[2:],sourceFile=None)]
+
+        #this does not work: appears that instances are at different memory locations, so are unequal?
+        # self.assertEqual(expectedList,childNodeList)
+
+        self.assertEqual(expectedList[0].myLines,childNodeList[0].myLines)
+        self.assertEqual(expectedList[1].myLines,childNodeList[1].myLines)
+        self.assertEqual(len(childNodeList),2)
+
+    def test_3(self):
+        '''test list_of_child_nodes_from_lines: no line starts with asterisk'''
+        lines=['* first\n','** second\n','* third\n','** fourth\n']
+        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
+
+        expectedList=[OFL.Node(lines[0:1],sourceFile=None),OFL.Node(lines[2:3],sourceFile=None)]
+
+        self.assertEqual(expectedList[0].myLines,childNodeList[0].myLines)
+        self.assertEqual(expectedList[1].myLines,childNodeList[1].myLines)
+        self.assertEqual(len(childNodeList),2)
+
+    def test_4(self):
+        '''test list_of_child_nodes_from_lines: no line starts with asterisk'''
+        lines=['** first\n','*** second\n','** third\n','*** fourth\n']
+        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
+
+        expectedList=[OFL.Node(lines[0:1],sourceFile=None),OFL.Node(lines[2:3],sourceFile=None)]
+
+        self.assertEqual(expectedList[0].myLines,childNodeList[0].myLines)
+        self.assertEqual(expectedList[1].myLines,childNodeList[1].myLines)
+        self.assertEqual(len(childNodeList),2)
+
+#head
+class TestLineToList1(unittest.TestCase):
+    def test_1(self):
+        line='some text [[a link with brackets]] more text [[another link with brackets][description]]. \n'
+        outputList=['some text ','[[a link with brackets]]',' more text ','[[another link with brackets][description]]','. \n']  #note the spaces
+        self.assertEqual(OFL.line_to_list1(line),outputList)
+
+    def test_2(self):
+        line='some text [[a link with brackets]] more text [[another link with brackets][description]].\n'
+        outputList=['some text ','[[a link with brackets]]',' more text ','[[another link with brackets][description]]','.\n']
+        self.assertEqual(OFL.line_to_list1(line),outputList)
+
+    def test_3(self):
+        line='some text [[a link with brackets]] more text [[another link with brackets][description]].  \n'
+        outputList=['some text ','[[a link with brackets]]',' more text ','[[another link with brackets][description]]','.  \n']
+        self.assertEqual(OFL.line_to_list1(line),outputList)
+
+class TestTextToLinkAndDescriptionDoubleBrackets(unittest.TestCase):
+    def test_1(self):
+        someText='[[link link]]'
+        link,description=OFL.text_to_link_and_description_double_brackets(someText)
+        self.assertEqual('link link',link)
+        self.assertEqual(None,description)
+
+    def test_2(self):
+        someText='[[ link link ][ descr descr ]]'
+        link,description=OFL.text_to_link_and_description_double_brackets(someText)
+        self.assertEqual(' link link ',link)
+        self.assertEqual(' descr descr ',description)
+
+class TestTextFromLinkAndDescription(unittest.TestCase):
+    def test_1(self):
+        link='anything'
+        description=None
+        hasBrackets=False
+        expectedText='anything'
+        self.assertEqual(expectedText,OFL.text_from_link_and_description(link,description,hasBrackets))
+
+    def test_2(self):
+        link='anything'
+        description=None
+        hasBrackets=True
+        expectedText='[[anything]]'
+        self.assertEqual(expectedText,OFL.text_from_link_and_description(link,description,hasBrackets))
+
+    def test_3(self):
+        link='anything'
+        description='any description'
+        hasBrackets=True
+        expectedText='[[anything][any description]]'
+        self.assertEqual(expectedText,OFL.text_from_link_and_description(link,description,hasBrackets))
+
+    def test_4(self):
+        link='anything'
+        description='any description'
+        hasBrackets=False
+        expectedText='anything'
+        self.failUnlessRaises(ValueError,OFL.text_from_link_and_description,link,description,hasBrackets)
+
+class TestRemoveTildeFromOrgLink(unittest.TestCase):
+    def test_1(self):
+        link='file:anyName.org~'
+        link2='file:anyName.org'
+        self.assertEqual(link2,OFL.remove_tilde_from_org_link(link))
+
+    def test_2(self):
+        link='file:anyName.org'
+        self.assertEqual(link,OFL.remove_tilde_from_org_link(link))
+
+    def test_3(self):
+        link='file:.org~anyName.org'
+        self.assertEqual(link,OFL.remove_tilde_from_org_link(link))
+
+    def test_4(self):
+        link='file:.org~anyName.org~'
+        self.assertEqual(link,OFL.remove_tilde_from_org_link(link))  #TODO want to use regular expressions to improve this
+
+class TestSplitOnNonWhitespaceKeepEverything(unittest.TestCase):
+    def test_1(self):
+        line='how now  brown   cow\tand.  \n'
+        list=OFL.split_on_non_whitespace_keep_everything(line)
+        # expectedList=['how',' ','now','  ','brown','   ','cow','\t','and.','  \n','']
+        expectedList=['how',' ','now','  ','brown','   ','cow','\t','and.','  \n']
+        self.assertEqual(line,''.join(list))
+        self.assertEqual(list,expectedList)
+
+    def test_2(self):
+        line='* tags \t\t:tag1:tag2:\n'
+        list=OFL.split_on_non_whitespace_keep_everything(line)
+        # expectedList=['*',' ','tags',' \t\t',':tag1:tag2:','\n','']
+        expectedList=['*',' ','tags',' \t\t',':tag1:tag2:','\n']
+        self.assertEqual(line,''.join(list))
+        self.assertEqual(list,expectedList)
+
+class TestFindBestRegexMatchForText(unittest.TestCase):
+    #head this is where you test if your regexes can correctly identify links
+    #head function name is somewhat confusing; input is link instead of text=[[link][description]]
+    #head temp lines for copy and paste:
+    # self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexes['file:anyFilename.org::anything or file+sys:anyFilename.org::anything or file+emacs:anyFilename.org::anything or docview:anyFilename.org::anything'])
+    # self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexes['/anyFilename.org::anything  or  ./anyFilename.org::anything  or  ~/anyFilename.org::anything'])
+    # self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexes['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org'])
+    # self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexes['/anyFilename.org  or  ./anyFilename.org  or  ~/anyFilename.org'])
+
+    # self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexes['file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything'])
+    # self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexes['/anyFilename::anything  or  ./anyFilename::anything  or  ~/anyFilename::anything'])
+    # self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexes['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
+    # self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexes['/anyFilename  or  ./anyFilename  or  ~/anyFilename'])
+
+    #head these tests are not in order; too much of a chore to renumber them
+    def test_1(self):
+        '''non-link text'''
+        #see OFL.Node.__init__
+        someText='non_link_text'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(someText,hasBrackets=False)
+        self.failIf(matchingRegex)
+
+    def test_1B(self):
+        '''internal link'''
+        someText='non link text'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(someText,hasBrackets=True)
+        self.failIf(matchingRegex)
+
+    def test_2(self):
+        '''non-link text'''
+        someText='#my-custom-id'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(someText,hasBrackets=False)
+        self.failIf(matchingRegex)
+
+    def test_2B(self):
+        '''internal link'''
+        someText='#my-custom-id'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(someText,hasBrackets=True)
+        self.failIf(matchingRegex)
+
+    def test_3(self):
+        '''non link text'''
+        someText='id:B7423F4D-2E8A-471B-8810-C40F074717E9'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(someText,hasBrackets=False)
+        self.failIf(matchingRegex)
+
+    def test_3B(self):
+        '''internal link'''
+        someText='id:B7423F4D-2E8A-471B-8810-C40F074717E9'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(someText,hasBrackets=True)
+        self.failIf(matchingRegex)
+
+    def test_4(self):
+        '''a web link'''
+        someText='http://www.astro.uva.nl/~dominik'  #clickable without brackets
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(someText,hasBrackets=False)
+        self.failIf(matchingRegex)
+
+    def test_4B(self):
+        '''a web link'''
+        someText='http://www.astro.uva.nl/~dominik'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(someText,hasBrackets=True)
+        self.failIf(matchingRegex)
+
+    def test_5(self):
+        '''a document identifier'''
+        someText='doi:10.1000/182'  #clickable without brackets
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(someText,hasBrackets=False)
+        self.failIf(matchingRegex)
+
+    def test_5B(self):
+        '''a document identifier'''
+        someText='doi:10.1000/182'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(someText,hasBrackets=True)
+        self.failIf(matchingRegex)
+
+    def test_6(self):
+        '''not clickable'''
+        link1='OrgModeFileCrawlerMain.org'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
+        self.failIf(matchingRegex)
+
+    def test_6B(self):
+        '''internal link'''
+        link1='OrgModeFileCrawlerMain.org'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
+        self.failIf(matchingRegex)
+
+    def test_7(self):
+        '''link to local org file'''
+        link1='file:OrgModeFileCrawlerMain.org'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
+        self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexesNoBrackets['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org'])
+        self.assertEqual(matchingClass,OFL.LinkToOrgFile)
+
+    def test_7B(self):
+        '''link to local org file'''
+        link1='file:OrgModeFileCrawlerMain.org'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
+        self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexesBrackets['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org'])
+        self.assertEqual(matchingClass,OFL.LinkToOrgFile)
+
+    def test_8(self):
+        '''not clickable'''
+        link1='/OrgModeFileCrawlerMain.org'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
+        self.failIf(matchingRegex)
+
+    def test_8B(self):
+        '''link to local org file'''
+        link1='/OrgModeFileCrawlerMain.org'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
+        self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexesBrackets['/anyFilename.org  or  ./anyFilename.org  or  ~/anyFilename.org'])
+        self.assertEqual(matchingClass,OFL.LinkToOrgFile)
+
+    def test_9(self):
+        '''link to local org file'''
+        link1='file:/OrgModeFileCrawlerMain.org'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
+        self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexesNoBrackets['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org'])
+        self.assertEqual(matchingClass,OFL.LinkToOrgFile)
+
+    def test_9B(self):
+        '''link to local org file'''
+        link1='file:/OrgModeFileCrawlerMain.org'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
+        self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexesBrackets['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org'])
+        self.assertEqual(matchingClass,OFL.LinkToOrgFile)
+
+    def test_10(self):
+        '''not clickable'''
+        link1='~/OrgModeFileCrawlerMain.org'
+        hasBrackets=False
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
+        self.failIf(matchingRegex)
+
+    def test_10B(self):
+        '''link to local org file'''
+        link1='~/OrgModeFileCrawlerMain.org'
+        hasBrackets=True
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
+        self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexesBrackets['/anyFilename.org  or  ./anyFilename.org  or  ~/anyFilename.org'])
+        self.assertEqual(matchingClass,OFL.LinkToOrgFile)
+
+    def test_11(self):
+        '''link to local org file'''
+        link1='file:~/OrgModeFileCrawlerMain.org'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
+        self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexesNoBrackets['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org'])
+        self.assertEqual(matchingClass,OFL.LinkToOrgFile)
+
+    def test_11B(self):
+        '''link to local org file'''
+        link1='file:~/OrgModeFileCrawlerMain.org'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
+        self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexesBrackets['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org'])
+        self.assertEqual(matchingClass,OFL.LinkToOrgFile)
+
+    def test_12(self):
+        '''not clickable'''
+        link1='OrgModeFileCrawlerMain.org::what about'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
+        self.failIf(matchingRegex)
+
+    def test_12(self):
+        '''not clickable'''
+        link1='OrgModeFileCrawlerMain.org::what about'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
+        self.failIf(matchingRegex)
+
+    def test_12B(self):
+        '''internal link'''
+        link1='OrgModeFileCrawlerMain.org::what about'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
+        self.failIf(matchingRegex)
+
+    def test_13(self):
+        '''link to local org file'''
+        link1='file:OrgModeFileCrawlerMain.org::what about'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
+        self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexesNoBrackets['file:anyFilename.org::anything or file+sys:anyFilename.org::anything or file+emacs:anyFilename.org::anything or docview:anyFilename.org::anything'])
+        self.assertEqual(matchingClass,OFL.LinkToOrgFile)
+
+    def test_13B(self):
+        '''link to local org file'''
+        link1='file:OrgModeFileCrawlerMain.org::what about'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
+        self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexesBrackets['file:anyFilename.org::anything or file+sys:anyFilename.org::anything or file+emacs:anyFilename.org::anything or docview:anyFilename.org::anything'])
+        self.assertEqual(matchingClass,OFL.LinkToOrgFile)
+
+    def test_14(self):
+        '''not clickable'''
+        link1=os.path.join(os.path.expanduser('~'),'Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py')
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
+        self.failIf(matchingRegex)
+
+    def test_14B(self):
+        '''local non org file'''
+        link1=os.path.join(os.path.expanduser('~'),'Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py')
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesBrackets['/anyFilename  or  ./anyFilename  or  ~/anyFilename'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test_15(self):
+        '''local non org file'''
+        link1='file:'+os.path.join(os.path.expanduser('~'),'Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py')
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesNoBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test_15B(self):
+        '''local non org file'''
+        link1='file:'+os.path.join(os.path.expanduser('~'),'Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py')
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test_16(self):
+        '''not clickable'''
+        link1='./20160908ExceptionTest.py'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
+        self.failIf(matchingRegex)
+
+    def test_16B(self):
+        '''local non org file'''
+        link1='./20160908ExceptionTest.py'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesBrackets['/anyFilename  or  ./anyFilename  or  ~/anyFilename'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test_17(self):
+        '''local non org file'''
+        link1='file:./20160908ExceptionTest.py'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesNoBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test_17B(self):
+        '''local non org file'''
+        link1='file:./20160908ExceptionTest.py'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test_18(self):
+        '''not clickable'''
+        link1='./20160908Exception Test.py'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
+        self.failIf(matchingRegex)
+
+    def test_18B(self):
+        '''local non org file'''
+        link1='./20160908Exception Test.py' #without brackets, this link would not be clickable in org
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesBrackets['/anyFilename  or  ./anyFilename  or  ~/anyFilename'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test_19(self):
+        '''local non org file'''
+        link1='file:./20160908Exception Test.py'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesNoBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test_19B(self):
+        '''local non org file'''
+        link1='file:./20160908Exception Test.py'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test_20(self):
+        '''not clickable'''
+        link1='~/20160908ExceptionTest.py'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
+        self.failIf(matchingRegex)
+
+    def test_20B(self):
+        '''local non org file'''
+        link1='~/20160908ExceptionTest.py'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesBrackets['/anyFilename  or  ./anyFilename  or  ~/anyFilename'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test_21(self):
+        '''local non org file'''
+        link1='file:~/20160908ExceptionTest.py'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesNoBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test_21B(self):
+        '''local non org file'''
+        link1='file:~/20160908ExceptionTest.py'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test_22(self):
+        '''not clickable'''
+        link1='20160908ExceptionTest.py'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
+        self.failIf(matchingRegex)
+
+    def test_22B(self):
+        '''internal link'''
+        link1='20160908ExceptionTest.py' #without brackets, this link would not be clickable in org.  with brackets, org sees it as a clickable internal link.
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
+        self.failIf(matchingRegex)
+
+    def test_23(self):
+        '''local non org file'''
+        link1='file:20160908ExceptionTest.py'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesNoBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test_23B(self):
+        '''local non org file'''
+        link1='file:20160908ExceptionTest.py'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test_24(self):
+        '''not clickable'''
+        link1='PythonScriptOldVersions'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
+        self.failIf(matchingRegex)
+
+    def test_24B(self):
+        '''internal link'''
+        link1='PythonScriptOldVersions'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
+        self.failIf(matchingRegex)
+
+    def test_25(self):
+        '''local directory'''
+        link1='file:PythonScriptOldVersions'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesNoBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test_25B(self):
+        '''local directory'''
+        link1='file:PythonScriptOldVersions'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test_26(self):
+        '''file on remote machine; not clickable'''
+        link1='/myself@some.where:papers/last.pdf'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
+        self.failIf(matchingRegex)
+
+    def test_26B(self):
+        '''file on remote machine'''
+        link1='/myself@some.where:papers/last.pdf'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
+        self.failIf(matchingRegex)
+
+    def test_27(self):
+        '''file on remote machine'''
+        link1='file:/myself@some.where:papers/last.pdf'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
+        self.failIf(matchingRegex)
+
+    def test_27B(self):
+        '''file on remote machine'''
+        link1='file:/myself@some.where:papers/last.pdf'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
+        self.failIf(matchingRegex)
+
+    def test_28(self):
+        '''not clickable'''
+        link1='20160908ExceptionTest.py::23'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
+        self.failIf(matchingRegex)
+
+    def test_28B(self):
+        '''internal link'''
+        link1='20160908ExceptionTest.py::23'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
+        self.failIf(matchingRegex)
+
+    def test_29(self):
+        '''local non-org file'''
+        link1='file:20160908ExceptionTest.py::23'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesNoBrackets['file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test_29B(self):
+        '''local non-org file'''
+        link1='file:20160908ExceptionTest.py::23'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesBrackets['file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test_30(self):
+        '''not clickable'''
+        link1=os.path.join(os.path.expanduser('~'),'Documents/Computer/Software/PythonNotes/SeverancePythonForInformatics/PythonForInformaticsSeverance009d2.pdf')+'::32'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
+        self.failIf(matchingRegex)
+
+    def test_30B(self):
+        '''local non-org file'''
+        link1=os.path.join(os.path.expanduser('~'),'Documents/Computer/Software/PythonNotes/SeverancePythonForInformatics/PythonForInformaticsSeverance009d2.pdf')+'::32'  #not clickable in org without brackets
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesBrackets['/anyFilename::anything  or  ./anyFilename::anything  or  ~/anyFilename::anything'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test_31(self):
+        '''local non-org file'''
+        link1='file:'+os.path.join(os.path.expanduser('~'),'Documents/Computer/Software/PythonNotes/SeverancePythonForInformatics/PythonForInformaticsSeverance009d2.pdf')+'::32'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesNoBrackets['file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test_31B(self):
+        '''local non-org file'''
+        link1='file:'+os.path.join(os.path.expanduser('~'),'Documents/Computer/Software/PythonNotes/SeverancePythonForInformatics/PythonForInformaticsSeverance009d2.pdf')+'::32'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesBrackets['file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test_32(self):
+        '''not clickable'''
+        link1='OrgModeFileCrawlerMain.org::**what about'  #a heading search in an org file
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
+        self.failIf(matchingRegex)
+
+    def test_32B(self):
+        '''internal link'''
+        link1='OrgModeFileCrawlerMain.org::**what about'  #a heading search in an org file
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
+        self.failIf(matchingRegex)
+
+    def test_33(self):
+        '''local org file'''
+        link1='file:OrgModeFileCrawlerMain.org::**what about'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
+        self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexesNoBrackets['file:anyFilename.org::anything or file+sys:anyFilename.org::anything or file+emacs:anyFilename.org::anything or docview:anyFilename.org::anything'])
+        self.assertEqual(matchingClass,OFL.LinkToOrgFile)
+
+    def test_33B(self):
+        '''local org file'''
+        link1='file:OrgModeFileCrawlerMain.org::**what about'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
+        self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexesBrackets['file:anyFilename.org::anything or file+sys:anyFilename.org::anything or file+emacs:anyFilename.org::anything or docview:anyFilename.org::anything'])
+        self.assertEqual(matchingClass,OFL.LinkToOrgFile)
+
+    def test_34(self):
+        '''local non org file'''
+        link1='file+sys:./20160807PuzzleOverProgramLogic.xoj'  #open via OS, like double-clicking
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesNoBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test_34B(self):
+        '''local non org file'''
+        link1='file+sys:./20160807PuzzleOverProgramLogic.xoj'  #open via OS, like double-clicking
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test_35(self):
+        '''local non org file'''
+        link1='file+emacs:./20160807PuzzleOverProgramLogic.xoj'  #force opening by emacs
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesNoBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test_35B(self):
+        '''local non org file'''
+        link1='file+emacs:./20160807PuzzleOverProgramLogic.xoj'  #force opening by emacs
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test_36(self):
+        '''local non org file'''
+        link1='docview:'+os.path.join(os.path.expanduser('~'),'Documents/Computer/Software/PythonNotes/SeverancePythonForInformatics/PythonForInformaticsSeverance009d2.pdf')+'::32'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesNoBrackets['file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test_36B(self):
+        '''local non org file'''
+        link1='docview:'+os.path.join(os.path.expanduser('~'),'Documents/Computer/Software/PythonNotes/SeverancePythonForInformatics/PythonForInformaticsSeverance009d2.pdf')+'::32'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
+        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesBrackets['file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything'])
+        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
+
+    def test_37(self):
+        '''not clickable'''
+        link1='file:'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
+        self.failIf(matchingRegex)
+
+    def test_37B(self):
+        '''internal link'''
+        link1='file:'
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
+        self.failIf(matchingRegex)
+
+    def test_38B(self):
+        '''empty brackets'''
+        link1=''
+        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
+        self.failIf(matchingRegex)
+
+    #head long list of links that orgFixLinks.py ignores
+    def test_39(self):
+        #long list of org mode links that orgFixLinks.py ignores
+        link1List=[]
+
+        link1='news:comp.emacs'  # usenet link;  does not require brackets; nothing happens when I try opening it in org mode
+        link1List.append(link1)
+        link1='mailto:adent@galaxy.net'  # mail link;  does not require brackets
+        link1List.append(link1)
+        link1='mhe:folder' # MH-E folder link
+        link1List.append(link1)
+        link1='mhe:folder#id' # MH-E message link
+        link1List.append(link1)
+        link1='rmail:folder' # RMAIL folder link
+        link1List.append(link1)
+        link1='rmail:folder#id' # RMAIL message link
+        link1List.append(link1)
+        link1='gnus:folder' # GNUS folder link
+        link1List.append(link1)
+        link1='gnus:folder#id' # GNUS message link
+        link1List.append(link1)
+        link1='gnus:group' # Gnus group link
+        link1List.append(link1)
+        link1='gnus:group#id' # Gnus article link
+        link1List.append(link1)
+        link1='bbdb:R.*Stallman' # BBDB link (with regexp)
+        link1List.append(link1)
+        link1='irc:/irc.com/#emacs/bob' # IRC link
+        link1List.append(link1)
+        link1='vm:folder' # VM folder link 
+        link1List.append(link1)
+        link1='vm:folder#id' # VM message link 
+        link1List.append(link1)
+        link1='vm://myself@some.where.org/folder#id' # VM on remote machine 
+        link1List.append(link1)
+        link1='vm-imap:account:folder' #VM IMAP folder link 
+        link1List.append(link1)
+        link1='vm-imap:account:folder#id' #VM IMAP message link 
+        link1List.append(link1)
+        link1='wl:folder' # WANDERLUST folder link
+        link1List.append(link1)
+        link1='wl:folder#id' # WANDERLUST message link
+        link1List.append(link1)
+        #might want this in a header, but it needs its own section; SKIP
+        link1='info:org#External links' #info node or index link  USEFUL 
+        link1='shell:ls *.org' #a shell command; anything with a space has to be in brackets to be a link 
+        link1List.append(link1)
+        link1='elist:org-agenda' #interactive Elisp command; must have brackets
+        link1List.append(link1)
+        link1='elisp:(find-file-other-frame "Elisp.org")' #Elisp form to evaluate; must have brackets 
+        link1List.append(link1)
+        link1='./*.org'  #asterisk wildcard in filename works in emacs
+        link1List.append(link1)
+        link1='file:./*.org'
+        link1List.append(link1)
+        link1='./*.py'
+        link1List.append(link1)
+        link1='file:./*.py'
+        link1List.append(link1)
+
+        for link1 in link1List:
+            matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
+            self.failIf(matchingRegex)
+
+            matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
+            self.failIf(matchingRegex)
+
+#head
+class TestMakeListOf(unittest.TestCase):
+    def test_1(self):
+        input=[]
+        self.assertEqual(OFL.make_list_of(input),input)
+
+    def test_2(self):
+        input=['a','b','c']
+        self.assertEqual(OFL.make_list_of(input),input)
+
+    def test_3(self):
+        input='abcde'
+        self.assertEqual(OFL.make_list_of(input),[input])
+
+    def test_4(self):
+        input=OFL.make_list_of
+        self.assertEqual(OFL.make_list_of(input),[input])
+
+#head TODO test traverse_nodes_to_regen_after_link_updates
+class TestTraverseNodesToRecoverLineList(unittest.TestCase):
+    def test_1(self):
+        lines=['first\n','second\n','third\n']
+        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
+        self.assertEqual(childNodeList,[])
+        linesOut=[]
+        OFL.traverse_nodes_to_recover_line_list(childNodeList,linesOut)
+        self.assertEqual([],linesOut)
+
+    def test_2(self):
+
+        lines=['* first\n','second\n','* third\n','fourth\n']
+        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
+        linesOut=[]
+        OFL.traverse_nodes_to_recover_line_list(childNodeList,linesOut)
+        self.assertEqual(lines,linesOut)
+
+    def test_3(self):
+        lines=['* first\n','** second\n','* third\n','** fourth\n']
+        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
+        linesOut=[]
+        OFL.traverse_nodes_to_recover_line_list(childNodeList,linesOut)
+        self.assertEqual(lines,linesOut)
+
+    def test_4(self):
+        lines=['** first\n','*** second\n','** third\n','*** fourth\n']
+        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
+        linesOut=[]
+        OFL.traverse_nodes_to_recover_line_list(childNodeList,linesOut)
+        self.assertEqual(lines,linesOut)
+
+class TestTraverseNodesToReachDesiredNode(unittest.TestCase):
+    def test_1(self):
+
+        lines=['* first\n','second\n','* third\n','fourth\n']
+        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
+        foundNode=OFL.traverse_nodes_to_reach_desired_node(childNodeList,'first',maxLevel=1)
+        self.assertEqual(foundNode.myLines[0],lines[0])
+
+    def test_2(self):
+
+        lines=['* first\n','second\n','* third\n','fourth\n']
+        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
+        foundNode=OFL.traverse_nodes_to_reach_desired_node(childNodeList,'second',maxLevel=1)
+        self.assertEqual(foundNode,None)
+
+    def test_3(self):
+
+        lines=['* first\n','second\n','* third\n','fourth\n']
+        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
+        foundNode=OFL.traverse_nodes_to_reach_desired_node(childNodeList,'third',maxLevel=1)
+        self.assertEqual(foundNode.myLines[0],lines[2])
+
+    def test_4(self):
+
+        lines=['** first\n','*** second\n','** third\n','*** fourth\n']
+        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
+        foundNode=OFL.traverse_nodes_to_reach_desired_node(childNodeList,'second',maxLevel=1)
+        self.assertEqual(foundNode,None)
+
+    def test_5(self):
+
+        lines=['** first\n','*** second\n','** third\n','*** fourth\n']
+        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
+        foundNode=OFL.traverse_nodes_to_reach_desired_node(childNodeList,'second')
+        self.assertEqual(foundNode.myLines[0],lines[1])
+
+#head skip test of set_up_logging
+#head skip test remove_old_logs
+#head skip test of turn_off_logging, or TODO use test-first to get it working, then use it when wanted to suppress logging for files in header
+#head skip test of turn_logging_back_on_at_initial_level
+#head skip test of display_log_file
+#head skip test walk_files_looking_for_name_match
+#head skip test walk_org_files_looking_for_unique_id_match
+#head skip test find_all_name_matches_via_bash
+#head skip test find_all_name_matches_via_bash_for_directories
+#head skip test of set_up_database 
+#head skip test user_chooses_element_from_list_or_rejects_all; how to simulate user typing something at a prompt?
+#head skip test of get_past_interactive_repairs_dict
+#head skip test of store_past_interactive_repairs
+#head skip test of print_and_log_traceback
+class TestFindUniqueIDInsideFile(unittest.TestCase):
+    '''these are all tests of OFL.find_unique_id_inside_org_file
+    which is a function that goes line by line inside an org file
+    it's used when script has not made a full representation of that org file
+    '''
+    def test_1(self):
+        '''test find_unique_id_inside_file: file contains status node but does not contain unique ID'''
+
+        
+        
+        testFileLines=['* status\n']
+        testFileLines.append('blurb\n')
+        testFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org')
+        testFile=open(testFilename,'w')
+        testFile.writelines(testFileLines)
+        testFile.close()
+
+        uniqueID=OFL.find_unique_id_inside_org_file(testFilename)
+        self.failIf(uniqueID)
+        os.remove(testFilename)
+
+    def test_2(self):
+        '''test find_unique_id_inside_file: file contains status node but does not contain unique ID'''
+        
+        
+        testFileLines=['* status\n']
+        testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9812   \n')
+        testFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org')
+        testFile=open(testFilename,'w')
+        testFile.writelines(testFileLines)
+        testFile.close()
+
+        uniqueID=OFL.find_unique_id_inside_org_file(testFilename)
+        self.assertEqual(uniqueID,'2016-05-19_17-15-59-9812')
+        os.remove(testFilename)
+
+    def test_3(self):
+
+        
+        testFileLines=['* status\n']
+        testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9812   \n')
+        testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9813   \n')
+        testFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org')
+        testFile=open(testFilename,'w')
+        testFile.writelines(testFileLines)
+        testFile.close()
+
+        uniqueID=OFL.find_unique_id_inside_org_file(testFilename)
+        self.assertEqual(uniqueID,'2016-05-19_17-15-59-9812')
+        os.remove(testFilename)
+
+    def test_4(self):
+
+        
+        testFileLines=[]
+        testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9812   \n')
+        testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9813   \n')
+        testFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org')
+        testFile=open(testFilename,'w')
+        testFile.writelines(testFileLines)
+        testFile.close()
+
+        uniqueID=OFL.find_unique_id_inside_org_file(testFilename)
+        self.failIf(uniqueID)
+        os.remove(testFilename)
+
+    def test_5(self):
+
+        
+        testFileLines=['one line\n','another line\n']
+        testFileLines.append('* status\n')
+        testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9812   \n')
+        testFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org')
+        testFile=open(testFilename,'w')
+        testFile.writelines(testFileLines)
+        testFile.close()
+
+        uniqueID=OFL.find_unique_id_inside_org_file(testFilename)
+        self.assertEqual(uniqueID,'2016-05-19_17-15-59-9812')
+        os.remove(testFilename)
+
+#head skip test clean_up_on_error_in_operate_on_fileA
+class TestOperateOnFileA(unittest.TestCase):
+    def test_1(self):
+        #goal is to check on what happened in database
+
+        reset_database()
+
+        runDebuggerOnlyInRepairStep=False
+        runDebuggerInEveryStep=False
+        runWithPauses=False
+
+        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
+    
+        showLog1=False
+        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileB=operate_on_fileA_w(filenameB,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+
+        self.failUnless(fileA.uniqueID)
+        self.failUnless(fileB.uniqueID)
+      
+        self.assertEqual(fileA.myFilesTable,fileB.myFilesTable)
+        self.assertEqual(fileA.myFilesTable.getNRows(),2)
+
+        self.assertEqual(fileA.myFilesTable.lookupID_UsingUniqueID(fileA),fileA.myFilesTableID)
+        self.assertEqual(fileB.myFilesTable.lookupID_UsingUniqueID(fileB),fileB.myFilesTableID)
+
+        self.assertEqual(fileA.myFilesTable.lookupUniqueID_UsingID(fileA.myFilesTableID),fileA.uniqueID)
+        self.assertEqual(fileB.myFilesTable.lookupUniqueID_UsingID(fileB.myFilesTableID),fileB.uniqueID)
+
+        self.assertEqual(fileA.myFilesTable.lookupID_UsingName(fileA),fileA.myFilesTableID)
+        self.assertEqual(fileB.myFilesTable.lookupID_UsingName(fileB),fileB.myFilesTableID)
+
+        #http://stackoverflow.com/questions/3501382/checking-whether-a-variable-is-an-integer-or-not
+        self.failUnless(isinstance(fileA.myFilesTable.lookupTimeLastFullyAnalyzed_UsingID(fileA.myFilesTableID),(int,long)))
+
+        os.remove(filenameA)
+        os.remove(filenameB)
+        os.remove(symlinkToFileB_Name)
+
+    def test_2(self):
+        '''focus on symlinksOrgTable'''
+
+        reset_database()
+
+        runDebuggerOnlyInRepairStep=False
+        runDebuggerInEveryStep=False
+        runWithPauses=False
+
+        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
+    
+        showLog1=False
+        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileB=operate_on_fileA_w(filenameB,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+
+        #focus on symlinks table
+        self.assertEqual(fileA.symlinksTable.lookupTarget(os.path.abspath(symlinkToFileB_Name)),fileB.myFilesTableID)
+        self.assertEqual(fileA.symlinksTable.lookupSymlinks(fileB),[os.path.abspath(symlinkToFileB_Name)])
+
+        os.remove(filenameA)
+        os.remove(filenameB)
+        os.remove(symlinkToFileB_Name)
+
+    def test_3(self):
+        '''focus on linksToOrgTable'''
+
+        reset_database()
+
+        runDebuggerOnlyInRepairStep=False
+        runDebuggerInEveryStep=False
+        runWithPauses=False
+
+        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
+    
+        showLog1=False
+        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileB=operate_on_fileA_w(filenameB,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+
+        #focus on linksTo table
+
+        files_A_LinksTo=OFL.db1.linksToOrgTable.makeListOfFilesAFileLinksTo(fileA)
+        self.assertEqual(len(files_A_LinksTo),1)
+        self.assertEqual(files_A_LinksTo[0].filenameAP,fileB.filenameAP)
+
+        filesLinkingToFileA=OFL.db1.linksToOrgTable.makeListOfFilesThatLinkToAFile(fileA)
+        self.assertEqual(len(filesLinkingToFileA),1)
+        self.assertEqual(filesLinkingToFileA[0].filenameAP,fileB.filenameAP)
+
+        files_B_LinksTo=OFL.db1.linksToOrgTable.makeListOfFilesAFileLinksTo(fileB)
+        self.assertEqual(len(files_B_LinksTo),1)
+        self.assertEqual(files_B_LinksTo[0].filenameAP,fileA.filenameAP)
+
+        filesLinkingToFileB=OFL.db1.linksToOrgTable.makeListOfFilesThatLinkToAFile(fileB)
+        self.assertEqual(len(filesLinkingToFileB),1)
+        self.assertEqual(filesLinkingToFileB[0].filenameAP,fileA.filenameAP)
+
+        OFL.db1.linksToOrgTable.removeEntriesMatchingFromFile(fileB)
+        files_B_LinksTo=OFL.db1.linksToOrgTable.makeListOfFilesAFileLinksTo(fileB)
+        self.failIf(files_B_LinksTo)
+
+        OFL.db1.linksToOrgTable.removeEntriesMatchingFromFile(fileA)
+        files_A_LinksTo=OFL.db1.linksToOrgTable.makeListOfFilesAFileLinksTo(fileA)
+        self.failIf(files_A_LinksTo)
+
+        self.assertEqual(OFL.db1.linksToOrgTable.getNRows(),0)
+
+        os.remove(filenameA)
+        os.remove(filenameB)
+        os.remove(symlinkToFileB_Name)
+
+    def test_4(self):
+        '''focus on the org files on disk: .bak, isDryRun, keepBackup'''
+        pass
+
+        # reset_database()
+
+        # runDebuggerOnlyInRepairStep=False
+        # runDebuggerInEveryStep=False
+        # runWithPauses=False
+
+        # self.failUnless(OFL.keepBackup) #keepBackup should be True by default
+        # self.failIf(OFL.isDryRun) #isDryRun should be False by default
+
+        # filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
+
+        # filenameA_AP=os.path.abspath(filenameA)
+
+        # if os.path.exists(filenameA_AP+'.bak'):
+        #     os.remove(filenameA_AP+'.bak')
+
+        # # shutil.copy2(filenameA_AP,filenameA_AP+'.bak')
+
+        # hashA1=get_hash(filenameA_AP)
+        # # hashA1bak=get_hash(filenameA_AP+'.bak')
+    
+        # showLog1=False
+        # fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+
+        # self.failUnless(os.path.exists(fileA.filenameAP))
+
+        # self.assertEqual(filenameA_AP,fileA.filenameAP)
+
+        # hashA2=get_hash(fileA.filenameAP)
+
+        # self.failIf(hashA1==hashA2)
+        # self.failUnless(os.path.exists(filenameA_AP+'.bak'))
+
+        # hashA2bak=get_hash(fileA.filenameAP+'.bak')
+
+        # self.assertEqual(hashA1,hashA2bak)
+
+        # #restore defaults
+        # OFL.keepBackup=True
+        # OFL.isDryRun=False
+
+        # os.remove(filenameA)
+        # os.remove(filenameA_AP+'.bak')
+        # os.remove(filenameB)
+        # os.remove(symlinkToFileB_Name)
+
+#head skip test user_says_stop_spidering
+#head skip test clean_up_before_ending_spidering_run
+#head skip test spider_starting_w_fileA
+#head skip test get_list_of_all_repairable_org_files
+#head skip test operate_on_all_org_files
+#head skip test make_regex_dicts
+#head skip test make regex_ordered_lists
+#head skip test usage
+#head
+#head
+#head
+#head other tests
 class TestsOfRepairingLinksToOrgFiles(unittest.TestCase):
     #these tests require much more time to run than the rest
     #head TODO expecting some mistakes in print statements; too much duplicate code;  study unittest and see how to rewrite to reduce duplicate code
@@ -4175,1130 +5358,6 @@ class TestsOfRepairingLinksToNonOrgFiles(unittest.TestCase):
 #head
 #head
 #head
-#head test standalone functions
-class TestAllUpperToAllLowercase(unittest.TestCase):
-    def test_1(self):
-        someText='I AM ALL UPPER CASE'
-        result='i am all upper case'
-        self.assertEqual(OFL.all_upper_to_all_lowercase(someText),result)
-
-    def test_2(self):
-        someText='I AM not ALL UPPER CASE'
-        result=someText
-        self.assertEqual(OFL.all_upper_to_all_lowercase(someText),result)
-
-#head figure out how to test rand_int_as_string
-class TestGetAsteriskLevel(unittest.TestCase):
-    def test_1(self):
-        '''test get_asterisk_level'''
-        line='* junk text\n'
-        self.assertEqual(OFL.get_asterisk_level(line),1)
-
-    def test_2(self):        
-        '''test get_asterisk_level'''
-        line='*** junk text\n'
-        self.assertEqual(OFL.get_asterisk_level(line),3)
-
-    def test_3(self):        
-        '''test get_asterisk_level'''
-        line='junk text\n'
-        self.assertEqual(OFL.get_asterisk_level(line),0)
-
-    def test_4(self):        
-        '''test get_asterisk_level'''
-        line='junk *** text ***\n'
-        self.assertEqual(OFL.get_asterisk_level(line),0)
-
-class TestGetBaseAsteriskLevel(unittest.TestCase):
-    def test_1(self):
-        '''test get_base_asterisk_level'''
-        lines=['line1\n','line2\n','line3\n']
-        self.assertEqual(OFL.get_base_asterisk_level(lines),0)
-
-    def test_2(self):
-        '''test get_base_asterisk_level'''
-        lines=['* line1\n','line2\n','line3\n']
-        self.assertEqual(OFL.get_base_asterisk_level(lines),1)
-
-    def test_3(self):
-        '''test get_base_asterisk_level'''
-        lines=['* line1\n','** line2\n','*** line3\n']
-        self.assertEqual(OFL.get_base_asterisk_level(lines),1)
-
-    def test_4(self):
-        '''test get_base_asterisk_level'''
-        lines=['*** line1\n','** line2\n','* line3\n']
-        self.assertEqual(OFL.get_base_asterisk_level(lines),1)
-
-    def test_5(self):
-        '''test get_base_asterisk_level'''
-        lines=['*** line1\n','line2\n','** line3\n','line4\n','* line5\n','line6\n']
-        self.assertEqual(OFL.get_base_asterisk_level(lines),1)
-
-    def test_6(self):
-        '''test get_base_asterisk_level'''
-        lines=['***   line1\n','**   line2\n','**   line3\n']  #extra spaces after leading asterisks
-        self.assertEqual(OFL.get_base_asterisk_level(lines),2)
-
-class TestSeparateParentLinesDescendantLines(unittest.TestCase):
-    def test_1(self):
-        '''test separate_parent_lines_descendant_lines'''
-        lines=['* line1','** line2','*** line3']
-        parentLines,descendantLines=OFL.separate_parent_lines_descendant_lines(lines)
-        self.assertEqual(parentLines,['* line1'])
-        self.assertEqual(descendantLines,['** line2','*** line3'])
-
-    def test_2(self):
-        '''test separate_parent_lines_descendant_lines'''
-        lines=['line1','line2','line3']
-        parentLines,descendantLines=OFL.separate_parent_lines_descendant_lines(lines)
-        self.assertEqual(parentLines,lines)
-        self.assertEqual(descendantLines,None)
-
-    def test_3(self):
-        '''test separate_parent_lines_descendant_lines'''
-        lines=['* line1','line2','line3']
-        parentLines,descendantLines=OFL.separate_parent_lines_descendant_lines(lines)
-        self.assertEqual(parentLines,lines)
-        self.assertEqual(descendantLines,None)
-
-    def test_4(self):
-        '''test separate_parent_lines_descendant_lines'''
-        lines=['* line1','line2','** line3','line 4']
-        parentLines,descendantLines=OFL.separate_parent_lines_descendant_lines(lines)
-        self.assertEqual(parentLines,['* line1','line2'])
-        self.assertEqual(descendantLines,['** line3','line 4'])
-
-    def test_5(self):
-        '''test separate_parent_lines_descendant_lines'''
-        lines=['* line1','** line2','*** line3']
-        parentLines,descendantLines=OFL.separate_parent_lines_descendant_lines(lines)
-        self.assertEqual(parentLines,['* line1'])
-        self.assertEqual(descendantLines,['** line2','*** line3'])
-
-        lines=['* line1','blurb 1','** line2','blurb 2','*** line3']
-        self.assertEqual(parentLines,['* line1'])
-        self.assertEqual(descendantLines,['** line2','*** line3'])
-
-class TestListOfChildNodesFromLines(unittest.TestCase):
-    def test_1(self):
-        '''test list_of_child_nodes_from_lines: no line starts with asterisk'''
-        lines=['first\n','second\n','third\n']
-        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
-        self.assertEqual([],childNodeList)
-
-    def test_2(self):
-        '''test list_of_child_nodes_from_lines: no line starts with asterisk'''
-        lines=['* first\n','second\n','* third\n','fourth\n']
-        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
-
-        expectedList=[OFL.Node(lines[0:2],sourceFile=None),OFL.Node(lines[2:],sourceFile=None)]
-
-        #this does not work: appears that instances are at different memory locations, so are unequal?
-        # self.assertEqual(expectedList,childNodeList)
-
-        self.assertEqual(expectedList[0].myLines,childNodeList[0].myLines)
-        self.assertEqual(expectedList[1].myLines,childNodeList[1].myLines)
-        self.assertEqual(len(childNodeList),2)
-
-    def test_3(self):
-        '''test list_of_child_nodes_from_lines: no line starts with asterisk'''
-        lines=['* first\n','** second\n','* third\n','** fourth\n']
-        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
-
-        expectedList=[OFL.Node(lines[0:1],sourceFile=None),OFL.Node(lines[2:3],sourceFile=None)]
-
-        self.assertEqual(expectedList[0].myLines,childNodeList[0].myLines)
-        self.assertEqual(expectedList[1].myLines,childNodeList[1].myLines)
-        self.assertEqual(len(childNodeList),2)
-
-    def test_4(self):
-        '''test list_of_child_nodes_from_lines: no line starts with asterisk'''
-        lines=['** first\n','*** second\n','** third\n','*** fourth\n']
-        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
-
-        expectedList=[OFL.Node(lines[0:1],sourceFile=None),OFL.Node(lines[2:3],sourceFile=None)]
-
-        self.assertEqual(expectedList[0].myLines,childNodeList[0].myLines)
-        self.assertEqual(expectedList[1].myLines,childNodeList[1].myLines)
-        self.assertEqual(len(childNodeList),2)
-
-#head
-class TestLineToList1(unittest.TestCase):
-    def test_1(self):
-        line='some text [[a link with brackets]] more text [[another link with brackets][description]]. \n'
-        outputList=['some text ','[[a link with brackets]]',' more text ','[[another link with brackets][description]]','. \n']  #note the spaces
-        self.assertEqual(OFL.line_to_list1(line),outputList)
-
-    def test_2(self):
-        line='some text [[a link with brackets]] more text [[another link with brackets][description]].\n'
-        outputList=['some text ','[[a link with brackets]]',' more text ','[[another link with brackets][description]]','.\n']
-        self.assertEqual(OFL.line_to_list1(line),outputList)
-
-    def test_3(self):
-        line='some text [[a link with brackets]] more text [[another link with brackets][description]].  \n'
-        outputList=['some text ','[[a link with brackets]]',' more text ','[[another link with brackets][description]]','.  \n']
-        self.assertEqual(OFL.line_to_list1(line),outputList)
-
-class TestTextToLinkAndDescriptionDoubleBrackets(unittest.TestCase):
-    def test_1(self):
-        someText='[[link link]]'
-        link,description=OFL.text_to_link_and_description_double_brackets(someText)
-        self.assertEqual('link link',link)
-        self.assertEqual(None,description)
-
-    def test_2(self):
-        someText='[[ link link ][ descr descr ]]'
-        link,description=OFL.text_to_link_and_description_double_brackets(someText)
-        self.assertEqual(' link link ',link)
-        self.assertEqual(' descr descr ',description)
-
-class TestTextFromLinkAndDescription(unittest.TestCase):
-    def test_1(self):
-        link='anything'
-        description=None
-        hasBrackets=False
-        expectedText='anything'
-        self.assertEqual(expectedText,OFL.text_from_link_and_description(link,description,hasBrackets))
-
-    def test_2(self):
-        link='anything'
-        description=None
-        hasBrackets=True
-        expectedText='[[anything]]'
-        self.assertEqual(expectedText,OFL.text_from_link_and_description(link,description,hasBrackets))
-
-    def test_3(self):
-        link='anything'
-        description='any description'
-        hasBrackets=True
-        expectedText='[[anything][any description]]'
-        self.assertEqual(expectedText,OFL.text_from_link_and_description(link,description,hasBrackets))
-
-    def test_4(self):
-        link='anything'
-        description='any description'
-        hasBrackets=False
-        expectedText='anything'
-        self.failUnlessRaises(ValueError,OFL.text_from_link_and_description,link,description,hasBrackets)
-
-class TestRemoveTildeFromOrgLink(unittest.TestCase):
-    def test_1(self):
-        link='file:anyName.org~'
-        link2='file:anyName.org'
-        self.assertEqual(link2,OFL.remove_tilde_from_org_link(link))
-
-    def test_2(self):
-        link='file:anyName.org'
-        self.assertEqual(link,OFL.remove_tilde_from_org_link(link))
-
-    def test_3(self):
-        link='file:.org~anyName.org'
-        self.assertEqual(link,OFL.remove_tilde_from_org_link(link))
-
-    def test_4(self):
-        link='file:.org~anyName.org~'
-        self.assertEqual(link,OFL.remove_tilde_from_org_link(link))  #TODO want to use regular expressions to improve this
-
-class TestSplitOnNonWhitespaceKeepEverything(unittest.TestCase):
-    def test_1(self):
-        line='how now  brown   cow\tand.  \n'
-        list=OFL.split_on_non_whitespace_keep_everything(line)
-        # expectedList=['how',' ','now','  ','brown','   ','cow','\t','and.','  \n','']
-        expectedList=['how',' ','now','  ','brown','   ','cow','\t','and.','  \n']
-        self.assertEqual(line,''.join(list))
-        self.assertEqual(list,expectedList)
-
-    def test_2(self):
-        line='* tags \t\t:tag1:tag2:\n'
-        list=OFL.split_on_non_whitespace_keep_everything(line)
-        # expectedList=['*',' ','tags',' \t\t',':tag1:tag2:','\n','']
-        expectedList=['*',' ','tags',' \t\t',':tag1:tag2:','\n']
-        self.assertEqual(line,''.join(list))
-        self.assertEqual(list,expectedList)
-
-class TestFindBestRegexMatchForText(unittest.TestCase):
-    #head this is where you test if your regexes can correctly identify links
-    #head function name is somewhat confusing; input is link instead of text=[[link][description]]
-    #head temp lines for copy and paste:
-    # self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexes['file:anyFilename.org::anything or file+sys:anyFilename.org::anything or file+emacs:anyFilename.org::anything or docview:anyFilename.org::anything'])
-    # self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexes['/anyFilename.org::anything  or  ./anyFilename.org::anything  or  ~/anyFilename.org::anything'])
-    # self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexes['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org'])
-    # self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexes['/anyFilename.org  or  ./anyFilename.org  or  ~/anyFilename.org'])
-
-    # self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexes['file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything'])
-    # self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexes['/anyFilename::anything  or  ./anyFilename::anything  or  ~/anyFilename::anything'])
-    # self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexes['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
-    # self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexes['/anyFilename  or  ./anyFilename  or  ~/anyFilename'])
-
-    #head these tests are not in order; too much of a chore to renumber them
-    def test_1(self):
-        '''non-link text'''
-        #see OFL.Node.__init__
-        someText='non_link_text'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(someText,hasBrackets=False)
-        self.failIf(matchingRegex)
-
-    def test_1B(self):
-        '''internal link'''
-        someText='non link text'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(someText,hasBrackets=True)
-        self.failIf(matchingRegex)
-
-    def test_2(self):
-        '''non-link text'''
-        someText='#my-custom-id'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(someText,hasBrackets=False)
-        self.failIf(matchingRegex)
-
-    def test_2B(self):
-        '''internal link'''
-        someText='#my-custom-id'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(someText,hasBrackets=True)
-        self.failIf(matchingRegex)
-
-    def test_3(self):
-        '''non link text'''
-        someText='id:B7423F4D-2E8A-471B-8810-C40F074717E9'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(someText,hasBrackets=False)
-        self.failIf(matchingRegex)
-
-    def test_3B(self):
-        '''internal link'''
-        someText='id:B7423F4D-2E8A-471B-8810-C40F074717E9'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(someText,hasBrackets=True)
-        self.failIf(matchingRegex)
-
-    def test_4(self):
-        '''a web link'''
-        someText='http://www.astro.uva.nl/~dominik'  #clickable without brackets
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(someText,hasBrackets=False)
-        self.failIf(matchingRegex)
-
-    def test_4B(self):
-        '''a web link'''
-        someText='http://www.astro.uva.nl/~dominik'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(someText,hasBrackets=True)
-        self.failIf(matchingRegex)
-
-    def test_5(self):
-        '''a document identifier'''
-        someText='doi:10.1000/182'  #clickable without brackets
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(someText,hasBrackets=False)
-        self.failIf(matchingRegex)
-
-    def test_5B(self):
-        '''a document identifier'''
-        someText='doi:10.1000/182'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(someText,hasBrackets=True)
-        self.failIf(matchingRegex)
-
-    def test_6(self):
-        '''not clickable'''
-        link1='OrgModeFileCrawlerMain.org'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
-        self.failIf(matchingRegex)
-
-    def test_6B(self):
-        '''internal link'''
-        link1='OrgModeFileCrawlerMain.org'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
-        self.failIf(matchingRegex)
-
-    def test_7(self):
-        '''link to local org file'''
-        link1='file:OrgModeFileCrawlerMain.org'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
-        self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexesNoBrackets['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org'])
-        self.assertEqual(matchingClass,OFL.LinkToOrgFile)
-
-    def test_7B(self):
-        '''link to local org file'''
-        link1='file:OrgModeFileCrawlerMain.org'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
-        self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexesBrackets['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org'])
-        self.assertEqual(matchingClass,OFL.LinkToOrgFile)
-
-    def test_8(self):
-        '''not clickable'''
-        link1='/OrgModeFileCrawlerMain.org'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
-        self.failIf(matchingRegex)
-
-    def test_8B(self):
-        '''link to local org file'''
-        link1='/OrgModeFileCrawlerMain.org'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
-        self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexesBrackets['/anyFilename.org  or  ./anyFilename.org  or  ~/anyFilename.org'])
-        self.assertEqual(matchingClass,OFL.LinkToOrgFile)
-
-    def test_9(self):
-        '''link to local org file'''
-        link1='file:/OrgModeFileCrawlerMain.org'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
-        self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexesNoBrackets['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org'])
-        self.assertEqual(matchingClass,OFL.LinkToOrgFile)
-
-    def test_9B(self):
-        '''link to local org file'''
-        link1='file:/OrgModeFileCrawlerMain.org'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
-        self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexesBrackets['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org'])
-        self.assertEqual(matchingClass,OFL.LinkToOrgFile)
-
-    def test_10(self):
-        '''not clickable'''
-        link1='~/OrgModeFileCrawlerMain.org'
-        hasBrackets=False
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
-        self.failIf(matchingRegex)
-
-    def test_10B(self):
-        '''link to local org file'''
-        link1='~/OrgModeFileCrawlerMain.org'
-        hasBrackets=True
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
-        self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexesBrackets['/anyFilename.org  or  ./anyFilename.org  or  ~/anyFilename.org'])
-        self.assertEqual(matchingClass,OFL.LinkToOrgFile)
-
-    def test_11(self):
-        '''link to local org file'''
-        link1='file:~/OrgModeFileCrawlerMain.org'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
-        self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexesNoBrackets['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org'])
-        self.assertEqual(matchingClass,OFL.LinkToOrgFile)
-
-    def test_11B(self):
-        '''link to local org file'''
-        link1='file:~/OrgModeFileCrawlerMain.org'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
-        self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexesBrackets['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org'])
-        self.assertEqual(matchingClass,OFL.LinkToOrgFile)
-
-    def test_12(self):
-        '''not clickable'''
-        link1='OrgModeFileCrawlerMain.org::what about'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
-        self.failIf(matchingRegex)
-
-    def test_12(self):
-        '''not clickable'''
-        link1='OrgModeFileCrawlerMain.org::what about'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
-        self.failIf(matchingRegex)
-
-    def test_12B(self):
-        '''internal link'''
-        link1='OrgModeFileCrawlerMain.org::what about'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
-        self.failIf(matchingRegex)
-
-    def test_13(self):
-        '''link to local org file'''
-        link1='file:OrgModeFileCrawlerMain.org::what about'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
-        self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexesNoBrackets['file:anyFilename.org::anything or file+sys:anyFilename.org::anything or file+emacs:anyFilename.org::anything or docview:anyFilename.org::anything'])
-        self.assertEqual(matchingClass,OFL.LinkToOrgFile)
-
-    def test_13B(self):
-        '''link to local org file'''
-        link1='file:OrgModeFileCrawlerMain.org::what about'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
-        self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexesBrackets['file:anyFilename.org::anything or file+sys:anyFilename.org::anything or file+emacs:anyFilename.org::anything or docview:anyFilename.org::anything'])
-        self.assertEqual(matchingClass,OFL.LinkToOrgFile)
-
-    def test_14(self):
-        '''not clickable'''
-        link1=os.path.join(os.path.expanduser('~'),'Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py')
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
-        self.failIf(matchingRegex)
-
-    def test_14B(self):
-        '''local non org file'''
-        link1=os.path.join(os.path.expanduser('~'),'Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py')
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
-        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesBrackets['/anyFilename  or  ./anyFilename  or  ~/anyFilename'])
-        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
-
-    def test_15(self):
-        '''local non org file'''
-        link1='file:'+os.path.join(os.path.expanduser('~'),'Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py')
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
-        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesNoBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
-        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
-
-    def test_15B(self):
-        '''local non org file'''
-        link1='file:'+os.path.join(os.path.expanduser('~'),'Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py')
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
-        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
-        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
-
-    def test_16(self):
-        '''not clickable'''
-        link1='./20160908ExceptionTest.py'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
-        self.failIf(matchingRegex)
-
-    def test_16B(self):
-        '''local non org file'''
-        link1='./20160908ExceptionTest.py'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
-        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesBrackets['/anyFilename  or  ./anyFilename  or  ~/anyFilename'])
-        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
-
-    def test_17(self):
-        '''local non org file'''
-        link1='file:./20160908ExceptionTest.py'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
-        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesNoBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
-        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
-
-    def test_17B(self):
-        '''local non org file'''
-        link1='file:./20160908ExceptionTest.py'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
-        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
-        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
-
-    def test_18(self):
-        '''not clickable'''
-        link1='./20160908Exception Test.py'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
-        self.failIf(matchingRegex)
-
-    def test_18B(self):
-        '''local non org file'''
-        link1='./20160908Exception Test.py' #without brackets, this link would not be clickable in org
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
-        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesBrackets['/anyFilename  or  ./anyFilename  or  ~/anyFilename'])
-        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
-
-    def test_19(self):
-        '''local non org file'''
-        link1='file:./20160908Exception Test.py'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
-        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesNoBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
-        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
-
-    def test_19B(self):
-        '''local non org file'''
-        link1='file:./20160908Exception Test.py'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
-        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
-        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
-
-    def test_20(self):
-        '''not clickable'''
-        link1='~/20160908ExceptionTest.py'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
-        self.failIf(matchingRegex)
-
-    def test_20B(self):
-        '''local non org file'''
-        link1='~/20160908ExceptionTest.py'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
-        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesBrackets['/anyFilename  or  ./anyFilename  or  ~/anyFilename'])
-        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
-
-    def test_21(self):
-        '''local non org file'''
-        link1='file:~/20160908ExceptionTest.py'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
-        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesNoBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
-        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
-
-    def test_21B(self):
-        '''local non org file'''
-        link1='file:~/20160908ExceptionTest.py'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
-        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
-        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
-
-    def test_22(self):
-        '''not clickable'''
-        link1='20160908ExceptionTest.py'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
-        self.failIf(matchingRegex)
-
-    def test_22B(self):
-        '''internal link'''
-        link1='20160908ExceptionTest.py' #without brackets, this link would not be clickable in org.  with brackets, org sees it as a clickable internal link.
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
-        self.failIf(matchingRegex)
-
-    def test_23(self):
-        '''local non org file'''
-        link1='file:20160908ExceptionTest.py'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
-        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesNoBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
-        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
-
-    def test_23B(self):
-        '''local non org file'''
-        link1='file:20160908ExceptionTest.py'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
-        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
-        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
-
-    def test_24(self):
-        '''not clickable'''
-        link1='PythonScriptOldVersions'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
-        self.failIf(matchingRegex)
-
-    def test_24B(self):
-        '''internal link'''
-        link1='PythonScriptOldVersions'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
-        self.failIf(matchingRegex)
-
-    def test_25(self):
-        '''local directory'''
-        link1='file:PythonScriptOldVersions'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
-        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesNoBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
-        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
-
-    def test_25B(self):
-        '''local directory'''
-        link1='file:PythonScriptOldVersions'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
-        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
-        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
-
-    def test_26(self):
-        '''file on remote machine; not clickable'''
-        link1='/myself@some.where:papers/last.pdf'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
-        self.failIf(matchingRegex)
-
-    def test_26B(self):
-        '''file on remote machine'''
-        link1='/myself@some.where:papers/last.pdf'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
-        self.failIf(matchingRegex)
-
-    def test_27(self):
-        '''file on remote machine'''
-        link1='file:/myself@some.where:papers/last.pdf'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
-        self.failIf(matchingRegex)
-
-    def test_27B(self):
-        '''file on remote machine'''
-        link1='file:/myself@some.where:papers/last.pdf'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
-        self.failIf(matchingRegex)
-
-    def test_28(self):
-        '''not clickable'''
-        link1='20160908ExceptionTest.py::23'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
-        self.failIf(matchingRegex)
-
-    def test_28B(self):
-        '''internal link'''
-        link1='20160908ExceptionTest.py::23'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
-        self.failIf(matchingRegex)
-
-    def test_29(self):
-        '''local non-org file'''
-        link1='file:20160908ExceptionTest.py::23'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
-        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesNoBrackets['file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything'])
-        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
-
-    def test_29B(self):
-        '''local non-org file'''
-        link1='file:20160908ExceptionTest.py::23'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
-        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesBrackets['file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything'])
-        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
-
-    def test_30(self):
-        '''not clickable'''
-        link1=os.path.join(os.path.expanduser('~'),'Documents/Computer/Software/PythonNotes/SeverancePythonForInformatics/PythonForInformaticsSeverance009d2.pdf')+'::32'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
-        self.failIf(matchingRegex)
-
-    def test_30B(self):
-        '''local non-org file'''
-        link1=os.path.join(os.path.expanduser('~'),'Documents/Computer/Software/PythonNotes/SeverancePythonForInformatics/PythonForInformaticsSeverance009d2.pdf')+'::32'  #not clickable in org without brackets
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
-        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesBrackets['/anyFilename::anything  or  ./anyFilename::anything  or  ~/anyFilename::anything'])
-        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
-
-    def test_31(self):
-        '''local non-org file'''
-        link1='file:'+os.path.join(os.path.expanduser('~'),'Documents/Computer/Software/PythonNotes/SeverancePythonForInformatics/PythonForInformaticsSeverance009d2.pdf')+'::32'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
-        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesNoBrackets['file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything'])
-        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
-
-    def test_31B(self):
-        '''local non-org file'''
-        link1='file:'+os.path.join(os.path.expanduser('~'),'Documents/Computer/Software/PythonNotes/SeverancePythonForInformatics/PythonForInformaticsSeverance009d2.pdf')+'::32'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
-        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesBrackets['file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything'])
-        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
-
-    def test_32(self):
-        '''not clickable'''
-        link1='OrgModeFileCrawlerMain.org::**what about'  #a heading search in an org file
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
-        self.failIf(matchingRegex)
-
-    def test_32B(self):
-        '''internal link'''
-        link1='OrgModeFileCrawlerMain.org::**what about'  #a heading search in an org file
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
-        self.failIf(matchingRegex)
-
-    def test_33(self):
-        '''local org file'''
-        link1='file:OrgModeFileCrawlerMain.org::**what about'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
-        self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexesNoBrackets['file:anyFilename.org::anything or file+sys:anyFilename.org::anything or file+emacs:anyFilename.org::anything or docview:anyFilename.org::anything'])
-        self.assertEqual(matchingClass,OFL.LinkToOrgFile)
-
-    def test_33B(self):
-        '''local org file'''
-        link1='file:OrgModeFileCrawlerMain.org::**what about'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
-        self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexesBrackets['file:anyFilename.org::anything or file+sys:anyFilename.org::anything or file+emacs:anyFilename.org::anything or docview:anyFilename.org::anything'])
-        self.assertEqual(matchingClass,OFL.LinkToOrgFile)
-
-    def test_34(self):
-        '''local non org file'''
-        link1='file+sys:./20160807PuzzleOverProgramLogic.xoj'  #open via OS, like double-clicking
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
-        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesNoBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
-        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
-
-    def test_34B(self):
-        '''local non org file'''
-        link1='file+sys:./20160807PuzzleOverProgramLogic.xoj'  #open via OS, like double-clicking
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
-        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
-        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
-
-    def test_35(self):
-        '''local non org file'''
-        link1='file+emacs:./20160807PuzzleOverProgramLogic.xoj'  #force opening by emacs
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
-        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesNoBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
-        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
-
-    def test_35B(self):
-        '''local non org file'''
-        link1='file+emacs:./20160807PuzzleOverProgramLogic.xoj'  #force opening by emacs
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
-        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
-        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
-
-    def test_36(self):
-        '''local non org file'''
-        link1='docview:'+os.path.join(os.path.expanduser('~'),'Documents/Computer/Software/PythonNotes/SeverancePythonForInformatics/PythonForInformaticsSeverance009d2.pdf')+'::32'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
-        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesNoBrackets['file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything'])
-        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
-
-    def test_36B(self):
-        '''local non org file'''
-        link1='docview:'+os.path.join(os.path.expanduser('~'),'Documents/Computer/Software/PythonNotes/SeverancePythonForInformatics/PythonForInformaticsSeverance009d2.pdf')+'::32'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
-        self.assertEqual(matchingRegex,OFL.LinkToNonOrgFile.linkRegexesBrackets['file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything'])
-        self.assertEqual(matchingClass,OFL.LinkToNonOrgFile)
-
-    def test_37(self):
-        '''not clickable'''
-        link1='file:'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
-        self.failIf(matchingRegex)
-
-    def test_37B(self):
-        '''internal link'''
-        link1='file:'
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
-        self.failIf(matchingRegex)
-
-    def test_38B(self):
-        '''empty brackets'''
-        link1=''
-        matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
-        self.failIf(matchingRegex)
-
-    #head long list of links that orgFixLinks.py ignores
-    def test_39(self):
-        #long list of org mode links that orgFixLinks.py ignores
-        link1List=[]
-
-        link1='news:comp.emacs'  # usenet link;  does not require brackets; nothing happens when I try opening it in org mode
-        link1List.append(link1)
-        link1='mailto:adent@galaxy.net'  # mail link;  does not require brackets
-        link1List.append(link1)
-        link1='mhe:folder' # MH-E folder link
-        link1List.append(link1)
-        link1='mhe:folder#id' # MH-E message link
-        link1List.append(link1)
-        link1='rmail:folder' # RMAIL folder link
-        link1List.append(link1)
-        link1='rmail:folder#id' # RMAIL message link
-        link1List.append(link1)
-        link1='gnus:folder' # GNUS folder link
-        link1List.append(link1)
-        link1='gnus:folder#id' # GNUS message link
-        link1List.append(link1)
-        link1='gnus:group' # Gnus group link
-        link1List.append(link1)
-        link1='gnus:group#id' # Gnus article link
-        link1List.append(link1)
-        link1='bbdb:R.*Stallman' # BBDB link (with regexp)
-        link1List.append(link1)
-        link1='irc:/irc.com/#emacs/bob' # IRC link
-        link1List.append(link1)
-        link1='vm:folder' # VM folder link 
-        link1List.append(link1)
-        link1='vm:folder#id' # VM message link 
-        link1List.append(link1)
-        link1='vm://myself@some.where.org/folder#id' # VM on remote machine 
-        link1List.append(link1)
-        link1='vm-imap:account:folder' #VM IMAP folder link 
-        link1List.append(link1)
-        link1='vm-imap:account:folder#id' #VM IMAP message link 
-        link1List.append(link1)
-        link1='wl:folder' # WANDERLUST folder link
-        link1List.append(link1)
-        link1='wl:folder#id' # WANDERLUST message link
-        link1List.append(link1)
-        #might want this in a header, but it needs its own section; SKIP
-        link1='info:org#External links' #info node or index link  USEFUL 
-        link1='shell:ls *.org' #a shell command; anything with a space has to be in brackets to be a link 
-        link1List.append(link1)
-        link1='elist:org-agenda' #interactive Elisp command; must have brackets
-        link1List.append(link1)
-        link1='elisp:(find-file-other-frame "Elisp.org")' #Elisp form to evaluate; must have brackets 
-        link1List.append(link1)
-        link1='./*.org'  #asterisk wildcard in filename works in emacs
-        link1List.append(link1)
-        link1='file:./*.org'
-        link1List.append(link1)
-        link1='./*.py'
-        link1List.append(link1)
-        link1='file:./*.py'
-        link1List.append(link1)
-
-        for link1 in link1List:
-            matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=True)
-            self.failIf(matchingRegex)
-
-            matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets=False)
-            self.failIf(matchingRegex)
-
-#head
-class TestMakeListOf(unittest.TestCase):
-    def test_1(self):
-        input=[]
-        self.assertEqual(OFL.make_list_of(input),input)
-
-    def test_2(self):
-        input=['a','b','c']
-        self.assertEqual(OFL.make_list_of(input),input)
-
-    def test_3(self):
-        input='abcde'
-        self.assertEqual(OFL.make_list_of(input),[input])
-
-    def test_4(self):
-        input=OFL.make_list_of
-        self.assertEqual(OFL.make_list_of(input),[input])
-
-#head TODO test traverse_nodes_to_regen_after_link_updates
-class TestTraverseNodesToRecoverLineList(unittest.TestCase):
-    def test_1(self):
-        lines=['first\n','second\n','third\n']
-        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
-        self.assertEqual(childNodeList,[])
-        linesOut=[]
-        OFL.traverse_nodes_to_recover_line_list(childNodeList,linesOut)
-        self.assertEqual([],linesOut)
-
-    def test_2(self):
-
-        lines=['* first\n','second\n','* third\n','fourth\n']
-        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
-        linesOut=[]
-        OFL.traverse_nodes_to_recover_line_list(childNodeList,linesOut)
-        self.assertEqual(lines,linesOut)
-
-    def test_3(self):
-        lines=['* first\n','** second\n','* third\n','** fourth\n']
-        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
-        linesOut=[]
-        OFL.traverse_nodes_to_recover_line_list(childNodeList,linesOut)
-        self.assertEqual(lines,linesOut)
-
-    def test_4(self):
-        lines=['** first\n','*** second\n','** third\n','*** fourth\n']
-        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
-        linesOut=[]
-        OFL.traverse_nodes_to_recover_line_list(childNodeList,linesOut)
-        self.assertEqual(lines,linesOut)
-
-class TestTraverseNodesToReachDesiredNode(unittest.TestCase):
-    def test_1(self):
-
-        lines=['* first\n','second\n','* third\n','fourth\n']
-        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
-        foundNode=OFL.traverse_nodes_to_reach_desired_node(childNodeList,'first',maxLevel=1)
-        self.assertEqual(foundNode.myLines[0],lines[0])
-
-    def test_2(self):
-
-        lines=['* first\n','second\n','* third\n','fourth\n']
-        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
-        foundNode=OFL.traverse_nodes_to_reach_desired_node(childNodeList,'second',maxLevel=1)
-        self.assertEqual(foundNode,None)
-
-    def test_3(self):
-
-        lines=['* first\n','second\n','* third\n','fourth\n']
-        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
-        foundNode=OFL.traverse_nodes_to_reach_desired_node(childNodeList,'third',maxLevel=1)
-        self.assertEqual(foundNode.myLines[0],lines[2])
-
-    def test_4(self):
-
-        lines=['** first\n','*** second\n','** third\n','*** fourth\n']
-        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
-        foundNode=OFL.traverse_nodes_to_reach_desired_node(childNodeList,'second',maxLevel=1)
-        self.assertEqual(foundNode,None)
-
-    def test_5(self):
-
-        lines=['** first\n','*** second\n','** third\n','*** fourth\n']
-        childNodeList=OFL.list_of_child_nodes_from_lines(lines,sourceFile=None)
-        foundNode=OFL.traverse_nodes_to_reach_desired_node(childNodeList,'second')
-        self.assertEqual(foundNode.myLines[0],lines[1])
-
-#head skip test of set_up_logging
-#head skip test remove_old_logs
-#head skip test of turn_off_logging, or TODO use test-first to get it working, then use it when wanted to suppress logging for files in header
-#head skip test of turn_logging_back_on_at_initial_level
-#head skip test of display_log_file
-#head skip test walk_files_looking_for_name_match
-#head skip test walk_org_files_looking_for_unique_id_match
-#head skip test find_all_name_matches_via_bash
-#head skip test find_all_name_matches_via_bash_for_directories
-#head skip test of set_up_database 
-#head skip test user_chooses_element_from_list_or_rejects_all; how to simulate user typing something at a prompt?
-#head skip test of get_past_interactive_repairs_dict
-#head skip test of store_past_interactive_repairs
-#head skip test of print_and_log_traceback
-class TestFindUniqueIDInsideFile(unittest.TestCase):
-    '''these are all tests of OFL.find_unique_id_inside_org_file
-    which is a function that goes line by line inside an org file
-    it's used when script has not made a full representation of that org file
-    '''
-    def test_1(self):
-        '''test find_unique_id_inside_file: file contains status node but does not contain unique ID'''
-
-        
-        
-        testFileLines=['* status\n']
-        testFileLines.append('blurb\n')
-        testFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org')
-        testFile=open(testFilename,'w')
-        testFile.writelines(testFileLines)
-        testFile.close()
-
-        uniqueID=OFL.find_unique_id_inside_org_file(testFilename)
-        self.failIf(uniqueID)
-        os.remove(testFilename)
-
-    def test_2(self):
-        '''test find_unique_id_inside_file: file contains status node but does not contain unique ID'''
-        
-        
-        testFileLines=['* status\n']
-        testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9812   \n')
-        testFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org')
-        testFile=open(testFilename,'w')
-        testFile.writelines(testFileLines)
-        testFile.close()
-
-        uniqueID=OFL.find_unique_id_inside_org_file(testFilename)
-        self.assertEqual(uniqueID,'2016-05-19_17-15-59-9812')
-        os.remove(testFilename)
-
-    def test_3(self):
-
-        
-        testFileLines=['* status\n']
-        testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9812   \n')
-        testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9813   \n')
-        testFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org')
-        testFile=open(testFilename,'w')
-        testFile.writelines(testFileLines)
-        testFile.close()
-
-        uniqueID=OFL.find_unique_id_inside_org_file(testFilename)
-        self.assertEqual(uniqueID,'2016-05-19_17-15-59-9812')
-        os.remove(testFilename)
-
-    def test_4(self):
-
-        
-        testFileLines=[]
-        testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9812   \n')
-        testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9813   \n')
-        testFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org')
-        testFile=open(testFilename,'w')
-        testFile.writelines(testFileLines)
-        testFile.close()
-
-        uniqueID=OFL.find_unique_id_inside_org_file(testFilename)
-        self.failIf(uniqueID)
-        os.remove(testFilename)
-
-    def test_5(self):
-
-        
-        testFileLines=['one line\n','another line\n']
-        testFileLines.append('* status\n')
-        testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9812   \n')
-        testFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org')
-        testFile=open(testFilename,'w')
-        testFile.writelines(testFileLines)
-        testFile.close()
-
-        uniqueID=OFL.find_unique_id_inside_org_file(testFilename)
-        self.assertEqual(uniqueID,'2016-05-19_17-15-59-9812')
-        os.remove(testFilename)
-
-#head skip test clean_up_on_error_in_operate_on_fileA
-class TestOperateOnFileA(unittest.TestCase):
-    def test_1(self):
-        #goal is to check on what happened in database
-
-        reset_database()
-
-        runDebuggerOnlyInRepairStep=False
-        runDebuggerInEveryStep=False
-        runWithPauses=False
-
-        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
-    
-        showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
-        fileB=operate_on_fileA_w(filenameB,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
-        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
-
-        self.failUnless(fileA.uniqueID)
-        self.failUnless(fileB.uniqueID)
-      
-        self.assertEqual(fileA.myFilesTable,fileB.myFilesTable)
-        self.assertEqual(fileA.myFilesTable.getNRows(),2)
-
-        self.assertEqual(fileA.myFilesTable.lookupID_UsingUniqueID(fileA),fileA.myFilesTableID)
-        self.assertEqual(fileB.myFilesTable.lookupID_UsingUniqueID(fileB),fileB.myFilesTableID)
-
-        self.assertEqual(fileA.myFilesTable.lookupUniqueID_UsingID(fileA.myFilesTableID),fileA.uniqueID)
-        self.assertEqual(fileB.myFilesTable.lookupUniqueID_UsingID(fileB.myFilesTableID),fileB.uniqueID)
-
-        self.assertEqual(fileA.myFilesTable.lookupID_UsingName(fileA),fileA.myFilesTableID)
-        self.assertEqual(fileB.myFilesTable.lookupID_UsingName(fileB),fileB.myFilesTableID)
-
-        #http://stackoverflow.com/questions/3501382/checking-whether-a-variable-is-an-integer-or-not
-        self.failUnless(isinstance(fileA.myFilesTable.lookupTimeLastFullyAnalyzed_UsingID(fileA.myFilesTableID),(int,long)))
-
-        os.remove(filenameA)
-        os.remove(filenameB)
-        os.remove(symlinkToFileB_Name)
-
-    def test_2(self):
-        '''focus on symlinksOrgTable'''
-
-        reset_database()
-
-        runDebuggerOnlyInRepairStep=False
-        runDebuggerInEveryStep=False
-        runWithPauses=False
-
-        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
-    
-        showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
-        fileB=operate_on_fileA_w(filenameB,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
-        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
-
-        #focus on symlinks table
-        self.assertEqual(fileA.symlinksTable.lookupTarget(os.path.abspath(symlinkToFileB_Name)),fileB.myFilesTableID)
-        self.assertEqual(fileA.symlinksTable.lookupSymlinks(fileB),[os.path.abspath(symlinkToFileB_Name)])
-
-        os.remove(filenameA)
-        os.remove(filenameB)
-        os.remove(symlinkToFileB_Name)
-
-    def test_3(self):
-        '''focus on linksToOrgTable'''
-
-        reset_database()
-
-        runDebuggerOnlyInRepairStep=False
-        runDebuggerInEveryStep=False
-        runWithPauses=False
-
-        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
-    
-        showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
-        fileB=operate_on_fileA_w(filenameB,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
-        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
-
-        #focus on linksTo table
-
-        files_A_LinksTo=OFL.db1.linksToOrgTable.makeListOfFilesAFileLinksTo(fileA)
-        self.assertEqual(len(files_A_LinksTo),1)
-        self.assertEqual(files_A_LinksTo[0].filenameAP,fileB.filenameAP)
-
-        filesLinkingToFileA=OFL.db1.linksToOrgTable.makeListOfFilesThatLinkToAFile(fileA)
-        self.assertEqual(len(filesLinkingToFileA),1)
-        self.assertEqual(filesLinkingToFileA[0].filenameAP,fileB.filenameAP)
-
-        files_B_LinksTo=OFL.db1.linksToOrgTable.makeListOfFilesAFileLinksTo(fileB)
-        self.assertEqual(len(files_B_LinksTo),1)
-        self.assertEqual(files_B_LinksTo[0].filenameAP,fileA.filenameAP)
-
-        filesLinkingToFileB=OFL.db1.linksToOrgTable.makeListOfFilesThatLinkToAFile(fileB)
-        self.assertEqual(len(filesLinkingToFileB),1)
-        self.assertEqual(filesLinkingToFileB[0].filenameAP,fileA.filenameAP)
-
-        OFL.db1.linksToOrgTable.removeEntriesMatchingFromFile(fileB)
-        files_B_LinksTo=OFL.db1.linksToOrgTable.makeListOfFilesAFileLinksTo(fileB)
-        self.failIf(files_B_LinksTo)
-
-        OFL.db1.linksToOrgTable.removeEntriesMatchingFromFile(fileA)
-        files_A_LinksTo=OFL.db1.linksToOrgTable.makeListOfFilesAFileLinksTo(fileA)
-        self.failIf(files_A_LinksTo)
-
-        self.assertEqual(OFL.db1.linksToOrgTable.getNRows(),0)
-
-        os.remove(filenameA)
-        os.remove(filenameB)
-        os.remove(symlinkToFileB_Name)
-
-#head skip test user_says_stop_spidering
-#head skip test clean_up_before_ending_spidering_run
-#head skip test spider_starting_w_fileA
-#head skip test get_list_of_all_repairable_org_files
-#head skip test operate_on_all_org_files
-#head skip test make_regex_dicts
-#head skip test make regex_ordered_lists
-#head skip test usage
-#head
 #head
 def reset_database():
     #if reset_database is inserted at the beginning of every single test, runtime of this script goes up drastically
@@ -5382,6 +5441,22 @@ def set_up_fileA_fileB_linkToFileB_non_org():
 
     return filenameA,filenameB,symlinkToFileB_Name
     # return os.path.abspath(filenameA),os.path.abspath(filenameB),os.path.abspath(symlinkToFileB_Name)  #should have done this, but now too many tests assume otherwise
+
+#head
+def get_hash(filenameAP):
+    #http://stackoverflow.com/questions/22058048/hashing-a-file-in-python
+    BUF_SIZE = 65536
+
+    md5 = hashlib.md5()
+
+    with open(filenameAP, 'rb') as f:
+        while True:
+            data = f.read(BUF_SIZE)
+            if not data:
+                break
+            md5.update(data)
+
+    return md5.hexdigest()
 
 #head
 DocumentsFolderAP=os.path.join(os.path.expanduser('~'),'Documents')

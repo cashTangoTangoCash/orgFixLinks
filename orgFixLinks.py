@@ -3260,7 +3260,7 @@ class OrgFile(LocalFile):
         assert not self.inHeader, 'unwanted method call on file from link in machine-generated header'
 
         if keepBackup:
-            #this is pretty useless since the same .bak file will keep getting overwritten; need time-series backup but that seems expensive in terms of disk space
+            #this is less useful since the same .bak file will keep getting overwritten; need time-series backup but that seems expensive in terms of disk space
             shutil.copy2(self.filenameAP,self.filenameAP+'.bak')
             # logging.debug('Copied %s to %s as a backup' % (self.filenameAP,self.filenameAP+'.bak'))
         #this should overwrite existing file
@@ -4410,8 +4410,9 @@ def operate_on_fileA(filename,userFixesLinksManually=False,runDebugger=False,deb
     logging.debug('Analyzed %s in %s seconds' % (filename,endTime-startTime))
 
     if isDryRun:
-        os.rename(fileA.filenameAP+'.bak',fileA.filenameAP)  #replace the rewritten file with original
-        logging.debug('Dry run: moved %s to %s' % (fileA.filenameAP+'.bak',fileA.filenameAP))
+        shutil.copy2(self.filenameAP+'.bak',self.filenameAP)
+        # os.rename(fileA.filenameAP+'.bak',fileA.filenameAP)  #replace the rewritten file with original
+        # logging.debug('Dry run: moved %s to %s' % (fileA.filenameAP+'.bak',fileA.filenameAP))
 
     return fileA
 
@@ -4751,43 +4752,8 @@ def usage():
     '''
     print messg1
 
-#head module-level stuff that will always execute even when this module is imported by another script/module
-databaseName=os.path.join(os.getcwd(),'orgFiles.sqlite')  #'real run' database
-dryRunDatabaseName=os.path.join(os.getcwd(),'orgFilesDryRunCopy.sqlite') #dry run database
 #head
-globalStartTime=time.time()
-#head
-keyboardInputLock=threading.Lock()
-#head
-origFolder=os.getcwd()
-#head
-pastInteractiveRepairs=get_past_interactive_repairs_dict()  # a dictionary for storing past interactive repairs of broken links
-#head
-asteriskRegex=re.compile('(?P<asterisks>^\*+) ')
-
-#list of compiled regex for identifying class of link; has particular order for identifying link in [[link][description]]
-regexOrderedListBrackets,regexOrderedListNoBrackets=make_regex_ordered_lists()
-
-#dictionary that matches compiled regex in regexOrderedListBrackets/regexOrderedListNoBrackets to class it belongs to
-regexDictBrackets,regexDictNoBrackets=make_regex_dicts()
-
-maxFailedRepairAttempts=10  #setting
-maxLinesInANodeToAnalyze=1000  #setting  idea is that sometimes a user will paste large blocks of text in a node blurb, and script can hang forever trying to make sense of long chunks of text that do not look like org file material
-# only purpose is to avoid errors where this script reacts improperly to a line of text.
-# if set too small, will not be able to get uniqueIDs in header when header contains many links
-secondsSinceFullyAnalyzedCutoff=2*24*60*60  #setting elapsed seconds since org file last fully analyzed; cutoff to be considered recently analyzed  24 hr/day * 60 min/hr * 60 sec/min
-maxLengthOfVisibleLinkText=5  #setting that affects length of visible text (length of description in [[link][description]]) in a link to a local file
-
-#head
-if __name__ <> "__main__":
-    #want to be able to import things from this module for testing, without logging taking place
-    logging.disable(logging.CRITICAL)  #disables all logging messages; see sweigart
-
-    set_up_blank_database()
-
-#head MAIN
-if __name__=="__main__":
-
+def main():
     #initialize variables that could be changed via command line inputs
     fileA1=None
     isDryRun=False
@@ -4894,5 +4860,44 @@ if __name__=="__main__":
 
     print 'Run completed: log file %s contains %s errors and %s warnings\n' % (logFilename,logging.error.counter,logging.warning.counter)
     db1.cur.close()
+
 #head
+#head module-level stuff that will always execute even when this module is imported by another script/module
+databaseName=os.path.join(os.getcwd(),'orgFiles.sqlite')  #'real run' database
+dryRunDatabaseName=os.path.join(os.getcwd(),'orgFilesDryRunCopy.sqlite') #dry run database
+#head
+globalStartTime=time.time()
+#head
+keyboardInputLock=threading.Lock()
+#head
+origFolder=os.getcwd()
+#head
+pastInteractiveRepairs=get_past_interactive_repairs_dict()  # a dictionary for storing past interactive repairs of broken links
+#head
+asteriskRegex=re.compile('(?P<asterisks>^\*+) ')
+
+#list of compiled regex for identifying class of link; has particular order for identifying link in [[link][description]]
+regexOrderedListBrackets,regexOrderedListNoBrackets=make_regex_ordered_lists()
+
+#dictionary that matches compiled regex in regexOrderedListBrackets/regexOrderedListNoBrackets to class it belongs to
+regexDictBrackets,regexDictNoBrackets=make_regex_dicts()
+
+maxFailedRepairAttempts=10  #setting
+maxLinesInANodeToAnalyze=1000  #setting  idea is that sometimes a user will paste large blocks of text in a node blurb, and script can hang forever trying to make sense of long chunks of text that do not look like org file material
+# only purpose is to avoid errors where this script reacts improperly to a line of text.
+# if set too small, will not be able to get uniqueIDs in header when header contains many links
+secondsSinceFullyAnalyzedCutoff=2*24*60*60  #setting elapsed seconds since org file last fully analyzed; cutoff to be considered recently analyzed  24 hr/day * 60 min/hr * 60 sec/min
+maxLengthOfVisibleLinkText=5  #setting that affects length of visible text (length of description in [[link][description]]) in a link to a local file
+
+#head
+if __name__ <> "__main__":
+    #want to be able to import things from this module for testing, without logging taking place
+    logging.disable(logging.CRITICAL)  #disables all logging messages; see sweigart
+
+    set_up_blank_database()
+
+#head MAIN
+if __name__=="__main__":
+    main()
+
 
