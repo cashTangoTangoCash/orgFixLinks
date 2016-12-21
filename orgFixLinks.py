@@ -3707,7 +3707,9 @@ def find_all_name_matches_via_bash(textToMatch):
     resListOfLists2=[[int(a[0]),a[1]] for a in resListOfLists]
     matchesOldestToNewest=sorted(resListOfLists2)  #sorted by modification time in seconds, ascending
     filenameAPsOldestToNewest=[a[1] for a in matchesOldestToNewest]
-    return filenameAPsOldestToNewest
+    #return only files that exist
+    returnList1=[a for a in filenameAPsOldestToNewest if os.path.exists(a)]
+    return returnList1
 
 def find_all_name_matches_via_bash_for_directories(textToMatch):
     '''
@@ -3735,7 +3737,9 @@ def find_all_name_matches_via_bash_for_directories(textToMatch):
     resListOfLists2=[[int(a[0]),a[1]] for a in resListOfLists]
     matchesOldestToNewest=sorted(resListOfLists2)  #sorted by modification time in seconds, ascending
     filenameAPsOldestToNewest=[a[1] for a in matchesOldestToNewest]
-    return filenameAPsOldestToNewest
+    #return only files that exist
+    returnList1=[a for a in filenameAPsOldestToNewest if os.path.exists(a)]
+    return returnList1
 
 #head
 def set_up_database():
@@ -4054,6 +4058,8 @@ def operate_on_fileA(filename,userFixesLinksManually=False,runDebugger=False,deb
             if (not repairLinks):
                 linkB.databaseHousekeepingForBrokenLink()
                 continue
+
+            #TODO want to use try except here; if automated routines can't fix a particular link, just log the error, leave the link broken, and move on
 
             if fileB.uniqueIDFromHeader:
                 #look for unique ID from header in database

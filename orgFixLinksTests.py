@@ -5,6 +5,8 @@ import os
 import pudb
 import shutil
 import hashlib
+import glob
+import time
 
 #must know how to do a single test: see http://stackoverflow.com/questions/15971735/running-single-test-from-unittest-testcase-via-command-line
 #reason: this entire script runs for approx 40 seconds
@@ -3797,7 +3799,54 @@ class TestTraverseNodesToReachDesiredNode(unittest.TestCase):
 #head skip test of display_log_file
 #head skip test walk_files_looking_for_name_match
 #head skip test walk_org_files_looking_for_unique_id_match
-#head skip test find_all_name_matches_via_bash
+class TestFindAllNameMatchesViaBash(unittest.TestCase):
+    def test_1(self):
+
+        #TODO caution this might remove more files than intended, if you have your own files that match this pattern?
+        for unwantedFile in glob.glob(datetime.datetime.now().strftime('%Y%m%d')+'*Test*FANMVB*.org'):
+            os.remove(unwantedFile)
+
+        for unwantedFile in glob.glob(os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d')+'*Test*FANMVB*.org')):
+            os.remove(unwantedFile)
+
+        for unwantedFile in glob.glob(os.path.join(anotherFolder2,datetime.datetime.now().strftime('%Y%m%d')+'*Test*FANMVB*.org')):
+            os.remove(unwantedFile)
+        
+        self.maxDiff=None
+
+        testFileLines=['* status\n']
+        testFileLines.append('blurb\n')
+
+        testFilename1=datetime.datetime.now().strftime('%Y%m%d_%H%MTest_FANMVB_1.org')
+        testFile1=open(testFilename1,'w')
+        testFile1.writelines(testFileLines)
+        testFile1.close()
+
+        time.sleep(.3)  #need to slow things down on my machine in order to get the desired oldest to newest ordering
+
+        testFilename2=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest_FANMVB_2.org'))
+        testFile2=open(testFilename2,'w')
+        testFile2.writelines(testFileLines)
+        testFile2.close()
+
+        time.sleep(.3)
+
+        testFilename3=os.path.join(anotherFolder2,datetime.datetime.now().strftime('%Y%m%d_%H%MTest_FANMVB_3.org'))
+        testFile3=open(testFilename3,'w')
+        testFile3.writelines(testFileLines)
+        testFile3.close()
+
+        expectedResList=[os.path.abspath(testFilename1),testFilename2,testFilename3]
+        testResList=OFL.find_all_name_matches_via_bash(datetime.datetime.now().strftime('%Y%m%d')+'*Test*FANMVB*.org')
+
+        self.assertEqual(3,len(testResList))
+        self.assertEqual(set(expectedResList),set(testResList))
+        self.assertEqual(expectedResList,testResList)
+
+        os.remove(testFilename1)
+        os.remove(testFilename2)
+        os.remove(testFilename3)
+
 #head skip test find_all_name_matches_via_bash_for_directories
 #head skip test of set_up_database 
 #head skip test user_chooses_element_from_list_or_rejects_all; how to simulate user typing something at a prompt?
@@ -3812,8 +3861,6 @@ class TestFindUniqueIDInsideFile(unittest.TestCase):
     def test_1(self):
         '''test find_unique_id_inside_file: file contains status node but does not contain unique ID'''
 
-        
-        
         testFileLines=['* status\n']
         testFileLines.append('blurb\n')
         testFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org')
