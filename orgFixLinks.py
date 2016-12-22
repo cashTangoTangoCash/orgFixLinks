@@ -1662,7 +1662,8 @@ class LinkToLocalFile(Link):
             Automatic routines have failed to fix these links.
             There are %s broken links remaining in org file %s.
 
-            Broken link is %s.
+            Broken link is %s
+            (last line ends with the verbatim broken link; no period is added at the end)
 
             Enter what to do next:
             1) skip manually fixing this link
@@ -4600,6 +4601,7 @@ def get_list_of_all_repairable_org_files():
 
         allBasenamesInDirnameThatAreOrg=[a for a in files if a.endswith('.org')]
         allFilenameAPInDirnameThatAreOrg=[os.path.join(dirname,a) for a in allBasenamesInDirnameThatAreOrg]
+        # allFilenameAPInDirnameThatAreOrg=[os.path.join(dirname,a) for a in allBasenamesInDirnameThatAreOrg if os.path.exists(a)]  #TODO why does --if os.path.exists(a)-- appear to yield far fewer files?
         allOrgFilenamesAP.extend(allFilenameAPInDirnameThatAreOrg)
         dirsVisitedBeforeAP.append(dirname)
 

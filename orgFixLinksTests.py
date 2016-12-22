@@ -340,7 +340,6 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
     #head test LinkToLocalFile.__init__
     def test_1(self):
         '''link1=file:OrgModeFileCrawlerMain.org'''
-        
 
         hasBrackets=False
         preFilename1='file:'
@@ -389,6 +388,28 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         self.assertEqual(preFilename1,aLink.preFilename)
         self.assertEqual(filename1,aLink.filename)
         self.assertEqual(postFilename1,aLink.postFilename)
+
+    def test_1C(self):
+        pass
+
+        #TODO need to revise script under test to make this pass
+        #TODO also deal with other punctuation following a similar link
+        #TODO also do non-org version
+
+        # pudb.set_trace()        
+
+        # hasBrackets=False
+        # preFilename1='file:'
+        # filename1='OrgModeFileCrawlerMain.org.'  #note the trailing period
+        # postFilename1=''
+        # link1=preFilename1+filename1+postFilename1
+        # description1=None
+
+        # text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
+
+        # matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
+        # self.failIf(matchingRegex)  #currently failing since a regex that identifies non-org links matches
+        # self.failIf(matchObj)
 
     def test_1BD(self):
         '''link1=file:OrgModeFileCrawlerMain.org'''
@@ -5654,6 +5675,13 @@ def get_hash(filenameAP):
     return md5.hexdigest()
 
 #head
+def empty_and_remove_temp_folders():
+    #http://stackoverflow.com/questions/303200/how-do-i-remove-delete-a-folder-that-is-not-empty-with-python
+    topFolderToRemove=os.path.join(DocumentsFolderAP,'TempOFLTests1')
+    if os.path.exists(topFolderToRemove):
+        shutil.rmtree(topFolderToRemove)
+
+#head
 DocumentsFolderAP=os.path.join(os.path.expanduser('~'),'Documents')
 assert os.path.exists(DocumentsFolderAP), 'Cannot proceed since assuming the folder %s exists' % DocumentsFolderAP
 anotherFolder=os.path.join(DocumentsFolderAP,'TempOFLTests1','TempOFLTests2','TempOFLTests3')
@@ -5664,4 +5692,4 @@ anotherFolder2=os.path.join(DocumentsFolderAP,'TempOFLTests1','TempOFLTests2')
 #head
 if __name__ == "__main__":
     unittest.main()
-    #TODO could delete anotherFolder, anotherFolder2
+    empty_and_remove_temp_folders()
