@@ -391,25 +391,19 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
     def test_1C(self):
         pass
-
-        #TODO need to revise script under test to make this pass
-        #TODO also deal with other punctuation following a similar link
-        #TODO also do non-org version
-
-        # pudb.set_trace()        
-
         # hasBrackets=False
         # preFilename1='file:'
-        # filename1='OrgModeFileCrawlerMain.org.'  #note the trailing period
-        # postFilename1=''
+        # filename1='OrgModeFileCrawlerMain.org'
+        # postFilename1='.'  #note the trailing period
         # link1=preFilename1+filename1+postFilename1
         # description1=None
 
         # text1=OFL.text_from_link_and_description(link1,description1,hasBrackets)
 
+        # self.assertEqual(matchingRegex,OFL.LinkToOrgFile.linkRegexesNoBrackets['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org'])  #UPDATE
+
         # matchingRegex,matchObj,matchingClass=OFL.find_best_regex_match_for_text(link1,hasBrackets)
-        # self.failIf(matchingRegex)  #currently failing since a regex that identifies non-org links matches
-        # self.failIf(matchObj)
+
 
     def test_1BD(self):
         '''link1=file:OrgModeFileCrawlerMain.org'''
@@ -3821,6 +3815,7 @@ class TestTraverseNodesToReachDesiredNode(unittest.TestCase):
 #head skip test walk_files_looking_for_name_match
 #head skip test walk_org_files_looking_for_unique_id_match
 class TestFindAllNameMatchesViaBash(unittest.TestCase):
+    '''time.sleep duration must be set properly for this to pass'''
     def test_1(self):
 
         #TODO caution this might remove more files than intended, if you have your own files that match this pattern?
@@ -3843,14 +3838,14 @@ class TestFindAllNameMatchesViaBash(unittest.TestCase):
         testFile1.writelines(testFileLines)
         testFile1.close()
 
-        time.sleep(.3)  #need to slow things down on my machine in order to get the desired oldest to newest ordering
+        time.sleep(1)  #need to slow things down on my machine in order to get the desired oldest to newest ordering
 
         testFilename2=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest_FANMVB_2.org'))
         testFile2=open(testFilename2,'w')
         testFile2.writelines(testFileLines)
         testFile2.close()
 
-        time.sleep(.3)
+        time.sleep(1)
 
         testFilename3=os.path.join(anotherFolder2,datetime.datetime.now().strftime('%Y%m%d_%H%MTest_FANMVB_3.org'))
         testFile3=open(testFilename3,'w')
@@ -3862,7 +3857,7 @@ class TestFindAllNameMatchesViaBash(unittest.TestCase):
 
         self.assertEqual(3,len(testResList))
         self.assertEqual(set(expectedResList),set(testResList))
-        self.assertEqual(expectedResList,testResList)
+        self.assertEqual(expectedResList,testResList)  #TODO if this line causes test to fail, try increasing the time.sleep duration above
 
         os.remove(testFilename1)
         os.remove(testFilename2)
@@ -5677,19 +5672,28 @@ def get_hash(filenameAP):
 #head
 def empty_and_remove_temp_folders():
     #http://stackoverflow.com/questions/303200/how-do-i-remove-delete-a-folder-that-is-not-empty-with-python
-    topFolderToRemove=os.path.join(DocumentsFolderAP,'TempOFLTests1')
+    topFolderToRemove=os.path.join(DocumentsFolderAP,'TemporaryOrgFixLinksTests1')
     if os.path.exists(topFolderToRemove):
         shutil.rmtree(topFolderToRemove)
 
 #head
 DocumentsFolderAP=os.path.join(os.path.expanduser('~'),'Documents')
 assert os.path.exists(DocumentsFolderAP), 'Cannot proceed since assuming the folder %s exists' % DocumentsFolderAP
-anotherFolder=os.path.join(DocumentsFolderAP,'TempOFLTests1','TempOFLTests2','TempOFLTests3')
-if not os.path.exists(anotherFolder):
+
+anotherFolder=os.path.join(DocumentsFolderAP,'TemporaryOrgFixLinksTests1','TemporaryOrgFixLinksTests2','TemporaryOrgFixLinksTests3')
+
+if os.path.exists(os.path.join(DocumentsFolderAP,'TemporaryOrgFixLinksTests1')):
+    #TODO come up with something better than this; but, it seems unlikely that a user will already have a folder with this long and particular name
+    print '\n\nWarning: your filesystem already has a folder named %s and this test script is deleting it and everything in it!  Sorry\n\n' % os.path.join(DocumentsFolderAP,'TemporaryOrgFixLinksTests1')
+
+if (not os.path.exists(anotherFolder)):
     os.makedirs(anotherFolder)
+
 assert os.path.exists(anotherFolder), 'Cannot proceed since assuming the folder %s exists' % anotherFolder
-anotherFolder2=os.path.join(DocumentsFolderAP,'TempOFLTests1','TempOFLTests2')
+anotherFolder2=os.path.join(DocumentsFolderAP,'TemporaryOrgFixLinksTests1','TemporaryOrgFixLinksTests2')
 #head
 if __name__ == "__main__":
-    unittest.main()
-    empty_and_remove_temp_folders()
+    try:
+        unittest.main()
+    finally:
+        empty_and_remove_temp_folders()
