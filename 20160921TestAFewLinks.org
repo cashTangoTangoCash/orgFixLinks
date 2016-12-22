@@ -161,6 +161,8 @@
 * brackets [[OrgModeFileCrawlerMain.org::python]] org sees this as internal link
 * ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((   
 * no brackets file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/OrgModeFileCrawlerMain.org works
+* no brackets file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/OrgModeFileCrawlerMain.org. works
+* no brackets "file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/OrgModeFileCrawlerMain.org" works
 * brackets [[file:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/OrgModeFileCrawlerMain.org]] works
 * no brackets file+sys:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/OrgModeFileCrawlerMain.org nothing happens
 * brackets [[file+sys:/home/dad84/Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/OrgModeFileCrawlerMain.org]] nothing happens

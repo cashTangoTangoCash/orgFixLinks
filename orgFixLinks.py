@@ -2011,7 +2011,7 @@ class LinkToNonOrgFile(LinkToLocalFile):
     linkRegexesBrackets['/anyFilename  or  ./anyFilename  or  ~/anyFilename']=re.compile(r'^(?P<preFilename>)(?P<filename>[.~]?[/][^@*]+$)(?P<postFilename>)')
 
     linkRegexesNoBrackets={'file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything':re.compile(r'^(?P<preFilename>(?:file(?:(?:[+]sys)|(?:[+]emacs))?:)|(?:docview:))(?P<filename>[^@*]+?)(?P<postFilename>::.+)$')}
-    linkRegexesNoBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename']=re.compile(r'^(?P<preFilename>(?:file(?:(?:[+]sys)|(?:[+]emacs))?:)|(?:docview:))(?P<filename>[^@*]+$)(?P<postFilename>)')
+    linkRegexesNoBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename']=re.compile(r'^(?P<preFilename>(?:file(?:(?:[+]sys)|(?:[+]emacs))?:)|(?:docview:))(?P<filename>[^@*]+?)(?P<postFilename>[.,:;!?]?$)')
 
     def __init__(self,text,inHeader,sourceFile,hasBrackets,regexForLink):
         '''
@@ -2076,7 +2076,8 @@ class LinkToOrgFile(LinkToLocalFile):
 
     #TODO if no brackets, cannot have spaces; log an error
     linkRegexesNoBrackets={'file:anyFilename.org::anything or file+sys:anyFilename.org::anything or file+emacs:anyFilename.org::anything or docview:anyFilename.org::anything':re.compile(r'^(?P<preFilename>(?:file(?:(?:[+]sys)|(?:[+]emacs))?:)|(?:docview:))(?P<filename>[^@*]+?[.]org)(?P<postFilename>::.+)$')}
-    linkRegexesNoBrackets['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org']=re.compile(r'^(?P<preFilename>(?:file(?:(?:[+]sys)|(?:[+]emacs))?:)|(?:docview:))(?P<filename>[^@*]+?[.]org$)(?P<postFilename>)')
+    linkRegexesNoBrackets['file:anyFilename.org or file+sys:anyFilename.org or file+emacs:anyFilename.org or docview:anyFilename.org']=re.compile(r'^(?P<preFilename>(?:file(?:(?:[+]sys)|(?:[+]emacs))?:)|(?:docview:))(?P<filename>[^@*]+?[.]org)(?P<postFilename>[.,:;!?]?$)')
+    #TODO could also have unusual cases: "file:anyFilename.org", 'file:anyFilename.org', (file:anyFilename.org), [file:anyFilename.org], {file:anyFilename.org}
 
     #unique ID in header of self.sourceFile pertaining to this link is written differently than unique ID in status section of self.sourceFile
     #this makes it easy to find unique ID of an org file without making a full representation of it in this script
@@ -4715,6 +4716,7 @@ def make_regex_ordered_lists():
     lists of compiled regex for identifying class of link; has particular order for identifying link in [[link][description]]
     '''
 
+    #brackets
     rOLB=[LinkToOrgFile.linkRegexesBrackets['file:anyFilename.org::anything or file+sys:anyFilename.org::anything or file+emacs:anyFilename.org::anything or docview:anyFilename.org::anything']]
     rOLB.append(LinkToOrgFile.linkRegexesBrackets['/anyFilename.org::anything  or  ./anyFilename.org::anything  or  ~/anyFilename.org::anything'])
     rOLB.append(LinkToNonOrgFile.linkRegexesBrackets['file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything'])
@@ -4725,6 +4727,7 @@ def make_regex_ordered_lists():
     rOLB.append(LinkToNonOrgFile.linkRegexesBrackets['file:anyFilename or file+sys:anyFilename or file+emacs:anyFilename or docview:anyFilename'])
     rOLB.append(LinkToNonOrgFile.linkRegexesBrackets['/anyFilename  or  ./anyFilename  or  ~/anyFilename'])
 
+    #no brackets
     rOLNB=[LinkToOrgFile.linkRegexesNoBrackets['file:anyFilename.org::anything or file+sys:anyFilename.org::anything or file+emacs:anyFilename.org::anything or docview:anyFilename.org::anything']]
     rOLNB.append(LinkToNonOrgFile.linkRegexesNoBrackets['file:anyFilename::anything or file+sys:anyFilename::anything or file+emacs:anyFilename::anything or docview:anyFilename::anything'])
 
