@@ -3942,7 +3942,7 @@ def operate_on_fileA(filename,userFixesLinksManually=False,runDebugger=False,deb
 
         fileA.testIfExists()  #version that goes with working with symlink target instead of symlink
 
-        assert fileA.exists, '\nInitial org file to begin spidering, %s, does not exist; quitting\n' % fileA.filenameAP 
+        assert fileA.exists, '\nCannot operate on %s because it does not exist\n' % fileA.filenameAP 
         
         assert fileA.endsInDotOrg(), '\nInput filename %s does not end with .org; quitting\n' % fileA.filenameAP
 
@@ -4473,6 +4473,11 @@ def spider_starting_w_fileA(filename,maxTime=None,maxN=None,hitReturnToStop=True
     logging.info(messg1)
 
     try:
+
+        fileA=OrgFile(filename,inHeader=False)
+        assert fileA.exists, '\nInitial org file to begin spidering, %s, does not exist; quitting\n' % fileA.filenameAP 
+        del fileA
+
         fileA=operate_on_fileA(filename=filename,userFixesLinksManually=userFixesLinksManually,runDebugger=runDebugger,debuggerAlreadyRunning=debuggerAlreadyRunning,isDryRun=isDryRun,showLog=showLog,repairLinks=repairLinks,keepBackup=keepBackup,deleteOldLogs=deleteOldLogs,doLessIfRecentlyFullyAnalyzed=skipIfRecentlySpidered)
         if fileA=='Quit':
             messg1='User quit during processing of %s; quitting spidering' % filename
@@ -4579,18 +4584,20 @@ def spider_starting_w_fileA(filename,maxTime=None,maxN=None,hitReturnToStop=True
     clean_up_before_ending_spidering_run(isDryRun,messg1='Completed spidering run')
 
 #head
-def get_list_of_all_repairable_org_files():
+def get_list_of_all_repairable_org_files(mainFolderAP):
     '''
     spider routine queue can run dry
     instead of spidering, get a list of all org files on disc that I would want to repair
     '''
 
+    assert os.path.exists(mainFolderAP), 'cannot get list of all org files in %s because it does not exist' % mainFolderAP
+
     dirsVisitedBeforeAP=[]
     allOrgFilenamesAP=[]
 
-    DocumentsFoldernameAP=os.path.join(os.path.expanduser('~'),'Documents')
+    #TODO having trouble with this function returning a list that includes broken symlinks
 
-    for (dirname, dirs, files) in os.walk(DocumentsFoldernameAP):
+    for (dirname, dirs, files) in os.walk(mainFolderAP):
         dirsAP=[os.path.join(dirname,a) for a in dirs]
         for dir1 in dirsVisitedBeforeAP:
             if dir1 in dirsAP:
@@ -4600,10 +4607,17 @@ def get_list_of_all_repairable_org_files():
         if 'venv' in dirs:
             dirs.remove('venv')  #don't visit venv directories
 
-        allBasenamesInDirnameThatAreOrg=[a for a in files if a.endswith('.org')]
-        allFilenameAPInDirnameThatAreOrg=[os.path.join(dirname,a) for a in allBasenamesInDirnameThatAreOrg]
-        # allFilenameAPInDirnameThatAreOrg=[os.path.join(dirname,a) for a in allBasenamesInDirnameThatAreOrg if os.path.exists(a)]  #TODO why does --if os.path.exists(a)-- appear to yield far fewer files?
-        allOrgFilenamesAP.extend(allFilenameAPInDirnameThatAreOrg)
+        orgBasenamesInDir=[a for a in files if a.endswith('.org')]
+        orgFilenameAPsInDir=[os.path.join(dirname,a) for a in orgBasenamesInDir]
+        orgFileObjsInDir=[OrgFile(a,inHeader=False,leaveAsSymlink=True) for a in orgFilenameAPsInDir]
+
+        finalList=[]
+
+        for a in orgFileObjsInDir:
+            if a.exists and (not a.isSymlink):
+                finalList.append(a.filenameAP)
+
+        allOrgFilenamesAP.extend(finalList)
         dirsVisitedBeforeAP.append(dirname)
 
     return allOrgFilenamesAP
@@ -4623,7 +4637,9 @@ def operate_on_all_org_files(maxTime=None,maxN=None,hitReturnToStop=True,userFix
         runDebugger=False
         logging.warning('In spidering, you have enabled feature: hit return to stop spidering.  You also turned on debugger.  Debugger pudb cannot handle multithreading, so it cannot be turned on')
 
-    filesToWalk=get_list_of_all_repairable_org_files()
+    DocumentsFoldernameAP=os.path.join(os.path.expanduser('~'),'Documents')
+
+    filesToWalk=get_list_of_all_repairable_org_files(DocumentsFoldernameAP)
     NFilesToWalk=len(filesToWalk)
     logging.debug('%s total org files found to walk (operate_on_all_org_files)' % NFilesToWalk)
     count=0
