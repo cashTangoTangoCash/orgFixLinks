@@ -1,12 +1,10 @@
-# orgFixLinks, a Python Utility
-
-**20161219: code under construction; currently debugging**
+# orgFixLinks.py, a Python Command-Line Utility
 
 Be sure to check out
 the [wiki](https://github.com/cashTangoTangoCash/orgFixLinks/wiki).  There is a
 cookbook section.
 
-This is a script in this category: <http://orgmode.org/worg/org-tools/>
+This is a script aspriring to be in this category: <http://orgmode.org/worg/org-tools/>
 
 I wrote over *800 org files*, which reside on my local disk.  They consist of
 simple notes with links to websites and other files on local disk.  **_Broken
@@ -30,25 +28,24 @@ The goals of this script:
     links, and tags
 
 
-The script is a command line utility to be used in the terminal.
+The script is a command line utility to be used in the terminal.  Currently it
+is known to run in the Ubuntu OS only.
 
 ## Warnings and State of Development
 **WARNING** this python script is amateur work
 
 **WARNING** bugs are still regularly appearing.  Comprehensively testing this
-code is not easy; there is now a test script.
+code is not easy; there is now a test script: orgFixLinksTests.py.  Please
+resolve any bugs found via running the test script before running orgFixLinks.py.
 
-**WARNING** it can screw up your org files (backup first;
-dry run mode first)
+**WARNING** it can screw up your files.  Please first backup your files.
 
 **WARNING** it does not recognize all possible org file characteristics and may trample
 them (backup first; dry run mode first)
 
-**WARNING** org mode can change and this script can break as a result
+**WARNING** org mode in emacs can change and this script can break as a result
 
 **WARNING** intended for experienced users only
-
-**WARNING** script does not test itself; there is a separate script with tests.
 
 **WARNING** tags that are all caps are changed to all lowercase; if you know
 python, this is easy to change
@@ -182,8 +179,8 @@ For further details, please check out the [wiki](https://github.com/cashTangoTan
 
 ## Contributing
 
-Does this script need more work?  No doubt.  I would think there is at least
-something useful in it.  It does run on my machine.
+There is no question that this script will improve given further development.
+It does run on my machine, but bugs can be found.
 
 Boilerplate from <https://gist.github.com/zenorocha/4526327>:
 
@@ -200,10 +197,10 @@ Boilerplate from <https://gist.github.com/zenorocha/4526327>:
 I am a beginner with Github.  I make no promises in terms of maintaining
 anything.  The phrase 'the code is free, people are not' applies.  You can at
 least fork.  If I can comprehend your changes (far more likely if verbosely
-documented), I am much more likely to accept a pull request.  Any change should
-get a corresponding test in the test script.  Submissions must respect
-intellectual property rights of work they are derived from (e.g. citing
-stackexchange).
+documented), I am much more likely to accept a pull request.  A test in the test
+script orgFixLinksTest.py should be written for any nontrivial change.
+Submissions must respect intellectual property rights of work they are derived
+from (e.g. citing stackexchange).
 
 I put this project on Github because it would make me happy if someone found it
 useful.  It would be exciting to see a better programmer improve on it.  There
@@ -232,5 +229,5 @@ Severance: the Twitter spidering example in Ch 14 provided the idea for this scr
 
 The Gauld Tutorial <http://www.alan-g.me.uk/tutor/index.htm>
 
-I am well aware that I did not read and understand everything, and have much
+I am highly aware that I did not read and understand everything, and have much
 more to learn.
