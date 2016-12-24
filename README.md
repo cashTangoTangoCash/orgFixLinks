@@ -2,7 +2,7 @@
 
 Be sure to check out
 the [wiki](https://github.com/cashTangoTangoCash/orgFixLinks/wiki).  There is a
-cookbook section.
+cookbook section.  Also check out orgFixLinksHighlights.mm.
 
 This is a script aspriring to be in this category: <http://orgmode.org/worg/org-tools/>
 
@@ -60,6 +60,7 @@ ready, willing, and able to restore all your files from backups, don't run this.
 
 recommended but optional: set up a virtual environment (<http://docs.python-guide.org/en/latest/dev/virtualenvs/>)
 
+emacs 24.3.1 and org mode 7.9.3f
 
 Python 2.7.6
 
