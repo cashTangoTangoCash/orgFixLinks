@@ -1272,6 +1272,7 @@ class PreviousFilenamesNonOrgTable(PreviousFilenamesTable):
 
 #head
 #head
+#head
 #head  Classes for links found in org files
 class Link():
     '''

@@ -1,8 +1,13 @@
 # orgFixLinks.py, a Python Command-Line Utility
 
+**WARNING** many users will not want a header added to their org files.  The
+script can/will be modified to accomodate this, but at this time adds headers to
+all org files.
+
 Be sure to check out
 the [wiki](https://github.com/cashTangoTangoCash/orgFixLinks/wiki).  There is a
-cookbook section.  Also check out orgFixLinksHighlights.mm.
+cookbook section.  Also check out orgFixLinksHighlights.mm, which is readable
+using Freeplane.
 
 This is a script aspriring to be in this category: <http://orgmode.org/worg/org-tools/>
 
@@ -33,6 +38,9 @@ is known to run in the Ubuntu OS only.
 
 ## Warnings and State of Development
 **WARNING** this python script is amateur work
+
+**WARNING** many users will not want a header added to their org files.  The
+script can/will be modified to accomodate this.
 
 **WARNING** bugs are still regularly appearing.  Comprehensively testing this
 code is not easy; there is now a test script: orgFixLinksTests.py.  Please
