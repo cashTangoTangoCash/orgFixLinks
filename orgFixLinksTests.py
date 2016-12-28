@@ -18,9 +18,11 @@ import time
 
 #head
 class Test_ConditionsUponImportOf_OFL(unittest.TestCase):
-    def test_1(self):
+    def setUp(self):
         reset_database()  #appears that this test is not the first test run, so can't really test the conditions on import
 
+    def test_1(self):
+        self.assertEqual(os.getcwd(),origWorkingDir)
         self.failUnless(OFL.db1) #orgFixLinks uses a global variable to hold its single database
         self.failUnless(isinstance(OFL.db1,OFL.Database1))
         self.assertEqual(OFL.db1.filename,OFL.dryRunDatabaseName) #testing this due to constant anxiety over overwriting the 'real' database file
@@ -89,93 +91,65 @@ class Test_OFL_MyNonOrgFilesTable(unittest.TestCase):
 
 #head
 class Test_OFL_FilenameAPsTable(unittest.TestCase):
-    #head skip test of __init__
-    #head TODO test of addName
-    def test_1_addName(self):
+    def setUp(self):
         reset_database()
-        table1=OFL.db1.filenameAPsOrgTable
-        self.assertEqual(table1.getNRows(),0)
-        table1.addName('junkName.org')
-        self.assertEqual(table1.getNRows(),1)
+        self.table1=OFL.db1.filenameAPsOrgTable
+        self.assertEqual(self.table1.getNRows(),0)
+
+    #head skip test of __init__
+    def test_1_addName(self):
+        self.table1.addName('junkName.org')
+        self.assertEqual(self.table1.getNRows(),1)
 
     def test_2_addName(self):
-        reset_database()
-        table1=OFL.db1.filenameAPsOrgTable
-        self.assertEqual(table1.getNRows(),0)
-        table1.addName('junkName.org')
-        self.assertEqual(table1.getNRows(),1)
+        self.table1.addName('junkName.org')
+        self.assertEqual(self.table1.getNRows(),1)
 
         #should not allow adding of duplicate name
-        table1.addName('junkName.org')
-        self.assertEqual(table1.getNRows(),1)
+        self.table1.addName('junkName.org')
+        self.assertEqual(self.table1.getNRows(),1)
 
     def test_3_addName(self):
-        reset_database()
-        table1=OFL.db1.filenameAPsOrgTable
-        self.assertEqual(table1.getNRows(),0)
-        table1.addName('')
-        self.assertEqual(table1.getNRows(),1)  #table will accept an empty string for name
+        self.table1.addName('')
+        self.assertEqual(self.table1.getNRows(),1)  #table will accept an empty string for name
 
     def test_4_addName(self):
-        reset_database()
-        table1=OFL.db1.filenameAPsOrgTable
-        self.assertEqual(table1.getNRows(),0)
-        table1.addName(None)
-        self.assertEqual(table1.getNRows(),0) #table will not accept None for name
+        self.table1.addName(None)
+        self.assertEqual(self.table1.getNRows(),0) #table will not accept None for name
 
     def test_1_lookupID(self):
-        reset_database()
-        table1=OFL.db1.filenameAPsOrgTable
-        self.assertEqual(table1.getNRows(),0)
+        self.table1.addName('junkName.org')
+        self.assertEqual(self.table1.getNRows(),1)
 
-        table1.addName('junkName.org')
-        self.assertEqual(table1.getNRows(),1)
-
-        id=table1.lookupID('junkName.org')
-        self.assertEqual(id,1)  #warning id is integer, which is unexpected; would have thought string
+        id=self.table1.lookupID('junkName.org')
+        self.assertEqual(id,1)  #warning: id is integer, which is unexpected; would have thought string
 
     def test_2_lookupID(self):
-        reset_database()
-        table1=OFL.db1.filenameAPsOrgTable
-        self.assertEqual(table1.getNRows(),0)
+        self.table1.addName('junkName.org')
+        self.assertEqual(self.table1.getNRows(),1)
 
-        table1.addName('junkName.org')
-        self.assertEqual(table1.getNRows(),1)
-
-        id=table1.lookupID('junkName2.org')
+        id=self.table1.lookupID('junkName2.org')
         self.assertEqual(id,None)
 
     def test_1_lookupName(self):
-        reset_database()
-        table1=OFL.db1.filenameAPsOrgTable
-        self.assertEqual(table1.getNRows(),0)
+        self.table1.addName('junkName.org')
+        self.assertEqual(self.table1.getNRows(),1)
 
-        table1.addName('junkName.org')
-        self.assertEqual(table1.getNRows(),1)
-
-        name1=table1.lookupName(1)
+        name1=self.table1.lookupName(1)
         self.assertEqual(name1,'junkName.org')
 
     def test_2_lookupName(self):
-        reset_database()
-        table1=OFL.db1.filenameAPsOrgTable
-        self.assertEqual(table1.getNRows(),0)
+        self.table1.addName('junkName.org')
+        self.assertEqual(self.table1.getNRows(),1)
 
-        table1.addName('junkName.org')
-        self.assertEqual(table1.getNRows(),1)
-
-        name1=table1.lookupName(0)
+        name1=self.table1.lookupName(0)
         self.assertEqual(name1,None)
 
     def test_3_lookupName(self):
-        reset_database()
-        table1=OFL.db1.filenameAPsOrgTable
-        self.assertEqual(table1.getNRows(),0)
+        self.table1.addName('')
+        self.assertEqual(self.table1.getNRows(),1)
 
-        table1.addName('')
-        self.assertEqual(table1.getNRows(),1)
-
-        name1=table1.lookupName(1)
+        name1=self.table1.lookupName(1)
         self.assertEqual(name1,'')  #put in an empty string, get out an empty string
 
 #head skip test of OFL_FilenameAPsOrgTable
@@ -206,6 +180,8 @@ class Test_OFL_FilenameAPsTable(unittest.TestCase):
 class Test_OFL_Link(unittest.TestCase):
     #head test Link.__init__
     def test_1(self):
+
+        self.assertEqual(os.getcwd(),origWorkingDir)
         initialText='file:aFile.txt'
         aLink=OFL.Link(initialText,inHeader=False,sourceFile=None,hasBrackets=False)
         self.assertEqual(aLink.text,initialText)
@@ -215,6 +191,7 @@ class Test_OFL_Link(unittest.TestCase):
         self.assertEqual(aLink.link,initialText)
         self.assertEqual(aLink.description,None)
         #more parameters but seems unecessary to test them all
+        self.assertEqual(os.getcwd(),origWorkingDir)
 
     def test_2(self):
         
@@ -342,6 +319,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
     def test_1(self):
         '''link1=file:OrgModeFileCrawlerMain.org'''
 
+        self.assertEqual(os.getcwd(),origWorkingDir)
         hasBrackets=False
         preFilename1='file:'
         filename1='OrgModeFileCrawlerMain.org'
@@ -363,6 +341,8 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         self.assertEqual(preFilename1,aLink.preFilename)
         self.assertEqual(filename1,aLink.filename)
         self.assertEqual(postFilename1,aLink.postFilename)
+
+        self.assertEqual(os.getcwd(),origWorkingDir)
 
     def test_1B(self):
         '''link1=file:OrgModeFileCrawlerMain.org'''
@@ -894,6 +874,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
     #head
     def test_7B(self):
         
+        self.assertEqual(os.getcwd(),origWorkingDir)
         hasBrackets=True
         preFilename1=''
         filename1=os.path.join(os.path.expanduser('~'),'Documents/Computer/Software/OrgModeNotes/MyOrgModeScripts/OrgModeFileCrawler/20160908ExceptionTest.py')
@@ -915,6 +896,8 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
         self.assertEqual(preFilename1,aLink.preFilename)
         self.assertEqual(filename1,aLink.filename)
         self.assertEqual(postFilename1,aLink.postFilename)
+
+        self.assertEqual(os.getcwd(),origWorkingDir)
 
     def test_7BD(self):
         
@@ -1824,7 +1807,6 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
 
     def test_20BD(self):
         '''test trailing slash removal feature'''
-
         
         hasBrackets=True
         preFilename1=''
@@ -2142,7 +2124,9 @@ class Test_OFL_LinkToOrgFile(unittest.TestCase):
 class Test_OFL_Node(unittest.TestCase):
     def test_1_NodeInit(self):
         '''test OFL.Node.__init__ for a node with tags and one child node'''
-        
+
+        self.assertEqual(os.getcwd(),origWorkingDir)        
+
         lines=['* tags \t\t:tag1:tag2:\n','blurb 1\n','** tags  \t\t :tag3:tag4:\n','blurb\t2\n']
         aNode=OFL.Node(lines,sourceFile=None)
         self.failIf(aNode.inHeader)
@@ -2157,9 +2141,10 @@ class Test_OFL_Node(unittest.TestCase):
         # self.assertEqual(aNode.lineLists,[['*',' ','tags',' \t\t',':tag1:tag2:','\n',''],['blurb',' ','1','\n','']])
         self.assertEqual(aNode.lineLists,[['*',' ','tags',' \t\t',':tag1:tag2:','\n'],['blurb',' ','1','\n']])
 
+        self.assertEqual(os.getcwd(),origWorkingDir)
+
     def test_2_NodeInit(self):
         '''test OFL.Node.__init__ for a node with links'''
-
         
         link1Text='file:aFirstFakeFile.txt'
         link2Text='file:aSecondFakeFile.txt'
@@ -2184,7 +2169,6 @@ class Test_OFL_Node(unittest.TestCase):
 
     def test_3_NodeInit(self):
         '''test OFL.Node.__init__ for a node with links'''
-
         
         link1Text='file:aFirstFakeFile.org~'
         link1TextCorrected='file:'+os.path.abspath('aFirstFakeFile.org')
@@ -2201,7 +2185,6 @@ class Test_OFL_Node(unittest.TestCase):
 
     def test_4_NodeInit(self):
         '''test OFL.Node.__init__ for a node with links'''
-
         
         link1Text='file:aFirstFakeFile.org~'
         link1TextCorrected='file:'+os.path.abspath('aFirstFakeFile.org')
@@ -2219,13 +2202,17 @@ class Test_OFL_Node(unittest.TestCase):
     #head test regenAfterLinkUpdates
     def test_1_NodeRegenAfterLinkUpdates(self):
         '''OFL.Node.regenAfterLinkUpdates'''
-        
+
+        self.assertEqual(os.getcwd(),origWorkingDir)
+
         lines=['* tags \t\t:tag1:tag2:\n','blurb 1\n','** tags  \t\t :tag3:tag4:\n','blurb\t2\n']
         linesInNode1=lines[0:2]
 
         node1=OFL.Node(lines,sourceFile=None)
         node1.regenAfterLinkUpdates()
         self.assertEqual(linesInNode1,node1.myLines)
+
+        self.assertEqual(os.getcwd(),origWorkingDir)
 
     def test_2_NodeRegenAfterLinkUpdates(self):
         '''OFL.Node.regenAfterLinkUpdates'''
@@ -2242,7 +2229,6 @@ class Test_OFL_Node(unittest.TestCase):
 
     def test_3_NodeRegenAfterLinkUpdates(self):
         '''OFL.Node.regenAfterLinkUpdates'''
-        
 
         #TODO script changes the links to absolute path filenames, so will not see equality of input and output lines
 
@@ -2264,8 +2250,6 @@ class Test_OFL_Node(unittest.TestCase):
     def test_1_NodeFindUniqueID(self):
         '''test Node.findUniqueID (uniqueIDRegexObj is set to OrgFile.myUniqueIDRegex)'''
 
-        
-
         testLines1=['* status\n','#MyUniqueID2016-05-19_17-15-59-9812   \n']
         node1=OFL.Node(testLines1,sourceFile=None)
         node1.findUniqueID(OFL.OrgFile.myUniqueIDRegex)
@@ -2274,7 +2258,6 @@ class Test_OFL_Node(unittest.TestCase):
 
     def test_2_NodeFindUniqueID(self):
         '''test Node.findUniqueID (uniqueIDRegexObj set to OrgFile.myUniqueIDRegex)'''
-
         
         testLines1=['* status\n','** #MyUniqueID2016-05-19_17-15-59-9812   \n']
         node1=OFL.Node(testLines1,sourceFile=None)
@@ -2315,46 +2298,60 @@ class Test_OFL_Node(unittest.TestCase):
 class Test_OFL_LocalFile(unittest.TestCase):
     #head __init__ is tested to a degree in some tests below
     #head test LocalFile.testIfExists
+    def setUp(self):
+        os.chdir(origWorkingDir)
+
+    def tearDown(self):
+        os.chdir(origWorkingDir)
+        try:
+            self.testFilename
+            if os.path.exists(self.testFilename):
+                os.remove(self.testFilename)
+        except:
+            pass
+
+        try:
+            self.symlinkFilename
+            if os.path.exists(self.symlinkFilename) or os.path.islink(self.symlinkFilename):
+                os.remove(self.symlinkFilename)
+        except:
+            pass
+
     def test_1_testIfExists(self):
         '''test LocalFileMethods.testIfExists'''
 
-        
         #put a file on disk; file is known to exist
         #file is created in current working directory
         testFileLines=['* status\n']
         testFileLines.append('blurb\n')
-        testFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org')
-        testFile=open(testFilename,'w')
+        self.testFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org')
+        testFile=open(self.testFilename,'w')
         testFile.writelines(testFileLines)
         testFile.close()
 
-        orgFile=OFL.OrgFile(testFilename,inHeader=False)
+        orgFile=OFL.OrgFile(self.testFilename,inHeader=False)
         self.failUnless(orgFile.testIfExists())
-        os.remove(testFilename)
 
     def test_2_testIfExists(self):
         '''test LocalFileMethods.testIfExists'''
-
         
         orgFile=OFL.OrgFile('fileThatDoesNotExist.org',inHeader=False)
         self.failIf(orgFile.testIfExists())
 
     def test_3_testIfExists(self):
         '''test LocalFileMethods.testIfExists'''
-
         
         #put a file on disk; file is known to exist
         #put file in different folder than current working directory
         testFileLines=['* status\n']
         testFileLines.append('blurb\n')
-        testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
-        testFile=open(testFilename,'w')
+        self.testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        testFile=open(self.testFilename,'w')
         testFile.writelines(testFileLines)
         testFile.close()
 
-        orgFile=OFL.OrgFile(testFilename,inHeader=False)
+        orgFile=OFL.OrgFile(self.testFilename,inHeader=False)
         self.failUnless(orgFile.testIfExists())
-        os.remove(testFilename)
 
     #head test LocalFile.testIfExistsSymlinkVersion
     def test_1_testSymlinkHandling(self):
@@ -2363,18 +2360,18 @@ class Test_OFL_LocalFile(unittest.TestCase):
         #create a file on disk to be a symlink target
         testFileLines=['* status\n']
         testFileLines.append('blurb\n')
-        testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
-        testFile=open(testFilename,'w')
+        self.testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        testFile=open(self.testFilename,'w')
         testFile.writelines(testFileLines)
         testFile.close()
 
-        testTarget=OFL.OrgFile(testFilename,inHeader=False)
+        testTarget=OFL.OrgFile(self.testFilename,inHeader=False)
 
         #make a symlink that points to the first file
-        symlinkFilename=os.path.join(anotherFolder2,datetime.datetime.now().strftime('%Y%m%d_%H%MTestSymlink.org'))
-        os.symlink(testFilename,symlinkFilename) #target comes first
+        self.symlinkFilename=os.path.join(anotherFolder2,datetime.datetime.now().strftime('%Y%m%d_%H%MTestSymlink.org'))
+        os.symlink(self.testFilename,self.symlinkFilename) #target comes first
 
-        testSymlink=OFL.OrgFile(symlinkFilename,inHeader=False,leaveAsSymlink=True)  #leaveAsSymlink is False in normal operation of orgFixLinks.py
+        testSymlink=OFL.OrgFile(self.symlinkFilename,inHeader=False,leaveAsSymlink=True)  #leaveAsSymlink is False in normal operation of orgFixLinks.py
 
         self.failUnless(testSymlink.exists)  #symlink exists; it would exist even if target were missing, according to definition in script
         self.failIf(testSymlink.changedFromSymlinkToNonSymlink) #because leaveAsSymlink=True
@@ -2383,33 +2380,29 @@ class Test_OFL_LocalFile(unittest.TestCase):
         self.failUnless(testSymlink.isSymlink)
         self.failIf(testSymlink.isBrokenSymlink)
 
-        os.remove(testFilename)
-        os.remove(symlinkFilename)
-
     def test_2_testSymlinkHandling(self):
         '''test LocalFile methods handling of symlinks'''
-
         
         #create a file on disk; it will be symlink target
         testFileLines=['* status\n']
         testFileLines.append('blurb\n')
-        testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
-        testFile=open(testFilename,'w')
+        self.testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        testFile=open(self.testFilename,'w')
         testFile.writelines(testFileLines)
         testFile.close()
 
-        testTarget=OFL.OrgFile(testFilename,inHeader=False)
+        testTarget=OFL.OrgFile(self.testFilename,inHeader=False)
 
 
         #make a symlink that points to the first file
-        symlinkFilename=os.path.join(anotherFolder2,datetime.datetime.now().strftime('%Y%m%d_%H%MTestSymlink.org'))
-        os.symlink(testFilename,symlinkFilename) #target comes first
+        self.symlinkFilename=os.path.join(anotherFolder2,datetime.datetime.now().strftime('%Y%m%d_%H%MTestSymlink.org'))
+        os.symlink(self.testFilename,self.symlinkFilename) #target comes first
 
         #delete target after making symlink to it
-        os.remove(testFilename)
+        os.remove(self.testFilename)
         testTarget.testIfExists()
 
-        testSymlink=OFL.OrgFile(symlinkFilename,inHeader=False,leaveAsSymlink=True)  #leaveAsSymlink=False in normal operation of orgFixLinks.py
+        testSymlink=OFL.OrgFile(self.symlinkFilename,inHeader=False,leaveAsSymlink=True)  #leaveAsSymlink=False in normal operation of orgFixLinks.py
 
 
         self.failIf(testTarget.exists)  #target was deleted
@@ -2422,28 +2415,25 @@ class Test_OFL_LocalFile(unittest.TestCase):
         self.failUnless(testSymlink.isSymlink)
         self.failUnless(testSymlink.isBrokenSymlink) #because its target was deleted before instantiating it
 
-        os.remove(symlinkFilename)
-
     def test_3_testSymlinkHandling(self):
         '''test LocalFile methods handling of symlinks'''
-
         
         #create a file on disk; it will be symlink target
         testFileLines=['* status\n']
         testFileLines.append('blurb\n')
-        testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
-        testFile=open(testFilename,'w')
+        self.testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        testFile=open(self.testFilename,'w')
         testFile.writelines(testFileLines)
         testFile.close()
 
-        testTarget=OFL.OrgFile(testFilename,inHeader=False)
+        testTarget=OFL.OrgFile(self.testFilename,inHeader=False)
 
 
         #make a symlink that points to the first file
-        symlinkFilename=os.path.join(anotherFolder2,datetime.datetime.now().strftime('%Y%m%d_%H%MTestSymlink.org'))
-        os.symlink(testFilename,symlinkFilename) #target comes first
+        self.symlinkFilename=os.path.join(anotherFolder2,datetime.datetime.now().strftime('%Y%m%d_%H%MTestSymlink.org'))
+        os.symlink(self.testFilename,self.symlinkFilename) #target comes first
 
-        testSymlink=OFL.OrgFile(symlinkFilename,inHeader=False,leaveAsSymlink=False)  #it is replaced with its target
+        testSymlink=OFL.OrgFile(self.symlinkFilename,inHeader=False,leaveAsSymlink=False)  #it is replaced with its target
 
 
         self.failUnless(testSymlink.exists) #was replaced with its target and target exists
@@ -2453,30 +2443,26 @@ class Test_OFL_LocalFile(unittest.TestCase):
         self.failIf(testSymlink.isSymlink) #because leaveAsSymlink=False
         # self.failIf(testSymlink.isBrokenSymlink) # TODO have not decided what value this should have 
         #TODO have not decided what testSymlink.targetFilenameAP should be; target of symlink is already stored in testSymlink.filenameAP
-        self.assertEqual(testSymlink.originalFilenameAP,symlinkFilename)
+        self.assertEqual(testSymlink.originalFilenameAP,self.symlinkFilename)
         self.assertEqual(testSymlink.originalTargetFilenameAP,testSymlink.filenameAP)
-
-        os.remove(testFilename)
-        os.remove(symlinkFilename)
 
     def test_4_testSymlinkHandling(self):
         '''test LocalFile methods handling of symlinks'''
-
         
         #create a file on disk; it will be target of symlink
         testFileLines=['* status\n']
         testFileLines.append('blurb\n')
-        testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
-        testFile=open(testFilename,'w')
+        self.testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        testFile=open(self.testFilename,'w')
         testFile.writelines(testFileLines)
         testFile.close()
 
-        testTarget=OFL.OrgFile(testFilename,inHeader=False)
+        testTarget=OFL.OrgFile(self.testFilename,inHeader=False)
 
 
         #make a symlink that points to that test file
-        symlinkFilename=os.path.join(anotherFolder2,datetime.datetime.now().strftime('%Y%m%d_%H%MTestSymlink.org'))
-        os.symlink(testFilename,symlinkFilename) #target comes first
+        self.symlinkFilename=os.path.join(anotherFolder2,datetime.datetime.now().strftime('%Y%m%d_%H%MTestSymlink.org'))
+        os.symlink(self.testFilename,self.symlinkFilename) #target comes first
 
 
         #delete target after making symlink to it
@@ -2485,7 +2471,7 @@ class Test_OFL_LocalFile(unittest.TestCase):
         self.failIf(testTarget.exists)
 
         #instantiate testSymlink after its target was deleted:
-        testSymlink=OFL.OrgFile(symlinkFilename,inHeader=False,leaveAsSymlink=False) #symlink is replaced with target
+        testSymlink=OFL.OrgFile(self.symlinkFilename,inHeader=False,leaveAsSymlink=False) #symlink is replaced with target
 
 
         self.failIf(testSymlink.exists) #symlink was replaced with target, and target was deleted
@@ -2495,10 +2481,8 @@ class Test_OFL_LocalFile(unittest.TestCase):
         self.failIf(testSymlink.isSymlink)
         # self.failUnless(testSymlink.isBrokenSymlink)
         #TODO have not decided what testSymlink.targetFilenameAP should be; target of symlink is already stored in testSymlink.filenameAP
-        self.assertEqual(testSymlink.originalFilenameAP,symlinkFilename)
+        self.assertEqual(testSymlink.originalFilenameAP,self.symlinkFilename)
         self.assertEqual(testSymlink.originalTargetFilenameAP,testSymlink.filenameAP)
-
-        os.remove(symlinkFilename)
 
     #head TODO could write a test with a target, a first symlink pointing to it, and a 2nd symlink pointing to first symlink.  delete the 1st two files; now what about symlink #2?
     #head
@@ -2510,17 +2494,15 @@ class Test_OFL_LocalFile(unittest.TestCase):
         testFileLines.append('* third node\n')
         testFileLines.append('** child of third node\n')
         testFileLines.append('*** grandchild of third node\n')
-        testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
-        testFile=open(testFilename,'w')
+        self.testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        testFile=open(self.testFilename,'w')
         testFile.writelines(testFileLines)
         testFile.close()
 
-        orgFile=OFL.OrgFile(testFilename,inHeader=False)
+        orgFile=OFL.OrgFile(self.testFilename,inHeader=False)
         orgFile.readLines()
 
         self.assertEqual(orgFile.oldLines,testFileLines)
-
-        os.remove(testFilename)
 
     #head skip test of changeFromSymlinkToNonSymlink; already tested as parts of tests above
     #head skip test of changeBackToSymlink, or TODO use test-first approach to write this method
@@ -2534,28 +2516,46 @@ class Test_OFL_LocalFile(unittest.TestCase):
         testFileLines.append('* third node\n')
         testFileLines.append('** child of third node\n')
         testFileLines.append('*** grandchild of third node\n')
-        testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
-        testFile=open(testFilename,'w')
+        self.testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        testFile=open(self.testFilename,'w')
         testFile.writelines(testFileLines)
         testFile.close()
 
-        orgFile=OFL.OrgFile(testFilename,inHeader=False)
+        orgFile=OFL.OrgFile(self.testFilename,inHeader=False)
 
-        origFolder=os.getcwd()
+        self.assertEqual(os.getcwd(),origWorkingDir)
 
         myDirectory=orgFile.changeToMyDirectory()
         self.assertEqual(myDirectory,anotherFolder)
         self.assertEqual(os.getcwd(),anotherFolder)
 
-        os.chdir(origFolder)
-        self.assertEqual(os.getcwd(),origFolder)
-
-        os.remove(testFilename)
+        os.chdir(origWorkingDir)
+        self.assertEqual(os.getcwd(),origWorkingDir)
 
 #head skip test NonOrgFile
 class Test_OFL_OrgFile(unittest.TestCase):
+    def setUp(self):
+        os.chdir(origWorkingDir)
+
+    def tearDown(self):
+        os.chdir(origWorkingDir)
+        try:
+            self.testFilename
+            if os.path.exists(self.testFilename):
+                os.remove(self.testFilename)
+        except:
+            pass
+
+        try:
+            self.symlinkFilename
+            if os.path.exists(self.symlinkFilename) or os.path.islink(self.symlinkFilename):
+                os.remove(self.symlinkFilename)
+        except:
+            pass
+
     def test_1_init(self):
         #check the database-related behavior
+
         reset_database()
 
         currentWorkingDir=os.getcwd()
@@ -2578,6 +2578,8 @@ class Test_OFL_OrgFile(unittest.TestCase):
         self.assertEqual(anOrgFile.previousFilenamesTable.getNRows(),0)
 
         self.assertEqual(OFL.db1.linksToOrgTable.getNRows(),0)
+
+        self.assertEqual(os.getcwd(),origWorkingDir)
 
     def test_2_init(self):
         #check the database-related behavior
@@ -2629,12 +2631,12 @@ class Test_OFL_OrgFile(unittest.TestCase):
         testFileLines.append('* third node\n')
         testFileLines.append('** child of third node\n')
         testFileLines.append('*** grandchild of third node\n')
-        testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
-        testFile=open(testFilename,'w')
+        self.testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        testFile=open(self.testFilename,'w')
         testFile.writelines(testFileLines)
         testFile.close()
 
-        orgFile=OFL.OrgFile(testFilename,inHeader=False)
+        orgFile=OFL.OrgFile(self.testFilename,inHeader=False)
         orgFile.readLines()
         orgFile.createNodeRepresentation()
 
@@ -2651,23 +2653,20 @@ class Test_OFL_OrgFile(unittest.TestCase):
 
         self.assertEqual(orgFile.oldBodyLines,testFileLines)
 
-        os.remove(testFilename)
-
     def test_2_createNodeRepresentation(self):
         '''test OrgFile.createNodeRepresentation'''
 
-        
         #file starts out with header node and status node
         testFileLines=['* machine-generated indices;  READ ONLY\n']
         testFileLines.append('* status\n')
         testFileLines.append('* third node\n')
 
-        testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
-        testFile=open(testFilename,'w')
+        self.testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        testFile=open(self.testFilename,'w')
         testFile.writelines(testFileLines)
         testFile.close()
 
-        orgFile=OFL.OrgFile(testFilename,inHeader=False)
+        orgFile=OFL.OrgFile(self.testFilename,inHeader=False)
         orgFile.readLines()
         orgFile.createNodeRepresentation()
 
@@ -2681,11 +2680,8 @@ class Test_OFL_OrgFile(unittest.TestCase):
         self.assertEqual(orgFile.oldBodyLines,testFileLines[1:])
         self.assertEqual(orgFile.oldHeaderLines,[testFileLines[0]])
 
-        os.remove(testFilename)
-
     def test_3_createNodeRepresentation(self):
         '''test OrgFile.createNodeRepresentation'''
-
         
         #file starts out without status node and without header node
 
@@ -2695,12 +2691,12 @@ class Test_OFL_OrgFile(unittest.TestCase):
         testFileLines.append('* third node\n')
         testFileLines.append('** child of third node\n')
         testFileLines.append('*** grandchild of third node\n')
-        testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
-        testFile=open(testFilename,'w')
+        self.testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        testFile=open(self.testFilename,'w')
         testFile.writelines(testFileLines)
         testFile.close()
 
-        orgFile=OFL.OrgFile(testFilename,inHeader=False)
+        orgFile=OFL.OrgFile(self.testFilename,inHeader=False)
         orgFile.readLines()
         orgFile.createNodeRepresentation()
 
@@ -2721,11 +2717,8 @@ class Test_OFL_OrgFile(unittest.TestCase):
 
         self.assertEqual(orgFile.mainlineNodes,orgFile.bodyMainlineNodes)
 
-        os.remove(testFilename)
-
     def test_4_createNodeRepresentation(self):
         '''test OrgFile.createNodeRepresentation'''
-
         
         #file starts out with header node and without status node
 
@@ -2736,12 +2729,12 @@ class Test_OFL_OrgFile(unittest.TestCase):
         testFileLines.append('* third node\n')
         testFileLines.append('** child of third node\n')
         testFileLines.append('*** grandchild of third node\n')
-        testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
-        testFile=open(testFilename,'w')
+        self.testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        testFile=open(self.testFilename,'w')
         testFile.writelines(testFileLines)
         testFile.close()
 
-        orgFile=OFL.OrgFile(testFilename,inHeader=False)
+        orgFile=OFL.OrgFile(self.testFilename,inHeader=False)
         orgFile.readLines()
         orgFile.createNodeRepresentation()
 
@@ -2763,9 +2756,6 @@ class Test_OFL_OrgFile(unittest.TestCase):
         self.failUnless(orgFile.statusNode)
         self.assertEqual(len(orgFile.bodyMainlineNodes),4)
 
-        os.remove(testFilename)
-
-
     #head
     def test_1_traverseNodesToFillLists(self):
         '''test OrgFile.traverseNodesToFillLists'''
@@ -2780,12 +2770,12 @@ class Test_OFL_OrgFile(unittest.TestCase):
         testFileLines.append('* third %s node %s \t:%s:\n' % (orgLinkTextList[2],nonOrgLinkTextList[2],tagList[2]))
         testFileLines.append('** child of third %s node %s \t:%s:\n' % (orgLinkTextList[3],nonOrgLinkTextList[3],tagList[3]))
         testFileLines.append('*** grandchild of third %s node %s \t:%s:\n' % (orgLinkTextList[4],nonOrgLinkTextList[4],tagList[4]))
-        testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
-        testFile=open(testFilename,'w')
+        self.testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        testFile=open(self.testFilename,'w')
         testFile.writelines(testFileLines)
         testFile.close()
 
-        orgFile=OFL.OrgFile(testFilename,inHeader=False)
+        orgFile=OFL.OrgFile(self.testFilename,inHeader=False)
         orgFile.readLines()
         orgFile.createNodeRepresentation()
         orgFile.traverseNodesToFillLists(orgFile.bodyMainlineNodes)
@@ -2794,13 +2784,10 @@ class Test_OFL_OrgFile(unittest.TestCase):
         self.assertEqual(len(orgFile.linksToNonOrgFilesList),5)
         self.assertEqual(len(orgFile.tagList),5)
 
-        os.remove(testFilename)
-
     #head skip test addNodeLinksAndTagsToMyLists; included in traverseNodesToFillLists
     #head
     def test_1_lookInsideForUniqueID(self):
         '''test OrgFile.lookInsideForUniqueID'''
-
         
         testFileLines=['* status\n']
         testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9812   \n')
@@ -2809,12 +2796,12 @@ class Test_OFL_OrgFile(unittest.TestCase):
         testFileLines.append('* third node\n')
         testFileLines.append('** child of third node\n')
         testFileLines.append('*** grandchild of third node\n')
-        testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
-        testFile=open(testFilename,'w')
+        self.testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        testFile=open(self.testFilename,'w')
         testFile.writelines(testFileLines)
         testFile.close()
 
-        orgFile=OFL.OrgFile(testFilename,inHeader=False)
+        orgFile=OFL.OrgFile(self.testFilename,inHeader=False)
         orgFile.createFullRepresentation()  #includes call to lookInsideForUniqueID
 
         self.failUnless(orgFile.statusNode)
@@ -2822,11 +2809,9 @@ class Test_OFL_OrgFile(unittest.TestCase):
         self.assertEqual(orgFile.uniqueID,'2016-05-19_17-15-59-9812')
         self.failUnless(orgFile.lookedInsideForUniqueID)
         self.assertEqual(orgFile.uniqueID,orgFile.lookInsideForUniqueID())  #checks that lookInsideForUniqueID returns the unique ID
-        os.remove(testFilename)
 
     def test_2_lookInsideForUniqueID(self):
         '''test OrgFile.lookInsideForUniqueID'''
-
         
         testFileLines=['* status\n']
         testFileLines.append('# MyUniqueID 2016-05-19_17-15-59-9812   \n')
@@ -2835,12 +2820,12 @@ class Test_OFL_OrgFile(unittest.TestCase):
         testFileLines.append('* third node\n')
         testFileLines.append('** child of third node\n')
         testFileLines.append('*** grandchild of third node\n')
-        testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
-        testFile=open(testFilename,'w')
+        self.testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        testFile=open(self.testFilename,'w')
         testFile.writelines(testFileLines)
         testFile.close()
 
-        orgFile=OFL.OrgFile(testFilename,inHeader=False)
+        orgFile=OFL.OrgFile(self.testFilename,inHeader=False)
         orgFile.createFullRepresentation()  #includes call to lookInsideForUniqueID
 
         self.failUnless(orgFile.statusNode)
@@ -2848,12 +2833,9 @@ class Test_OFL_OrgFile(unittest.TestCase):
         self.failIf(orgFile.uniqueID)
         self.failUnless(orgFile.lookedInsideForUniqueID)
 
-        os.remove(testFilename)
-
     #head
     def test_1_generateAndInsertMyUniqueID(self):
         '''test OrgFile.generateAndInsertMyUniqueID'''
-
         
         testFileLines=['* status\n']
         testFileLines.append('* second node\n')
@@ -2861,12 +2843,12 @@ class Test_OFL_OrgFile(unittest.TestCase):
         testFileLines.append('* third node\n')
         testFileLines.append('** child of third node\n')
         testFileLines.append('*** grandchild of third node\n')
-        testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
-        testFile=open(testFilename,'w')
+        self.testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        testFile=open(self.testFilename,'w')
         testFile.writelines(testFileLines)
         testFile.close()
 
-        orgFile=OFL.OrgFile(testFilename,inHeader=False)
+        orgFile=OFL.OrgFile(self.testFilename,inHeader=False)
         orgFile.createFullRepresentation()
 
         self.failUnless(orgFile.statusNode)
@@ -2884,12 +2866,9 @@ class Test_OFL_OrgFile(unittest.TestCase):
 
         self.assertEqual(orgFile.lookInsideForUniqueID(),uniqueID_1)  #check that lookInsideForUniqueID can detect the ID inserted by generateAndInsertMyUniqueID
 
-        os.remove(testFilename)
-
     #head
     def test_1_addUniqueIDsFromHeaderToOutgoingOrgLinkTargets(self):
         '''test OrgFile.addUniqueIDsFromHeaderToOutgoingOrgLinkTargets'''
-
         
         testFileLines=['* machine-generated indices;  READ ONLY\n']
         testFileLines.append('** list of links\n')
@@ -2899,12 +2878,12 @@ class Test_OFL_OrgFile(unittest.TestCase):
         testFileLines.append('* status\n')
         testFileLines.append('* body node with link file:fakeFile.org\n')
 
-        testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
-        testFile=open(testFilename,'w')
+        self.testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        testFile=open(self.testFilename,'w')
         testFile.writelines(testFileLines)
         testFile.close()
 
-        orgFile=OFL.OrgFile(testFilename,inHeader=False)
+        orgFile=OFL.OrgFile(self.testFilename,inHeader=False)
         orgFile.createFullRepresentation()
 
         self.failUnless(orgFile.headerMainlineNode)
@@ -2916,11 +2895,8 @@ class Test_OFL_OrgFile(unittest.TestCase):
 
         self.assertEqual(outgoingOrgLinkTarget.uniqueIDFromHeader,'2016-10-02_12-43-15-3532')
 
-        os.remove(testFilename)
-
     def test_2_addUniqueIDsFromHeaderToOutgoingOrgLinkTargets(self):
         '''test OrgFile.addUniqueIDsFromHeaderToOutgoingOrgLinkTargets'''
-
         
         testFileLines=['* machine-generated indices;  READ ONLY\n']
         testFileLines.append('** list of links\n')
@@ -2930,12 +2906,12 @@ class Test_OFL_OrgFile(unittest.TestCase):
         testFileLines.append('* status\n')
         testFileLines.append('* body node with link file:fakeFile2.org\n')
 
-        testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
-        testFile=open(testFilename,'w')
+        self.testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        testFile=open(self.testFilename,'w')
         testFile.writelines(testFileLines)
         testFile.close()
 
-        orgFile=OFL.OrgFile(testFilename,inHeader=False)
+        orgFile=OFL.OrgFile(self.testFilename,inHeader=False)
         orgFile.createFullRepresentation()
 
         self.failUnless(orgFile.headerMainlineNode)
@@ -2946,8 +2922,6 @@ class Test_OFL_OrgFile(unittest.TestCase):
         orgFile.addUniqueIDsFromHeaderToOutgoingOrgLinkTargets()
 
         self.failIf(outgoingOrgLinkTarget.uniqueIDFromHeader)
-
-        os.remove(testFilename)
 
     #head skip test checkConsistencyOfThreeUniqueIDDataItems; appears non-obvious how to construct tests
     def test_1_makeListOfOrgFilesThatLinkToMe(self):
@@ -3090,19 +3064,17 @@ class Test_OFL_OrgFile(unittest.TestCase):
         testFileLines.append('* third %s node %s \t:%s:\n' % (orgLinkTextList[2],nonOrgLinkTextList[2],tagList[2]))
         testFileLines.append('** child of third %s node %s \t:%s:\n' % (orgLinkTextList[3],nonOrgLinkTextList[3],tagList[3]))
         testFileLines.append('*** grandchild of third %s node %s \t:%s:\n' % (orgLinkTextList[4],nonOrgLinkTextList[4],tagList[4]))
-        testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
-        testFile=open(testFilename,'w')
+        self.testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        testFile=open(self.testFilename,'w')
         testFile.writelines(testFileLines)
         testFile.close()
 
-        orgFile=OFL.OrgFile(testFilename,inHeader=False)
+        orgFile=OFL.OrgFile(self.testFilename,inHeader=False)
         orgFile.createFullRepresentation()
         orgFile.makeNewHeader()
         orgFile.fullRepresentationToNewLines()
 
         self.assertEqual(orgFile.newLinesMinusHeader,testFileLines)
-
-        os.remove(testFilename)
 
     #head skip test sanityChecksBeforeRewriteFile
     #head skip test rewriteFileFromNewLines
@@ -3170,7 +3142,6 @@ class Test_OFL_OrgFile(unittest.TestCase):
         os.remove(symlinkToFileB_Name)
 
 #head
-
 #head
 #head
 #head
@@ -4093,6 +4064,8 @@ class TestFindAllNameMatchesViaBash(unittest.TestCase):
     '''time.sleep duration must be set properly for this to pass'''
     def test_1(self):
 
+        self.assertEqual(os.getcwd(),origWorkingDir)
+
         #TODO caution this might remove more files than intended, if you have your own files that match this pattern?
         for unwantedFile in glob.glob(datetime.datetime.now().strftime('%Y%m%d')+'*Test*FANMVB*.org'):
             os.remove(unwantedFile)
@@ -4138,6 +4111,8 @@ class TestFindAllNameMatchesViaBash(unittest.TestCase):
         os.remove(testFilename2)
         os.remove(testFilename3)
 
+        self.assertEqual(os.getcwd(),origWorkingDir)
+
 #head skip test find_all_name_matches_via_bash_for_directories
 #head skip test of set_up_database 
 #head skip test user_chooses_element_from_list_or_rejects_all; how to simulate user typing something at a prompt?
@@ -4149,97 +4124,104 @@ class TestFindUniqueIDInsideFile(unittest.TestCase):
     which is a function that goes line by line inside an org file
     it's used when script has not made a full representation of that org file
     '''
+    def tearDown(self):
+        os.remove(self.testFilename)
+
     def test_1(self):
         '''test find_unique_id_inside_file: file contains status node but does not contain unique ID'''
 
         testFileLines=['* status\n']
         testFileLines.append('blurb\n')
-        testFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org')
-        testFile=open(testFilename,'w')
+        self.testFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org')
+        testFile=open(self.testFilename,'w')
         testFile.writelines(testFileLines)
         testFile.close()
 
-        uniqueID=OFL.find_unique_id_inside_org_file(testFilename)
+        uniqueID=OFL.find_unique_id_inside_org_file(self.testFilename)
         self.failIf(uniqueID)
-        os.remove(testFilename)
 
     def test_2(self):
         '''test find_unique_id_inside_file: file contains status node but does not contain unique ID'''
         
-        
         testFileLines=['* status\n']
         testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9812   \n')
-        testFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org')
-        testFile=open(testFilename,'w')
+        self.testFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org')
+        testFile=open(self.testFilename,'w')
         testFile.writelines(testFileLines)
         testFile.close()
 
-        uniqueID=OFL.find_unique_id_inside_org_file(testFilename)
+        uniqueID=OFL.find_unique_id_inside_org_file(self.testFilename)
         self.assertEqual(uniqueID,'2016-05-19_17-15-59-9812')
-        os.remove(testFilename)
 
     def test_3(self):
-
         
         testFileLines=['* status\n']
         testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9812   \n')
         testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9813   \n')
-        testFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org')
-        testFile=open(testFilename,'w')
+        self.testFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org')
+        testFile=open(self.testFilename,'w')
         testFile.writelines(testFileLines)
         testFile.close()
 
-        uniqueID=OFL.find_unique_id_inside_org_file(testFilename)
+        uniqueID=OFL.find_unique_id_inside_org_file(self.testFilename)
         self.assertEqual(uniqueID,'2016-05-19_17-15-59-9812')
-        os.remove(testFilename)
 
     def test_4(self):
 
-        
         testFileLines=[]
         testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9812   \n')
         testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9813   \n')
-        testFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org')
-        testFile=open(testFilename,'w')
+        self.testFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org')
+        testFile=open(self.testFilename,'w')
         testFile.writelines(testFileLines)
         testFile.close()
 
-        uniqueID=OFL.find_unique_id_inside_org_file(testFilename)
+        uniqueID=OFL.find_unique_id_inside_org_file(self.testFilename)
         self.failIf(uniqueID)
-        os.remove(testFilename)
 
     def test_5(self):
 
-        
         testFileLines=['one line\n','another line\n']
         testFileLines.append('* status\n')
         testFileLines.append('#MyUniqueID2016-05-19_17-15-59-9812   \n')
-        testFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org')
-        testFile=open(testFilename,'w')
+        self.testFilename=datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org')
+        testFile=open(self.testFilename,'w')
         testFile.writelines(testFileLines)
         testFile.close()
 
-        uniqueID=OFL.find_unique_id_inside_org_file(testFilename)
+        uniqueID=OFL.find_unique_id_inside_org_file(self.testFilename)
         self.assertEqual(uniqueID,'2016-05-19_17-15-59-9812')
-        os.remove(testFilename)
 
 #head skip test clean_up_on_error_in_operate_on_fileA
 class TestOperateOnFileA(unittest.TestCase):
-    def test_1(self):
-        #goal is to check on what happened in database
-
+    def setUp(self):
         reset_database()
 
-        runDebuggerOnlyInRepairStep=False
-        runDebuggerInEveryStep=False
-        runWithPauses=False
+        self.filenameA,self.filenameB,self.symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
+        self.filenameA_AP,self.filenameB_AP,self.symlinkToFileB_AP=tuple([os.path.abspath(a) for a in [self.filenameA,self.filenameB,self.symlinkToFileB_Name]])
 
-        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
+        # self.runDebuggerOnlyInRepairStep=False
+        self.runDebuggerInEveryStep=False
+        self.runWithPauses=False
+
+    def tearDown(self):
+        os.remove(self.filenameA_AP)
+        os.remove(self.filenameB_AP)
+        os.remove(self.symlinkToFileB_AP)
+
+        if os.path.exists(self.filenameA_AP+'.bak'):
+            os.remove(self.filenameA_AP+'.bak')
+
+    def test_1(self):
+
+        self.assertEqual(os.getcwd(),origWorkingDir)
+
+        #goal is to check on what happened in database
     
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
-        fileB=operate_on_fileA_w(filenameB,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
-        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
+        fileB=operate_on_fileA_w(self.filenameB,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         self.failUnless(fileA.uniqueID)
         self.failUnless(fileB.uniqueID)
@@ -4259,49 +4241,27 @@ class TestOperateOnFileA(unittest.TestCase):
         #http://stackoverflow.com/questions/3501382/checking-whether-a-variable-is-an-integer-or-not
         self.failUnless(isinstance(fileA.myFilesTable.lookupTimeLastFullyAnalyzed_UsingID(fileA.myFilesTableID),(int,long)))
 
-        os.remove(filenameA)
-        os.remove(filenameB)
-        os.remove(symlinkToFileB_Name)
+        self.assertEqual(os.getcwd(),origWorkingDir)
 
     def test_2(self):
         '''focus on symlinksOrgTable'''
-
-        reset_database()
-
-        runDebuggerOnlyInRepairStep=False
-        runDebuggerInEveryStep=False
-        runWithPauses=False
-
-        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
     
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
-        fileB=operate_on_fileA_w(filenameB,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
-        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
+        fileB=operate_on_fileA_w(self.filenameB,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         #focus on symlinks table
-        self.assertEqual(fileA.symlinksTable.lookupTarget(os.path.abspath(symlinkToFileB_Name)),fileB.myFilesTableID)
-        self.assertEqual(fileA.symlinksTable.lookupSymlinks(fileB),[os.path.abspath(symlinkToFileB_Name)])
-
-        os.remove(filenameA)
-        os.remove(filenameB)
-        os.remove(symlinkToFileB_Name)
+        self.assertEqual(fileA.symlinksTable.lookupTarget(self.symlinkToFileB_AP),fileB.myFilesTableID)
+        self.assertEqual(fileA.symlinksTable.lookupSymlinks(fileB),[self.symlinkToFileB_AP])
 
     def test_3(self):
         '''focus on linksToOrgTable'''
-
-        reset_database()
-
-        runDebuggerOnlyInRepairStep=False
-        runDebuggerInEveryStep=False
-        runWithPauses=False
-
-        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
     
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
-        fileB=operate_on_fileA_w(filenameB,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
-        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
+        fileB=operate_on_fileA_w(self.filenameB,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         #focus on linksTo table
 
@@ -4331,260 +4291,336 @@ class TestOperateOnFileA(unittest.TestCase):
 
         self.assertEqual(OFL.db1.linksToOrgTable.getNRows(),0)
 
-        os.remove(filenameA)
-        os.remove(filenameB)
-        os.remove(symlinkToFileB_Name)
-
     def test_4(self):
         '''focus on the org files on disk: .bak, isDryRun, keepBackup'''
-
-        reset_database()
-
-        runDebuggerOnlyInRepairStep=False
-        runDebuggerInEveryStep=False
-        runWithPauses=False
 
         keepBackup=True  #keepBackup should be True by default
         isDryRun=False  #isDryRun should be False by default
 
-        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
+        if os.path.exists(self.filenameA_AP+'.bak'):
+            os.remove(self.filenameA_AP+'.bak')
 
-        filenameA_AP=os.path.abspath(filenameA)
+        # shutil.copy2(self.filenameA_AP,self.filenameA_AP+'.bak')
 
-        if os.path.exists(filenameA_AP+'.bak'):
-            os.remove(filenameA_AP+'.bak')
-
-        # shutil.copy2(filenameA_AP,filenameA_AP+'.bak')
-
-        hashA1=get_hash(filenameA_AP)
-        # hashA1bak=get_hash(filenameA_AP+'.bak')
+        hashA1=get_hash(self.filenameA_AP)
+        # hashA1bak=get_hash(self.filenameA_AP+'.bak')
     
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=isDryRun,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses,keepBackup=keepBackup)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=self.runDebuggerInEveryStep,isDryRun=isDryRun,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses,keepBackup=keepBackup)
 
         self.failUnless(os.path.exists(fileA.filenameAP))
 
-        self.assertEqual(filenameA_AP,fileA.filenameAP)
+        self.assertEqual(self.filenameA_AP,fileA.filenameAP)
 
         hashA2=get_hash(fileA.filenameAP)
 
         self.failIf(hashA1==hashA2)  #the contents of fileA will have been changed
-        self.failUnless(os.path.exists(filenameA_AP+'.bak'))  #a backup of fileA would have been made
+        self.failUnless(os.path.exists(self.filenameA_AP+'.bak'))  #a backup of fileA would have been made
 
         hashA2bak=get_hash(fileA.filenameAP+'.bak')
 
         self.assertEqual(hashA1,hashA2bak)  #the contents of the backup of fileA must be identical to the contents of fileA before OFL operated on fileA
-
-        os.remove(filenameA)
-        os.remove(filenameA_AP+'.bak')
-        os.remove(filenameB)
-        os.remove(symlinkToFileB_Name)
 
     def test_5(self):
         '''focus on the org files on disk: .bak, isDryRun, keepBackup'''
 
-        reset_database()
-
-        runDebuggerOnlyInRepairStep=False
-        runDebuggerInEveryStep=False
-        runWithPauses=False
-
         keepBackup=True  #keepBackup should be True by default
         isDryRun=False  #isDryRun should be False by default
 
-        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
+        # if os.path.exists(self.filenameA_AP+'.bak'):
+        #     os.remove(self.filenameA_AP+'.bak')
 
-        filenameA_AP=os.path.abspath(filenameA)
+        shutil.copy2(self.filenameA_AP,self.filenameA_AP+'.bak')
 
-        # if os.path.exists(filenameA_AP+'.bak'):
-        #     os.remove(filenameA_AP+'.bak')
-
-        shutil.copy2(filenameA_AP,filenameA_AP+'.bak')
-
-        hashA1=get_hash(filenameA_AP)
-        hashA1bak=get_hash(filenameA_AP+'.bak')
+        hashA1=get_hash(self.filenameA_AP)
+        hashA1bak=get_hash(self.filenameA_AP+'.bak')
 
         self.failUnless(hashA1==hashA1bak)
     
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=isDryRun,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses,keepBackup=keepBackup)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=self.runDebuggerInEveryStep,isDryRun=isDryRun,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses,keepBackup=keepBackup)
 
         self.failUnless(os.path.exists(fileA.filenameAP))
 
-        self.assertEqual(filenameA_AP,fileA.filenameAP)
+        self.assertEqual(self.filenameA_AP,fileA.filenameAP)
 
         hashA2=get_hash(fileA.filenameAP)
 
         self.failIf(hashA1==hashA2)  #the contents of fileA will have been changed
 
-        self.failUnless(os.path.exists(filenameA_AP+'.bak'))  #a backup of fileA would have been made
+        self.failUnless(os.path.exists(self.filenameA_AP+'.bak'))  #a backup of fileA would have been made
 
         hashA2bak=get_hash(fileA.filenameAP+'.bak')
 
         self.assertEqual(hashA1,hashA2bak)  #the contents of the backup of fileA must be identical to the contents of fileA before OFL operated on fileA
-
-        os.remove(filenameA)
-        os.remove(filenameA_AP+'.bak')
-        os.remove(filenameB)
-        os.remove(symlinkToFileB_Name)
 
     def test_6(self):
         '''focus on the org files on disk: .bak, isDryRun, keepBackup'''
 
-        reset_database()
-
-        runDebuggerOnlyInRepairStep=False
-        runDebuggerInEveryStep=False
-        runWithPauses=False
-
         keepBackup=True  #keepBackup should be True by default
         isDryRun=True  #isDryRun should be False by default
 
-        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
+        if os.path.exists(self.filenameA_AP+'.bak'):
+            os.remove(self.filenameA_AP+'.bak')
 
-        filenameA_AP=os.path.abspath(filenameA)
+        # shutil.copy2(self.filenameA_AP,self.filenameA_AP+'.bak')
 
-        if os.path.exists(filenameA_AP+'.bak'):
-            os.remove(filenameA_AP+'.bak')
-
-        # shutil.copy2(filenameA_AP,filenameA_AP+'.bak')
-
-        hashA1=get_hash(filenameA_AP)
-        # hashA1bak=get_hash(filenameA_AP+'.bak')
+        hashA1=get_hash(self.filenameA_AP)
+        # hashA1bak=get_hash(self.filenameA_AP+'.bak')
     
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=isDryRun,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses,keepBackup=keepBackup)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=self.runDebuggerInEveryStep,isDryRun=isDryRun,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses,keepBackup=keepBackup)
 
         self.failUnless(os.path.exists(fileA.filenameAP))
 
-        self.assertEqual(filenameA_AP,fileA.filenameAP)  #filename of fileA does not change
+        self.assertEqual(self.filenameA_AP,fileA.filenameAP)  #filename of fileA does not change
 
         hashA2=get_hash(fileA.filenameAP)
 
         self.failUnless(hashA1==hashA2)  #dry run: the contents of fileA must not change
-        self.failUnless(os.path.exists(filenameA_AP+'.bak'))  #a backup of fileA would have been made
+        self.failUnless(os.path.exists(self.filenameA_AP+'.bak'))  #a backup of fileA would have been made
 
         hashA2bak=get_hash(fileA.filenameAP+'.bak')
 
         self.assertEqual(hashA1,hashA2bak)  #the contents of the backup of fileA must be identical to the contents of fileA before OFL operated on fileA
 
-        os.remove(filenameA)
-        os.remove(filenameA_AP+'.bak')
-        os.remove(filenameB)
-        os.remove(symlinkToFileB_Name)
-
     def test_7(self):
         '''focus on the org files on disk: .bak, isDryRun, keepBackup'''
 
-        reset_database()
-
-        runDebuggerOnlyInRepairStep=False
-        runDebuggerInEveryStep=False
-        runWithPauses=False
+        self.assertEqual(os.getcwd(),origWorkingDir)
 
         keepBackup=True  #keepBackup should be True by default
         isDryRun=True  #isDryRun should be False by default
 
-        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
-
-        filenameA_AP=os.path.abspath(filenameA)
-
-        # if os.path.exists(filenameA_AP+'.bak'):
-        #     os.remove(filenameA_AP+'.bak')
+        # if os.path.exists(self.filenameA_AP+'.bak'):
+        #     os.remove(self.filenameA_AP+'.bak')
 
         #make an initial .bak file for fileA that is different than fileA
-        fileALines=['* other text [[file:./'+symlinkToFileB_Name+']] other text\n']
+        fileALines=['* other text [[file:./'+self.symlinkToFileB_Name+']] other text\n']
 
-        fileA=open(filenameA,'r')
+        fileA=open(self.filenameA,'r')
         linesA1=fileA.readlines()
         fileA.close()
         linesA1.append('another line to make contents of .bak of fileA initially different\n')
 
-        fileAbak=open(filenameA+'.bak','w')
+        fileAbak=open(self.filenameA+'.bak','w')
         fileAbak.writelines(linesA1)
         fileAbak.close()
 
-        hashA1=get_hash(filenameA_AP)
-        hashA1bak=get_hash(filenameA_AP+'.bak')
+        hashA1=get_hash(self.filenameA_AP)
+        hashA1bak=get_hash(self.filenameA_AP+'.bak')
 
         self.failIf(hashA1==hashA1bak) #contents of initial fileA and its initial .bak file must differ
     
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=isDryRun,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses,keepBackup=keepBackup)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=self.runDebuggerInEveryStep,isDryRun=isDryRun,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses,keepBackup=keepBackup)
 
         self.failUnless(os.path.exists(fileA.filenameAP))
 
-        self.assertEqual(filenameA_AP,fileA.filenameAP) #filename of fileA does not change
+        self.assertEqual(self.filenameA_AP,fileA.filenameAP) #filename of fileA does not change
 
         hashA2=get_hash(fileA.filenameAP)
 
         self.failUnless(hashA1==hashA2)  #dry run: the contents of fileA will not change
 
-        self.failUnless(os.path.exists(filenameA_AP+'.bak'))  #a backup of fileA would have been made
+        self.failUnless(os.path.exists(self.filenameA_AP+'.bak'))  #a backup of fileA would have been made
 
         hashA2bak=get_hash(fileA.filenameAP+'.bak')
 
         self.assertEqual(hashA1,hashA2bak)  #the contents of the backup of fileA must be identical to the contents of fileA before OFL operated on fileA
 
-        os.remove(filenameA)
-        os.remove(filenameA_AP+'.bak')
-        os.remove(filenameB)
-        os.remove(symlinkToFileB_Name)
+        self.assertEqual(os.getcwd(),origWorkingDir)
 
 #head skip test user_says_stop_spidering
 #head skip test clean_up_before_ending_spidering_run
 #head skip test spider_starting_w_fileA
 #head skip test get_list_of_all_repairable_org_files
-class TestGetListOfAllRepairableOrgFiles(unittest.TestCase):
+class TestGetListOfFilesInGlobFile(unittest.TestCase):
+    def setUp(self):
+        #create 3 empty test folders
+
+        self.folder1=os.path.join(DocumentsFolderAP,'TemporaryOrgFixLinksTests1')
+        self.folder2=os.path.join(self.folder1,'TemporaryOrgFixLinksTests2')
+        self.folder3=os.path.join(self.folder2,'TemporaryOrgFixLinksTests3')
+
+        #erase folder1 and all its contents
+        if os.path.exists(self.folder1):
+            shutil.rmtree(self.folder1)
+
+        os.makedirs(self.folder3)  #create folder1, folder2, folder3
+
+        self.globFilename='testGetListOfFilesInGlobFile.txt'
+
+        os.chdir(origWorkingDir)
+
+    def tearDown(self):
+        #erase folder1 and all its contents
+        if os.path.exists(self.folder1):
+            shutil.rmtree(self.folder1)
+
+        os.makedirs(self.folder3)  #create folder1, folder2, folder3
+
+        if os.path.exists(self.globFilename):
+            os.remove(self.globFilename)
+
+        os.chdir(origWorkingDir)
+
     def test_1(self):
-        '''simple test: a folder with three existing files'''
+        '''find one folder identified by abs path filename'''
+        globFileLines=[self.folder1+'\n']
+
+        globFile=open(self.globFilename,'w')
+        globFile.writelines(globFileLines)
+        globFile.close()
+
+        expectedOrgFileList=[]
+        expectedFolderList=[self.folder1]
+
+        ret1,ret2=OFL.get_list_of_files_in_glob_file(self.globFilename,origWorkingDir)
+        self.assertEqual(expectedOrgFileList,ret1)
+        self.assertEqual(expectedFolderList,ret2)
+
+    def test_1B(self):
+        '''what about a trailing slash?'''
+        globFileLines=[self.folder1+'/'+'\n']
+
+        globFile=open(self.globFilename,'w')
+        globFile.writelines(globFileLines)
+        globFile.close()
+
+        expectedOrgFileList=[]
+        expectedFolderList=[self.folder1]
+
+        ret1,ret2=OFL.get_list_of_files_in_glob_file(self.globFilename,origWorkingDir)
+        self.assertEqual(expectedOrgFileList,ret1)
+        self.assertEqual(expectedFolderList,ret2)
+
+    def test_2(self):
+        '''find one org file identified by abs path filename'''
+        testFilenameAP=os.path.join(self.folder3,'testFile.org')
+
+        #http://stackoverflow.com/questions/12654772/create-empty-file-using-python
+        open(testFilenameAP,'a').close()
+
+        globFileLines=[testFilenameAP+'\n']
+
+        globFile=open(self.globFilename,'w')
+        globFile.writelines(globFileLines)
+        globFile.close()
+
+        expectedOrgFileList=[testFilenameAP]
+        expectedFolderList=[]
+
+        ret1,ret2=OFL.get_list_of_files_in_glob_file(self.globFilename,origWorkingDir)
+        self.assertEqual(expectedOrgFileList,ret1)
+        self.assertEqual(expectedFolderList,ret2)
+
+        os.remove(testFilenameAP)
+
+    def test_3(self):
+        '''illustrate abs path vs relative path behavior'''
+        if os.path.isdir('TemporaryOrgFixLinksTests3'):
+            #your filesystem somehow has this folder in the current working directory, so this test will not work as intended
+            pass
+        else:
+            globFileLines=['TemporaryOrgFixLinksTests3'+'\n']
+
+            globFile=open(self.globFilename,'w')
+            globFile.writelines(globFileLines)
+            globFile.close()
+
+            expectedOrgFileList=[]
+            expectedFolderList=[]
+
+            ret1,ret2=OFL.get_list_of_files_in_glob_file(self.globFilename,origWorkingDir)
+            self.assertEqual(expectedOrgFileList,ret1)
+            self.assertEqual(expectedFolderList,ret2)
+
+    def test_4(self):
+        '''illustrate abs path vs relative path behavior'''
+
+        os.chdir(self.folder2)
+
+        globFileLines=['TemporaryOrgFixLinksTests3'+'\n']
+            
+        globFile=open(self.globFilename,'w')
+        globFile.writelines(globFileLines)
+        globFile.close()
+
+        expectedOrgFileList=[]
+        # expectedFolderList=[self.folder3]
+        expectedFolderList=['TemporaryOrgFixLinksTests3']
+
+        ret1,ret2=OFL.get_list_of_files_in_glob_file(self.globFilename,os.getcwd())
+        self.assertEqual(expectedOrgFileList,ret1)
+        self.assertEqual(expectedFolderList,ret2)
+
+    def test_5(self):
+        '''illustrate abs path vs relative path behavior'''
+
+        # os.chdir(self.folder2)
+
+        globFileLines=['TemporaryOrgFixLinksTests3'+'\n']
+            
+        globFile=open(self.globFilename,'w')
+        globFile.writelines(globFileLines)
+        globFile.close()
+
+        expectedOrgFileList=[]
+        # expectedFolderList=[self.folder3]
+        # expectedFolderList=['TemporaryOrgFixLinksTests3']
+        expectedFolderList=[]
+
+        ret1,ret2=OFL.get_list_of_files_in_glob_file(self.globFilename,origWorkingDir)
+        self.assertEqual(expectedOrgFileList,ret1)
+        self.assertEqual(expectedFolderList,ret2)
+
+#head
+class TestGetListOfAllRepairableOrgFiles(unittest.TestCase):
+    def setUp(self):
         if os.path.exists(anotherFolder):
             shutil.rmtree(anotherFolder)
 
         os.makedirs(anotherFolder)
 
         filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org(anotherFolder)
+        self.filenameA_AP=os.path.join(anotherFolder,filenameA)
+        self.filenameB_AP=os.path.join(anotherFolder,filenameB)
+        self.symlinkToFileB_AP=os.path.join(anotherFolder,symlinkToFileB_Name)
 
-        filenameA_AP=os.path.join(anotherFolder,filenameA)
-        filenameB_AP=os.path.join(anotherFolder,filenameB)
-        symlinkToFileB_AP=os.path.join(anotherFolder,symlinkToFileB_Name)
+    def tearDown(self):
+        if os.path.exists(self.filenameA_AP):
+            os.remove(self.filenameA_AP)
+        if os.path.exists(self.filenameB_AP):
+            os.remove(self.filenameB_AP)
+        if os.path.exists(self.symlinkToFileB_AP) or os.path.islink(self.symlinkToFileB_AP):
+            os.remove(self.symlinkToFileB_AP)
+
+    def test_1(self):
+        '''simple test: a folder with three existing files'''
+
+        self.assertEqual(os.getcwd(),origWorkingDir)
 
         retList=OFL.get_list_of_all_repairable_org_files(anotherFolder)
 
-        expectedList=[filenameA_AP,filenameB_AP]  #do not want function under test to return symlinks, either broken or working
+        expectedList=[self.filenameA_AP,self.filenameB_AP]  #do not want function under test to return symlinks, either broken or working
 
         self.assertEqual(len(expectedList),len(retList))
         self.assertEqual(set(expectedList),set(retList))
 
-        os.remove(filenameA_AP)
-        os.remove(filenameB_AP)
-        os.remove(symlinkToFileB_AP)
+        self.assertEqual(os.getcwd(),origWorkingDir)
 
     def test_2(self):
         '''a folder with one existing file and one broken symlink'''
 
-        if os.path.exists(anotherFolder):
-            shutil.rmtree(anotherFolder)
-
-        os.makedirs(anotherFolder)
-
-        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org(anotherFolder)
-
-        filenameA_AP=os.path.join(anotherFolder,filenameA)
-        filenameB_AP=os.path.join(anotherFolder,filenameB)
-        symlinkToFileB_AP=os.path.join(anotherFolder,symlinkToFileB_Name)
-
-        os.remove(filenameB_AP)  #turn symlinkToFileB into a broken symlink
+        os.remove(self.filenameB_AP)  #turn symlinkToFileB into a broken symlink
 
         retList=OFL.get_list_of_all_repairable_org_files(anotherFolder)
 
-        expectedList=[filenameA_AP]
+        expectedList=[self.filenameA_AP]
 
         self.assertEqual(len(expectedList),len(retList))
         self.assertEqual(set(expectedList),set(retList))
-
-        os.remove(filenameA_AP)
-        os.remove(symlinkToFileB_AP)
 
 #head skip test operate_on_all_org_files
 #head skip test make_regex_dicts
@@ -4598,42 +4634,61 @@ class TestsOfRepairingLinksToOrgFiles(unittest.TestCase):
     #these tests require much more time to run than the rest
     #head TODO expecting some mistakes in print statements; too much duplicate code;  study unittest and see how to rewrite to reduce duplicate code
     #head TODO test repairing a broken link that cannot be fixed: keep trying until max tries setting exceeded; use database commands etc to check that script stops trying to fix link LEFTOFF
+
+    def setUp(self):
+        reset_database()
+
+        self.runDebuggerOnlyInRepairStep=False
+        self.runDebuggerInEveryStep=False
+        self.runWithPauses=False
+
+        self.filenameA,self.filenameB,self.symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
+
+    def tearDown(self):
+        if os.path.exists(self.filenameA):
+            os.remove(self.filenameA)
+
+        if os.path.exists(self.filenameB):
+            os.remove(self.filenameB)
+
+        if os.path.exists(self.symlinkToFileB_Name) or os.path.islink(self.symlinkToFileB_Name):
+            os.remove(self.symlinkToFileB_Name)
+
+        if os.path.exists(self.symlinkToFileB_Name+'.temp') or os.path.islink(self.symlinkToFileB_Name+'.temp'):
+            os.remove(self.symlinkToFileB_Name+'.temp')
+
+        try:
+            self.newNameB
+            os.remove(self.newNameB)
+        except:
+            pass
+
+    #head
     def test_1(self):
         '''fileA links to fileB; fileB is an org file; move fileB while keeping its basename the same; fileB never contains a unique ID'''
-
-        reset_database()
-
-        #lately have preferred to just insert pudb.set_trace() in this script
-        runDebuggerOnlyInRepairStep=False
-        runDebuggerInEveryStep=False
-        runWithPauses=False
-
-        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
-
-        self.failUnless(os.path.exists(filenameA))
-        self.failUnless(os.path.exists(filenameB))
-        self.failUnless(os.path.exists(symlinkToFileB_Name))
     
-        if runWithPauses:
+        self.assertEqual(os.getcwd(),origWorkingDir)
+
+        if self.runWithPauses:
             blurbList=['fileB is an org file','fileA and fileB start out without unique IDs','fileA gets a unique ID','fileB does not get a unique ID']
             blurbList.extend(['fileB is moved to another folder','basename of fileB is kept the same','an attempt is made to repair broken link to fileB in fileA'])
             blurb1="\n".join(blurbList)
             print blurb1
 
-            print 'fileA is %s and fileB is %s' % (filenameA,filenameB)
+            print 'fileA is %s and fileB is %s' % (self.filenameA,self.filenameB)
 
             wait_on_user_input('Now pausing to review nature of test')
 
         #####################################################
     
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         self.assertEqual(len(fileA.linksToOrgFilesList),1) # 'fileA has a single link to an org file'
-        self.assertEqual(fileA.linksToOrgFilesList[0].targetObj.filenameAP,os.path.join(os.getcwd(),filenameB)) # a link to fileB is found in fileA
+        self.assertEqual(fileA.linksToOrgFilesList[0].targetObj.filenameAP,os.path.join(os.getcwd(),self.filenameB)) # a link to fileB is found in fileA
 
-        if runWithPauses and (not showLog1):
-            print 'Now analyzing fileA %s; unique ID was inserted' % filenameA
+        if self.runWithPauses and (not showLog1):
+            print 'Now analyzing fileA %s; unique ID was inserted' % self.filenameA
 
             wait_on_user_input()
 
@@ -4642,17 +4697,17 @@ class TestsOfRepairingLinksToOrgFiles(unittest.TestCase):
         origFolder=os.path.split(fileA.filenameAP)[0]
     
         #move fileB but keep basename the same
-        newNameB=os.path.join(anotherFolder,filenameB)
-        os.rename(filenameB,newNameB)
-        # print 'Just Moved fileB %s to folder %s while keeping basenameB the same' % (filenameB,anotherFolder)
+        self.newNameB=os.path.join(anotherFolder,self.filenameB)
+        os.rename(self.filenameB,self.newNameB)
+        # print 'Just Moved fileB %s to folder %s while keeping basenameB the same' % (self.filenameB,anotherFolder)
 
         self.failIf(fileA.linksToOrgFilesList[0].targetObj.uniqueID) #fileB will not get a unique ID
         #####################################################
 
-        # print 'Now analyzing fileA %s a second time after moving fileB without changing basenameB; look for successful repair of link to fileB' % filenameA
+        # print 'Now analyzing fileA %s a second time after moving fileB without changing basenameB; look for successful repair of link to fileB' % self.filenameA
 
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=(runDebuggerOnlyInRepairStep or runDebuggerInEveryStep),isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=(self.runDebuggerOnlyInRepairStep or self.runDebuggerInEveryStep),isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         self.failUnless(fileA.linksToOrgFilesList[0].targetObj.repaired)
 
@@ -4661,142 +4716,52 @@ class TestsOfRepairingLinksToOrgFiles(unittest.TestCase):
 
         self.assertEqual(repairMethod,expectedRepairMethod)
 
-        if runWithPauses and (not showLog1):
-            print 'Just moved fileB %s to folder %s while keeping basenameB the same' % (filenameB,anotherFolder)
-            print 'Now analyzing fileA %s a second time after moving fileB without changing basenameB; look for successful repair of link to fileB via %s' % (filenameA,expectedRepairMethod)
+        if self.runWithPauses and (not showLog1):
+            print 'Just moved fileB %s to folder %s while keeping basenameB the same' % (self.filenameB,anotherFolder)
+            print 'Now analyzing fileA %s a second time after moving fileB without changing basenameB; look for successful repair of link to fileB via %s' % (self.filenameA,expectedRepairMethod)
             wait_on_user_input()
     
         #####################################################
-        if runWithPauses and (not showLog1):
+        if self.runWithPauses and (not showLog1):
             print 'Finally, restoring files on disk to original configuration\n'
 
-        os.remove(filenameA)
-        os.remove(newNameB)
-        os.remove(symlinkToFileB_Name)
-
-    def test_1p(self):
-        '''now the links are followed by punctuation'''
-
-        reset_database()
-
-        #lately have preferred to just insert pudb.set_trace() in this script
-        runDebuggerOnlyInRepairStep=False
-        runDebuggerInEveryStep=False
-        runWithPauses=False
-
-        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org_punc()
-
-        self.failUnless(os.path.exists(filenameA))
-        self.failUnless(os.path.exists(filenameB))
-        self.failUnless(os.path.exists(symlinkToFileB_Name))
-    
-        if runWithPauses:
-            blurbList=['fileB is an org file','fileA and fileB start out without unique IDs','fileA gets a unique ID','fileB does not get a unique ID']
-            blurbList.extend(['fileB is moved to another folder','basename of fileB is kept the same','an attempt is made to repair broken link to fileB in fileA'])
-            blurb1="\n".join(blurbList)
-            print blurb1
-
-            print 'fileA is %s and fileB is %s' % (filenameA,filenameB)
-
-            wait_on_user_input('Now pausing to review nature of test')
-
-        #####################################################
-    
-        showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
-
-        self.assertEqual(len(fileA.linksToOrgFilesList),1) # 'fileA has a single link to an org file'
-        self.assertEqual(fileA.linksToOrgFilesList[0].targetObj.filenameAP,os.path.join(os.getcwd(),filenameB)) # a link to fileB is found in fileA
-
-        if runWithPauses and (not showLog1):
-            print 'Now analyzing fileA %s; unique ID was inserted' % filenameA
-
-            wait_on_user_input()
-
-        #####################################################
-    
-        origFolder=os.path.split(fileA.filenameAP)[0]
-    
-        #move fileB but keep basename the same
-        newNameB=os.path.join(anotherFolder,filenameB)
-        os.rename(filenameB,newNameB)
-        # print 'Just Moved fileB %s to folder %s while keeping basenameB the same' % (filenameB,anotherFolder)
-
-        self.failIf(fileA.linksToOrgFilesList[0].targetObj.uniqueID) #fileB will not get a unique ID
-        #####################################################
-
-        # print 'Now analyzing fileA %s a second time after moving fileB without changing basenameB; look for successful repair of link to fileB' % filenameA
-
-        showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=(runDebuggerOnlyInRepairStep or runDebuggerInEveryStep),isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
-
-        self.failUnless(fileA.linksToOrgFilesList[0].targetObj.repaired)
-
-        expectedRepairMethod='attemptRepairViaBasenameMatchOnDisk'
-        repairMethod=fileA.linksToOrgFilesList[0].targetObj.repairedVia
-
-        self.assertEqual(repairMethod,expectedRepairMethod)
-
-        if runWithPauses and (not showLog1):
-            print 'Just moved fileB %s to folder %s while keeping basenameB the same' % (filenameB,anotherFolder)
-            print 'Now analyzing fileA %s a second time after moving fileB without changing basenameB; look for successful repair of link to fileB via %s' % (filenameA,expectedRepairMethod)
-            wait_on_user_input()
-    
-        #####################################################
-        if runWithPauses and (not showLog1):
-            print 'Finally, restoring files on disk to original configuration\n'
-
-        os.remove(filenameA)
-        os.remove(newNameB)
-        os.remove(symlinkToFileB_Name)
+        self.assertEqual(os.getcwd(),origWorkingDir)
 
     #head
     def test_2(self):
         '''fileA links to fileB;  fileB is an org file; insert a unique ID in file B; move fileB while keeping its basename the same'''
-
-        reset_database()
-
-        runDebuggerOnlyInRepairStep=False
-        runDebuggerInEveryStep=False
-        runWithPauses=False
-
-        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
-
-        self.failUnless(os.path.exists(filenameA))
-        self.failUnless(os.path.exists(filenameB))
-        self.failUnless(os.path.exists(symlinkToFileB_Name))
     
-        if runWithPauses:
+        if self.runWithPauses:
             blurbList=['fileB is an org file','fileA and fileB start out without unique IDs','fileA gets a unique ID','fileB gets a unique ID']
             blurbList.extend(['fileB is moved to another folder','basename of fileB is kept the same','an attempt is made to repair broken link to fileB in fileA'])
             blurb1="\n".join(blurbList)
             print blurb1
 
-            print 'fileA is %s and fileB is %s' % (filenameA,filenameB)
+            print 'fileA is %s and fileB is %s' % (self.filenameA,self.filenameB)
     
             wait_on_user_input('Now pausing to review nature of test')
 
         #####################################################
     
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         self.assertEqual(len(fileA.linksToOrgFilesList),1) # 'fileA has a single link to an org file'
-        self.assertEqual(fileA.linksToOrgFilesList[0].targetObj.filenameAP,os.path.join(os.getcwd(),filenameB)) # a link to fileB is found in fileA
+        self.assertEqual(fileA.linksToOrgFilesList[0].targetObj.filenameAP,os.path.join(os.getcwd(),self.filenameB)) # a link to fileB is found in fileA
 
-        if runWithPauses and (not showLog1):
-            print 'Now analyzing fileA %s; unique ID was inserted' % filenameA
+        if self.runWithPauses and (not showLog1):
+            print 'Now analyzing fileA %s; unique ID was inserted' % self.filenameA
             wait_on_user_input()
 
         #####################################################
     
         showLog1=False
-        fileB=operate_on_fileA_w(filenameB,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileB=operate_on_fileA_w(self.filenameB,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         self.failUnless(fileB.uniqueID)
 
-        if runWithPauses and (not showLog1):
-            print 'Just analyzed fileB %s; unique ID was inserted' % filenameB
+        if self.runWithPauses and (not showLog1):
+            print 'Just analyzed fileB %s; unique ID was inserted' % self.filenameB
             wait_on_user_input()
 
         #####################################################    
@@ -4804,16 +4769,16 @@ class TestsOfRepairingLinksToOrgFiles(unittest.TestCase):
         origFolder=os.path.split(fileA.filenameAP)[0]
     
         #move fileB but keep basename the same
-        newNameB=os.path.join(anotherFolder,filenameB)
-        os.rename(filenameB,newNameB)
-        # print 'Just Moved fileB %s to folder %s while keeping basenameB the same' % (filenameB,anotherFolder)
+        self.newNameB=os.path.join(anotherFolder,self.filenameB)
+        os.rename(self.filenameB,self.newNameB)
+        # print 'Just Moved fileB %s to folder %s while keeping basenameB the same' % (self.filenameB,anotherFolder)
 
         #####################################################
 
-        # print 'Now analyzing fileA %s a second time after moving fileB without changing basenameB; look for successful repair of link to fileB' % filenameA
+        # print 'Now analyzing fileA %s a second time after moving fileB without changing basenameB; look for successful repair of link to fileB' % self.filenameA
 
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=(runDebuggerOnlyInRepairStep or runDebuggerInEveryStep),isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=(self.runDebuggerOnlyInRepairStep or self.runDebuggerInEveryStep),isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         self.failUnless(fileA.linksToOrgFilesList[0].targetObj.repaired)
 
@@ -4822,83 +4787,67 @@ class TestsOfRepairingLinksToOrgFiles(unittest.TestCase):
 
         self.assertEqual(repairMethod,expectedRepairMethod)
 
-        if runWithPauses and (not showLog1):
-            print 'Just Moved fileB %s to folder %s while keeping basenameB the same' % (filenameB,anotherFolder)
-            print 'Now analyzing fileA %s a second time after moving fileB without changing basenameB; look for successful repair of link to fileB via %s' % (filenameA,expectedRepairMethod)
+        if self.runWithPauses and (not showLog1):
+            print 'Just Moved fileB %s to folder %s while keeping basenameB the same' % (self.filenameB,anotherFolder)
+            print 'Now analyzing fileA %s a second time after moving fileB without changing basenameB; look for successful repair of link to fileB via %s' % (self.filenameA,expectedRepairMethod)
             wait_on_user_input()
     
         #####################################################
-        if runWithPauses and (not showLog1):
+        if self.runWithPauses and (not showLog1):
             print 'Finally, restoring files on disk to original configuration\n'
-
-        os.remove(filenameA)
-        os.remove(newNameB)
-        os.remove(symlinkToFileB_Name)
 
     #head
     def test_3(self):
         '''fileA links to fileB;  fileB is an org file; insert a unique ID in fileB; fileA get a unique ID in header for fileB; move fileB while keeping its basename the same'''
-
-        reset_database()
-
-        runDebuggerOnlyInRepairStep=False
-        runDebuggerInEveryStep=False
-        runWithPauses=False
-
-        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
-
-        self.failUnless(os.path.exists(filenameA))
-        self.failUnless(os.path.exists(filenameB))
-        self.failUnless(os.path.exists(symlinkToFileB_Name))
     
-        if runWithPauses:
+        if self.runWithPauses:
             blurbList=['fileB is an org file','fileA and fileB start out without unique IDs','fileA gets a unique ID','fileB gets a unique ID']
             blurbList.extend(['fileA gets uniqueID in header for fileB','fileB is moved to another folder','basename of fileB is kept the same','an attempt is made to repair broken link to fileB in fileA'])
             blurb1="\n".join(blurbList)
             print blurb1
 
-            print 'fileA is %s and fileB is %s' % (filenameA,filenameB)
+            print 'fileA is %s and fileB is %s' % (self.filenameA,self.filenameB)
 
             wait_on_user_input('Now pausing to review nature of test')
 
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         self.assertEqual(len(fileA.linksToOrgFilesList),1)
-        self.assertEqual(fileA.linksToOrgFilesList[0].targetObj.filenameAP,os.path.join(os.getcwd(),filenameB))
+        self.assertEqual(fileA.linksToOrgFilesList[0].targetObj.filenameAP,os.path.join(os.getcwd(),self.filenameB))
 
-        if runWithPauses and (not showLog1):
-            print 'Analyzed fileA %s; unique ID was inserted' % filenameA
+        if self.runWithPauses and (not showLog1):
+            print 'Analyzed fileA %s; unique ID was inserted' % self.filenameA
             wait_on_user_input()
         
     
         showLog1=False
-        fileB=operate_on_fileA_w(filenameB,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileB=operate_on_fileA_w(self.filenameB,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         self.failUnless(fileB.uniqueID)
 
-        if runWithPauses and (not showLog1):
-            print 'Analyzed fileB %s; unique ID was inserted' % filenameB
+        if self.runWithPauses and (not showLog1):
+            print 'Analyzed fileB %s; unique ID was inserted' % self.filenameB
             wait_on_user_input()
 
         
 
-        # print 'Now analyzing fileA %s again; unique ID will be inserted in header for link to fileB' % filenameA
+        # print 'Now analyzing fileA %s again; unique ID will be inserted in header for link to fileB' % self.filenameA
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
-        if runWithPauses and (not showLog1):
-            print 'Analyzed fileA %s again; unique ID was inserted in header for link to fileB' % filenameA
+        if self.runWithPauses and (not showLog1):
+            print 'Analyzed fileA %s again; unique ID was inserted in header for link to fileB' % self.filenameA
             wait_on_user_input()
 
-        # print 'Now analyzing fileA %s again; unique ID in header should now make it to fileA variable' % filenameA
+        # print 'Now analyzing fileA %s again; unique ID in header should now make it to fileA variable' % self.filenameA
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         self.assertEqual(fileA.linksToOrgFilesList[0].targetObj.uniqueIDFromHeader,fileB.uniqueID)
 
-        if runWithPauses and (not showLog1):
-            print 'Analzyed fileA %s again; unique ID in header made it to fileA variable' % filenameA
+        if self.runWithPauses and (not showLog1):
+            print 'Analzyed fileA %s again; unique ID in header made it to fileA variable' % self.filenameA
             wait_on_user_input()
 
         
@@ -4906,18 +4855,18 @@ class TestsOfRepairingLinksToOrgFiles(unittest.TestCase):
         origFolder=os.path.split(fileA.filenameAP)[0]
     
         # move fileB but keep basename the same
-        newNameB=os.path.join(anotherFolder,filenameB)
-        os.rename(filenameB,newNameB)
+        self.newNameB=os.path.join(anotherFolder,self.filenameB)
+        os.rename(self.filenameB,self.newNameB)
 
-        if runWithPauses and (not showLog1):
-            print 'Moved fileB %s to folder %s while keeping basenameB the same' % (filenameB,anotherFolder)
+        if self.runWithPauses and (not showLog1):
+            print 'Moved fileB %s to folder %s while keeping basenameB the same' % (self.filenameB,anotherFolder)
 
         
 
-        # print 'Now analyzing fileA %s a second time after moving fileB without changing basenameB; look for successful repair of link to fileB' % filenameA
+        # print 'Now analyzing fileA %s a second time after moving fileB without changing basenameB; look for successful repair of link to fileB' % self.filenameA
 
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=(runDebuggerOnlyInRepairStep or runDebuggerInEveryStep),isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=(self.runDebuggerOnlyInRepairStep or self.runDebuggerInEveryStep),isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         self.failUnless(fileA.linksToOrgFilesList[0].targetObj.repaired)
 
@@ -4926,86 +4875,70 @@ class TestsOfRepairingLinksToOrgFiles(unittest.TestCase):
 
         self.assertEqual(repairMethod,expectedRepairMethod)
 
-        if runWithPauses and (not showLog1):
-            print 'Analyzed fileA %s a second time after moving fileB without changing basenameB; look for successful repair of link to fileB' % filenameA
+        if self.runWithPauses and (not showLog1):
+            print 'Analyzed fileA %s a second time after moving fileB without changing basenameB; look for successful repair of link to fileB' % self.filenameA
             wait_on_user_input()
     
         
-        if runWithPauses and (not showLog1):
+        if self.runWithPauses and (not showLog1):
             print 'Finally, restoring files on disk to original configuration\n'
-
-        os.remove(filenameA)
-        os.remove(newNameB)
-        os.remove(symlinkToFileB_Name)
 
     #head skip test4
     def test_5(self):
         '''fileB is an org file; move fileB but keep its basename the same; a unique ID is inserted in fileB prior to moving it; fileA gets a unique ID in header for fileB; delete database before attempting repair'''
-
-        reset_database()
-
-        runDebuggerOnlyInRepairStep=False
-        runDebuggerInEveryStep=False
-        runWithPauses=False
-
-        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
-
-        self.failUnless(os.path.exists(filenameA))
-        self.failUnless(os.path.exists(filenameB))
-        self.failUnless(os.path.exists(symlinkToFileB_Name))
     
-        if runWithPauses:
+        if self.runWithPauses:
             blurbList=['fileB is an org file','fileA and fileB start out without unique IDs','fileA gets a unique ID','fileB gets a unique ID']
             blurbList.extend(['fileA gets a uniqueID in header for fileB','fileB is moved to another folder','basename of fileB is kept the same'])
             blurbList.extend(['database is deleted before attempting to repair broken link in fileA'])
             blurb1="\n".join(blurbList)
             print blurb1
 
-            print 'fileA is %s and fileB is %s' % (filenameA,filenameB)
+            print 'fileA is %s and fileB is %s' % (self.filenameA,self.filenameB)
 
             wait_on_user_input('Now pausing to review nature of test')
 
         #####################################################
 
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         self.assertEqual(len(fileA.linksToOrgFilesList),1) # 'fileA has a single link to an org file'
-        self.assertEqual(fileA.linksToOrgFilesList[0].targetObj.filenameAP,os.path.join(os.getcwd(),filenameB)) # a link to fileB is found in fileA
+        self.assertEqual(fileA.linksToOrgFilesList[0].targetObj.filenameAP,os.path.join(os.getcwd(),self.filenameB)) # a link to fileB is found in fileA
 
-        if runWithPauses and (not showLog1):
-            print 'Analyzed fileA %s; unique ID was inserted' % filenameA
+        if self.runWithPauses and (not showLog1):
+            print 'Analyzed fileA %s; unique ID was inserted' % self.filenameA
             wait_on_user_input()
 
         #####################################################
     
         showLog1=False
-        fileB=operate_on_fileA_w(filenameB,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileB=operate_on_fileA_w(self.filenameB,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         self.failUnless(fileB.uniqueID)
 
-        if runWithPauses and (not showLog1):
-            print 'Analyzed fileB %s; unique ID was inserted' % filenameB
+        if self.runWithPauses and (not showLog1):
+            print 'Analyzed fileB %s; unique ID was inserted' % self.filenameB
             wait_on_user_input()
 
         #####################################################
 
-        # print 'Now analyzing fileA %s again; unique ID will be inserted in header for link to fileB' % filenameA
+        # print 'Now analyzing fileA %s again; unique ID will be inserted in header for link to fileB' % self.filenameA
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
-        if runWithPauses and (not showLog1):
-            print 'Analyzed fileA %s again; unique ID was inserted in header for link to fileB' % filenameA
+        if self.runWithPauses and (not showLog1):
+            print 'Analyzed fileA %s again; unique ID was inserted in header for link to fileB' % self.filenameA
             wait_on_user_input()
 
-        # # print 'Now analyzing fileA %s again; unique ID in header should now make it to fileA variable' % filenameA
+        # # print 'Now analyzing fileA %s again; unique ID in header should now make it to fileA variable' % self.filenameA
         # showLog1=False
-        # fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        # fileA=operate_on_fileA_w(self.filenameA,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         # self.assertEqual(fileA.linksToOrgFilesList[0].targetObj.uniqueIDFromHeader,fileB.uniqueID)
 
-        # if runWithPauses and (not showLog1):
-        #     print 'Analyzed fileA %s again; unique ID in header made it to fileA variable' % filenameA
+        # if self.runWithPauses and (not showLog1):
+        #     print 'Analyzed fileA %s again; unique ID in header made it to fileA variable' % self.filenameA
         #     wait_on_user_input()
 
         #####################################################
@@ -5013,11 +4946,11 @@ class TestsOfRepairingLinksToOrgFiles(unittest.TestCase):
         origFolder=os.path.split(fileA.filenameAP)[0]
     
         #move fileB but keep basename the same
-        newNameB=os.path.join(anotherFolder,filenameB)
-        os.rename(filenameB,newNameB)
+        self.newNameB=os.path.join(anotherFolder,self.filenameB)
+        os.rename(self.filenameB,self.newNameB)
 
-        if runWithPauses and (not showLog1):
-            print 'Moved fileB %s to folder %s while keeping basenameB the same' % (filenameB,anotherFolder)
+        if self.runWithPauses and (not showLog1):
+            print 'Moved fileB %s to folder %s while keeping basenameB the same' % (self.filenameB,anotherFolder)
 
         #####################################################
 
@@ -5025,10 +4958,10 @@ class TestsOfRepairingLinksToOrgFiles(unittest.TestCase):
 
         #####################################################
 
-        # print 'Now analyzing fileA %s a second time after moving fileB without changing basenameB; look for successful repair of link to fileB' % filenameA
+        # print 'Now analyzing fileA %s a second time after moving fileB without changing basenameB; look for successful repair of link to fileB' % self.filenameA
 
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=(runDebuggerOnlyInRepairStep or runDebuggerInEveryStep),isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=(self.runDebuggerOnlyInRepairStep or self.runDebuggerInEveryStep),isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         self.failUnless(fileA.linksToOrgFilesList[0].targetObj.repaired)
 
@@ -5037,86 +4970,70 @@ class TestsOfRepairingLinksToOrgFiles(unittest.TestCase):
 
         self.assertEqual(repairMethod,expectedRepairMethod)
 
-        if runWithPauses and (not showLog1):
+        if self.runWithPauses and (not showLog1):
             print 'Database was reset.'
-            print 'Analyzed fileA %s a second time after moving fileB without changing basenameB; look for successful repair of link to fileB' % filenameA
+            print 'Analyzed fileA %s a second time after moving fileB without changing basenameB; look for successful repair of link to fileB' % self.filenameA
             wait_on_user_input()
     
         #####################################################
-        if runWithPauses and (not showLog1):
+        if self.runWithPauses and (not showLog1):
             print 'Finally, restoring files on disk to original configuration\n'
-
-        os.remove(filenameA)
-        os.remove(newNameB)
-        os.remove(symlinkToFileB_Name)
 
     #head
     def test_6(self):
         '''fileB is an org file without a unique ID; move fileB and change its basename; repair should not be possible in this case'''
-
-        reset_database()
-
-        runDebuggerOnlyInRepairStep=False
-        runDebuggerInEveryStep=False
-        runWithPauses=False
-
-        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
-
-        self.failUnless(os.path.exists(filenameA))
-        self.failUnless(os.path.exists(filenameB))
-        self.failUnless(os.path.exists(symlinkToFileB_Name))
     
-        if runWithPauses:
+        if self.runWithPauses:
             blurbList=['fileB is an org file','fileA and fileB start out without unique IDs','fileA gets a unique ID','fileB does not get a unique ID']
             blurbList.extend(['fileB is moved to another folder','basename of fileB is changed'])
             blurb1="\n".join(blurbList)
             print blurb1
 
-            print 'fileA is %s and fileB is %s' % (filenameA,filenameB)
+            print 'fileA is %s and fileB is %s' % (self.filenameA,self.filenameB)
 
             wait_on_user_input('Now pausing to review nature of test')
 
         #####################################################
 
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         self.assertEqual(len(fileA.linksToOrgFilesList),1) # 'fileA has a single link to an org file'
-        self.assertEqual(fileA.linksToOrgFilesList[0].targetObj.filenameAP,os.path.join(os.getcwd(),filenameB)) # a link to fileB is found in fileA
+        self.assertEqual(fileA.linksToOrgFilesList[0].targetObj.filenameAP,os.path.join(os.getcwd(),self.filenameB)) # a link to fileB is found in fileA
 
-        if runWithPauses and (not showLog1):
-            print 'Analyzed fileA %s; unique ID was inserted' % filenameA
+        if self.runWithPauses and (not showLog1):
+            print 'Analyzed fileA %s; unique ID was inserted' % self.filenameA
             wait_on_user_input()
 
         # #####################################################
     
         # showLog1=False
-        # fileB=operate_on_fileA_w(filenameB,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        # fileB=operate_on_fileA_w(self.filenameB,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         # self.failUnless(fileB.uniqueID)
 
-        # if runWithPauses and (not showLog1):
-        #     print 'Analyzed fileB %s; unique ID was inserted' % filenameB
+        # if self.runWithPauses and (not showLog1):
+        #     print 'Analyzed fileB %s; unique ID was inserted' % self.filenameB
         #     wait_on_user_input()
 
         # #####################################################
 
-        # # print 'Now analyzing fileA %s again; unique ID will be inserted in header for link to fileB' % filenameA
+        # # print 'Now analyzing fileA %s again; unique ID will be inserted in header for link to fileB' % self.filenameA
         # showLog1=False
-        # fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        # fileA=operate_on_fileA_w(self.filenameA,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
-        # if runWithPauses and (not showLog1):
-        #     print 'Analyzed fileA %s again; unique ID was inserted in header for link to fileB' % filenameA
+        # if self.runWithPauses and (not showLog1):
+        #     print 'Analyzed fileA %s again; unique ID was inserted in header for link to fileB' % self.filenameA
         #     wait_on_user_input()
 
-        # # print 'Now analyzing fileA %s again; unique ID in header should now make it to fileA variable' % filenameA
+        # # print 'Now analyzing fileA %s again; unique ID in header should now make it to fileA variable' % self.filenameA
         # showLog1=False
-        # fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        # fileA=operate_on_fileA_w(self.filenameA,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         # self.assertEqual(fileA.linksToOrgFilesList[0].targetObj.uniqueIDFromHeader,fileB.uniqueID)
 
-        # if runWithPauses and (not showLog1):
-        #     print 'Analyzed fileA %s again; unique ID in header made it to fileA variable' % filenameA
+        # if self.runWithPauses and (not showLog1):
+        #     print 'Analyzed fileA %s again; unique ID in header made it to fileA variable' % self.filenameA
         #     wait_on_user_input()
 
         #####################################################
@@ -5124,18 +5041,18 @@ class TestsOfRepairingLinksToOrgFiles(unittest.TestCase):
         origFolder=os.path.split(fileA.filenameAP)[0]
     
         #move fileB and change basename
-        newNameB=os.path.join(anotherFolder,'NoName.org')
-        os.rename(filenameB,newNameB)
+        self.newNameB=os.path.join(anotherFolder,'NoName.org')
+        os.rename(self.filenameB,self.newNameB)
 
-        if runWithPauses and (not showLog1):
-            print 'Just moved fileB %s to %s' % (filenameB,newNameB)
+        if self.runWithPauses and (not showLog1):
+            print 'Just moved fileB %s to %s' % (self.filenameB,self.newNameB)
 
         #####################################################
 
-        # print 'Now analyzing fileA %s after moving fileB; look for failed repair of link to fileB' % filenameA
+        # print 'Now analyzing fileA %s after moving fileB; look for failed repair of link to fileB' % self.filenameA
 
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=(runDebuggerOnlyInRepairStep or runDebuggerInEveryStep),isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=(self.runDebuggerOnlyInRepairStep or self.runDebuggerInEveryStep),isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         self.failIf(fileA.linksToOrgFilesList[0].targetObj.repaired)
 
@@ -5144,69 +5061,49 @@ class TestsOfRepairingLinksToOrgFiles(unittest.TestCase):
 
         self.failIf(repairMethod)
 
-        if runWithPauses and (not showLog1):
-            print 'Analyzed fileA %s after moving fileB; look for failed repair of link to fileB' % filenameA
+        if self.runWithPauses and (not showLog1):
+            print 'Analyzed fileA %s after moving fileB; look for failed repair of link to fileB' % self.filenameA
             wait_on_user_input()
     
         #####################################################
-        if runWithPauses and (not showLog1):
+        if self.runWithPauses and (not showLog1):
             print 'Finally, restoring files on disk to original configuration\n'
-
-        os.remove(filenameA)
-        os.remove(newNameB)
-        os.remove(symlinkToFileB_Name)
 
     #head
     def test_7(self):
         '''fileB is an org file without a unique ID; insert unique ID then move and rename fileB'''
-
-        reset_database()
-
-        runDebuggerOnlyInRepairStep=False
-        runDebuggerInEveryStep=False
-        runWithPauses=False
-
-        filenameA='20160817TestFile.org'
-        filenameB='20160817TestFileLinkTarget.org'
-        symlinkToFileB_Name='symlinkTo'+filenameB
-
-        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
-
-        self.failUnless(os.path.exists(filenameA))
-        self.failUnless(os.path.exists(filenameB))
-        self.failUnless(os.path.exists(symlinkToFileB_Name))
     
-        if runWithPauses:
+        if self.runWithPauses:
             blurbList=['fileB is an org file','fileA and fileB start out without unique IDs','fileA gets a unique ID','fileB gets a unique ID']
             blurbList.extend(['fileB is moved to another folder','basename of fileB is changed'])
             blurb1="\n".join(blurbList)
             print blurb1
 
-            print 'fileA is %s and fileB is %s' % (filenameA,filenameB)
+            print 'fileA is %s and fileB is %s' % (self.filenameA,self.filenameB)
 
             wait_on_user_input('Now pausing to review nature of test')
 
         #####################################################
 
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         self.assertEqual(len(fileA.linksToOrgFilesList),1) # 'fileA has a single link to an org file'
-        self.assertEqual(fileA.linksToOrgFilesList[0].targetObj.filenameAP,os.path.join(os.getcwd(),filenameB)) # a link to fileB is found in fileA
+        self.assertEqual(fileA.linksToOrgFilesList[0].targetObj.filenameAP,os.path.join(os.getcwd(),self.filenameB)) # a link to fileB is found in fileA
 
-        if runWithPauses and (not showLog1):
-            print 'Analyzed fileA %s; unique ID was inserted' % filenameA
+        if self.runWithPauses and (not showLog1):
+            print 'Analyzed fileA %s; unique ID was inserted' % self.filenameA
             wait_on_user_input()
 
         # #####################################################
     
         showLog1=False
-        fileB=operate_on_fileA_w(filenameB,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileB=operate_on_fileA_w(self.filenameB,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         self.failUnless(fileB.uniqueID)
 
-        if runWithPauses and (not showLog1):
-            print 'Analyzed fileB %s; unique ID was inserted' % filenameB
+        if self.runWithPauses and (not showLog1):
+            print 'Analyzed fileB %s; unique ID was inserted' % self.filenameB
             wait_on_user_input()
 
         #####################################################
@@ -5214,18 +5111,18 @@ class TestsOfRepairingLinksToOrgFiles(unittest.TestCase):
         origFolder=os.path.split(fileA.filenameAP)[0]
     
         #move fileB and change basename
-        newNameB=os.path.join(anotherFolder,'NoName.org')
-        os.rename(filenameB,newNameB)
+        self.newNameB=os.path.join(anotherFolder,'NoName.org')
+        os.rename(self.filenameB,self.newNameB)
 
-        if runWithPauses and (not showLog1):
-            print 'Just moved fileB %s to %s' % (filenameB,newNameB)
+        if self.runWithPauses and (not showLog1):
+            print 'Just moved fileB %s to %s' % (self.filenameB,self.newNameB)
 
         #####################################################
 
-        # print 'Now analyzing fileA %s after moving and renaming fileB; look for succesful repair of link to fileB' % filenameA
+        # print 'Now analyzing fileA %s after moving and renaming fileB; look for succesful repair of link to fileB' % self.filenameA
 
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=(runDebuggerOnlyInRepairStep or runDebuggerInEveryStep),isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=(self.runDebuggerOnlyInRepairStep or self.runDebuggerInEveryStep),isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         self.failUnless(fileA.linksToOrgFilesList[0].targetObj.repaired)
 
@@ -5234,69 +5131,49 @@ class TestsOfRepairingLinksToOrgFiles(unittest.TestCase):
 
         self.assertEqual(repairMethod,expectedRepairMethod)
 
-        if runWithPauses and (not showLog1):
-            print 'Analyzed fileA %s after moving and renaming fileB; look for succesful repair of link to fileB' % filenameA
+        if self.runWithPauses and (not showLog1):
+            print 'Analyzed fileA %s after moving and renaming fileB; look for succesful repair of link to fileB' % self.filenameA
             wait_on_user_input()
     
         #####################################################
-        if runWithPauses and (not showLog1):
+        if self.runWithPauses and (not showLog1):
             print 'Finally, restoring files on disk to original configuration\n'
-
-        os.remove(filenameA)
-        os.remove(newNameB)
-        os.remove(symlinkToFileB_Name)
 
     #head skipt test 8
     def test_9(self):
         '''fileB is an org file without a unique ID; insert unique ID in fileB; remove database; move and rename fileB'''
-
-        reset_database()
-
-        runDebuggerOnlyInRepairStep=False
-        runDebuggerInEveryStep=False
-        runWithPauses=False
-
-        filenameA='20160817TestFile.org'
-        filenameB='20160817TestFileLinkTarget.org'
-        symlinkToFileB_Name='symlinkTo'+filenameB
-
-        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
-
-        self.failUnless(os.path.exists(filenameA))
-        self.failUnless(os.path.exists(filenameB))
-        self.failUnless(os.path.exists(symlinkToFileB_Name))
     
-        if runWithPauses:
+        if self.runWithPauses:
             blurbList=['fileB is an org file','fileA and fileB start out without unique IDs','fileA gets a unique ID','fileB gets a unique ID']
             blurbList.extend(['database is removed','fileB is moved to another folder','basename of fileB is changed'])
             blurb1="\n".join(blurbList)
             print blurb1
 
-            print 'fileA is %s and fileB is %s' % (filenameA,filenameB)
+            print 'fileA is %s and fileB is %s' % (self.filenameA,self.filenameB)
 
             wait_on_user_input('Now pausing to review nature of test')
 
         #####################################################
 
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         self.assertEqual(len(fileA.linksToOrgFilesList),1) # 'fileA has a single link to an org file'
-        self.assertEqual(fileA.linksToOrgFilesList[0].targetObj.filenameAP,os.path.join(os.getcwd(),filenameB)) # a link to fileB is found in fileA
+        self.assertEqual(fileA.linksToOrgFilesList[0].targetObj.filenameAP,os.path.join(os.getcwd(),self.filenameB)) # a link to fileB is found in fileA
 
-        if runWithPauses and (not showLog1):
-            print 'Analyzed fileA %s; unique ID was inserted' % filenameA
+        if self.runWithPauses and (not showLog1):
+            print 'Analyzed fileA %s; unique ID was inserted' % self.filenameA
             wait_on_user_input()
 
         # #####################################################
     
         showLog1=False
-        fileB=operate_on_fileA_w(filenameB,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileB=operate_on_fileA_w(self.filenameB,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         self.failUnless(fileB.uniqueID)
 
-        if runWithPauses and (not showLog1):
-            print 'Analyzed fileB %s; unique ID was inserted' % filenameB
+        if self.runWithPauses and (not showLog1):
+            print 'Analyzed fileB %s; unique ID was inserted' % self.filenameB
             wait_on_user_input()
 
         #####################################################
@@ -5308,19 +5185,19 @@ class TestsOfRepairingLinksToOrgFiles(unittest.TestCase):
         origFolder=os.path.split(fileA.filenameAP)[0]
     
         #move fileB and change basename
-        newNameB=os.path.join(anotherFolder,'NoName.org')
-        os.rename(filenameB,newNameB)
+        self.newNameB=os.path.join(anotherFolder,'NoName.org')
+        os.rename(self.filenameB,self.newNameB)
 
-        if runWithPauses and (not showLog1):
+        if self.runWithPauses and (not showLog1):
             print 'Database was removed.'
-            print 'Just moved fileB %s to %s' % (filenameB,newNameB)
+            print 'Just moved fileB %s to %s' % (self.filenameB,self.newNameB)
 
         #####################################################
 
-        # print 'Now analyzing fileA %s after moving and renaming fileB; look for succesful repair of link to fileB' % filenameA
+        # print 'Now analyzing fileA %s after moving and renaming fileB; look for succesful repair of link to fileB' % self.filenameA
 
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=(runDebuggerOnlyInRepairStep or runDebuggerInEveryStep),isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=(self.runDebuggerOnlyInRepairStep or self.runDebuggerInEveryStep),isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         self.failIf(fileA.linksToOrgFilesList[0].targetObj.repaired)
 
@@ -5329,86 +5206,70 @@ class TestsOfRepairingLinksToOrgFiles(unittest.TestCase):
 
         self.failIf(repairMethod)
 
-        if runWithPauses and (not showLog1):
-            print 'Analyzed fileA %s after moving and renaming fileB and removing database; look for failed repair of link to fileB' % filenameA
+        if self.runWithPauses and (not showLog1):
+            print 'Analyzed fileA %s after moving and renaming fileB and removing database; look for failed repair of link to fileB' % self.filenameA
             wait_on_user_input()
     
         #####################################################
-        if runWithPauses and (not showLog1):
+        if self.runWithPauses and (not showLog1):
             print 'Finally, restoring files on disk to original configuration\n'
-
-        os.remove(filenameA)
-        os.remove(newNameB)
-        os.remove(symlinkToFileB_Name)
 
     #head
     def test_10(self):
         '''fileB is an org file; insert unique ID in file B; move and rename fileB; fileA gets a unique ID in header for fileB; delete database before attempting repair'''
-
-        reset_database()
-
-        runDebuggerOnlyInRepairStep=False
-        runDebuggerInEveryStep=False
-        runWithPauses=False
-
-        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
-
-        self.failUnless(os.path.exists(filenameA))
-        self.failUnless(os.path.exists(filenameB))
-        self.failUnless(os.path.exists(symlinkToFileB_Name))
     
-        if runWithPauses:
+        if self.runWithPauses:
 
             blurbList=['fileB is an org file','fileA and fileB start out without unique IDs','fileA gets a unique ID','fileB gets a unique ID']
             blurbList.extend(['fileA gets unique ID in header for link to fileB','database is deleted','fileB is moved to another folder','basename of fileB is changed'])
             blurb1="\n".join(blurbList)
             print blurb1
 
-            print 'fileA is %s and fileB is %s' % (filenameA,filenameB)
+            print 'fileA is %s and fileB is %s' % (self.filenameA,self.filenameB)
 
             wait_on_user_input('Now pausing to review nature of test')
 
         #####################################################
 
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         self.assertEqual(len(fileA.linksToOrgFilesList),1) # 'fileA has a single link to an org file'
-        self.assertEqual(fileA.linksToOrgFilesList[0].targetObj.filenameAP,os.path.join(os.getcwd(),filenameB)) # a link to fileB is found in fileA
+        self.assertEqual(fileA.linksToOrgFilesList[0].targetObj.filenameAP,os.path.join(os.getcwd(),self.filenameB)) # a link to fileB is found in fileA
 
-        if runWithPauses and (not showLog1):
-            print 'Analyzed fileA %s; unique ID was inserted' % filenameA
+        if self.runWithPauses and (not showLog1):
+            print 'Analyzed fileA %s; unique ID was inserted' % self.filenameA
             wait_on_user_input()
 
         #####################################################
     
         showLog1=False
-        fileB=operate_on_fileA_w(filenameB,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileB=operate_on_fileA_w(self.filenameB,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         self.failUnless(fileB.uniqueID)
 
-        if runWithPauses and (not showLog1):
-            print 'Analyzed fileB %s; unique ID was inserted' % filenameB
+        if self.runWithPauses and (not showLog1):
+            print 'Analyzed fileB %s; unique ID was inserted' % self.filenameB
             wait_on_user_input()
 
         #####################################################
 
-        # print 'Now analyzing fileA %s again; unique ID will be inserted in header for link to fileB' % filenameA
+        # print 'Now analyzing fileA %s again; unique ID will be inserted in header for link to fileB' % self.filenameA
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
-        if runWithPauses and (not showLog1):
-            print 'Analyzed fileA %s again; unique ID was inserted in header for link to fileB' % filenameA
+        if self.runWithPauses and (not showLog1):
+            print 'Analyzed fileA %s again; unique ID was inserted in header for link to fileB' % self.filenameA
             wait_on_user_input()
 
-        # print 'Now analyzing fileA %s again; unique ID in header should now make it to fileA variable' % filenameA
+        # print 'Now analyzing fileA %s again; unique ID in header should now make it to fileA variable' % self.filenameA
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         self.assertEqual(fileA.linksToOrgFilesList[0].targetObj.uniqueIDFromHeader,fileB.uniqueID)
 
-        if runWithPauses and (not showLog1):
-            print 'Analyzed fileA %s again; unique ID in header made it to fileA variable' % filenameA
+        if self.runWithPauses and (not showLog1):
+            print 'Analyzed fileA %s again; unique ID in header made it to fileA variable' % self.filenameA
             wait_on_user_input()
 
         #####################################################
@@ -5416,11 +5277,11 @@ class TestsOfRepairingLinksToOrgFiles(unittest.TestCase):
         origFolder=os.path.split(fileA.filenameAP)[0]
 
         #move fileB and change basename
-        newNameB=os.path.join(anotherFolder,'NoName.org')
-        os.rename(filenameB,newNameB)
+        self.newNameB=os.path.join(anotherFolder,'NoName.org')
+        os.rename(self.filenameB,self.newNameB)
 
-        if runWithPauses and (not showLog1):
-            print 'Just moved fileB %s to %s' % (filenameB,newNameB)
+        if self.runWithPauses and (not showLog1):
+            print 'Just moved fileB %s to %s' % (self.filenameB,self.newNameB)
 
         #####################################################
 
@@ -5428,10 +5289,10 @@ class TestsOfRepairingLinksToOrgFiles(unittest.TestCase):
 
         #####################################################
 
-        # print 'Now analyzing fileA %s a second time after moving fileB without changing basenameB; look for successful repair of link to fileB' % filenameA
+        # print 'Now analyzing fileA %s a second time after moving fileB without changing basenameB; look for successful repair of link to fileB' % self.filenameA
 
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=(runDebuggerOnlyInRepairStep or runDebuggerInEveryStep),isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=(self.runDebuggerOnlyInRepairStep or self.runDebuggerInEveryStep),isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         self.failUnless(fileA.linksToOrgFilesList[0].targetObj.repaired)
 
@@ -5440,71 +5301,51 @@ class TestsOfRepairingLinksToOrgFiles(unittest.TestCase):
 
         self.assertEqual(repairMethod,expectedRepairMethod)
 
-        if runWithPauses and (not showLog1):
+        if self.runWithPauses and (not showLog1):
             print 'Database was reset.'
-            print 'Analyzed fileA %s a second time after moving and renaming fileB; look for successful repair of link to fileB' % filenameA
+            print 'Analyzed fileA %s a second time after moving and renaming fileB; look for successful repair of link to fileB' % self.filenameA
             wait_on_user_input()
     
         #####################################################
-        if runWithPauses and (not showLog1):
+        if self.runWithPauses and (not showLog1):
             print 'Finally, restoring files on disk to original configuration\n'
-
-        os.remove(filenameA)
-        os.remove(newNameB)
-        os.remove(symlinkToFileB_Name)
 
     #head
     def test_11(self):
         '''A test of attemptRepairUsingTablePreviousFilenames '''
-
-        reset_database()
-
-        runDebuggerOnlyInRepairStep=False
-        runDebuggerInEveryStep=False
-        runWithPauses=False
-
-        filenameA='20160817TestFile.org'
-        filenameB='20160817TestFileLinkTarget.org'
-        symlinkToFileB_Name='symlinkTo'+filenameB
-
-        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
-
-        self.failUnless(os.path.exists(filenameA))
-        self.failUnless(os.path.exists(filenameB))
-        self.failUnless(os.path.exists(symlinkToFileB_Name))
     
-        if runWithPauses:
+        if self.runWithPauses:
             blurbList=['fileB is an org file','fileA and fileB start out without unique IDs','fileA gets a unique ID','fileB gets a unique ID']
             blurbList.extend(['fileB is moved to another folder','basename of fileB is changed','repair of broken link to fileB in fileA is done'])
             blurbList.extend(['fileA is edited so that repaired link to fileB is back to the original value','repair of this broken link tests previous filename repair capability'])
             blurb1="\n".join(blurbList)
             print blurb1
 
-            print 'fileA is %s and fileB is %s' % (filenameA,filenameB)
+            print 'fileA is %s and fileB is %s' % (self.filenameA,self.filenameB)
 
             wait_on_user_input('Now pausing to review nature of test')
 
         #####################################################
 
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         self.assertEqual(len(fileA.linksToOrgFilesList),1) # 'fileA has a single link to an org file'
-        self.assertEqual(fileA.linksToOrgFilesList[0].targetObj.filenameAP,os.path.join(os.getcwd(),filenameB)) # a link to fileB is found in fileA
+        self.assertEqual(fileA.linksToOrgFilesList[0].targetObj.filenameAP,os.path.join(os.getcwd(),self.filenameB)) # a link to fileB is found in fileA
 
-        if runWithPauses and (not showLog1):
-            print 'Analyzed fileA %s; unique ID was inserted' % filenameA
+        if self.runWithPauses and (not showLog1):
+            print 'Analyzed fileA %s; unique ID was inserted' % self.filenameA
             wait_on_user_input()
 
         # #####################################################
     
         showLog1=False
-        fileB=operate_on_fileA_w(filenameB,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileB=operate_on_fileA_w(self.filenameB,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         self.failUnless(fileB.uniqueID)
 
-        if runWithPauses and (not showLog1):
-            print 'Analyzed fileB %s; unique ID was inserted' % filenameB
+        if self.runWithPauses and (not showLog1):
+            print 'Analyzed fileB %s; unique ID was inserted' % self.filenameB
             wait_on_user_input()
 
         #####################################################
@@ -5512,18 +5353,18 @@ class TestsOfRepairingLinksToOrgFiles(unittest.TestCase):
         origFolder=os.path.split(fileA.filenameAP)[0]
     
         #move fileB and change basename
-        newNameB=os.path.join(anotherFolder,'NoName.org')
-        os.rename(filenameB,newNameB)
+        self.newNameB=os.path.join(anotherFolder,'NoName.org')
+        os.rename(self.filenameB,self.newNameB)
 
-        if runWithPauses and (not showLog1):
-            print 'Just moved fileB %s to %s' % (filenameB,newNameB)
+        if self.runWithPauses and (not showLog1):
+            print 'Just moved fileB %s to %s' % (self.filenameB,self.newNameB)
 
         #####################################################
 
-        # print 'Now analyzing fileA %s after moving and renaming fileB; look for succesful repair of link to fileB' % filenameA
+        # print 'Now analyzing fileA %s after moving and renaming fileB; look for succesful repair of link to fileB' % self.filenameA
 
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=(runDebuggerOnlyInRepairStep or runDebuggerInEveryStep),isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=(self.runDebuggerOnlyInRepairStep or self.runDebuggerInEveryStep),isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         self.failUnless(fileA.linksToOrgFilesList[0].targetObj.repaired)
 
@@ -5532,8 +5373,8 @@ class TestsOfRepairingLinksToOrgFiles(unittest.TestCase):
 
         self.assertEqual(repairMethod,expectedRepairMethod)
 
-        if runWithPauses and (not showLog1):
-            print 'Analyzed fileA %s after moving and renaming fileB; look for succesful repair of link to fileB' % filenameA
+        if self.runWithPauses and (not showLog1):
+            print 'Analyzed fileA %s after moving and renaming fileB; look for succesful repair of link to fileB' % self.filenameA
             wait_on_user_input()
 
         #####################################################
@@ -5541,22 +5382,22 @@ class TestsOfRepairingLinksToOrgFiles(unittest.TestCase):
         
         #must generate test file from current fileA so that unique ID matches the one in current fileA
 
-        inp=file(filenameA,'r')
+        inp=file(self.filenameA,'r')
         oldLines2=[a for a in inp.readlines() if a.strip()]  #gets rid of lines that are just a newline \n character
-        oldLines2[-1]=oldLines2[-1].replace(newNameB,filenameB)  #change the one outward link in filenameA to point to previous name of filenameB
+        oldLines2[-1]=oldLines2[-1].replace(self.newNameB,self.filenameB)  #change the one outward link in self.filenameA to point to previous name of self.filenameB
 
         inp.close()
-        out=file(filenameA,'w')
+        out=file(self.filenameA,'w')
         out.writelines(oldLines2)
         out.close()
 
-        if runWithPauses and (not showLog1):
+        if self.runWithPauses and (not showLog1):
             print 'Just rewrote fileA so that link to fileB points to previous name of fileB'
 
         #####################################################
 
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=(runDebuggerOnlyInRepairStep or runDebuggerInEveryStep),isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=(self.runDebuggerOnlyInRepairStep or self.runDebuggerInEveryStep),isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         self.failUnless(fileA.linksToOrgFilesList[0].targetObj.repaired)
 
@@ -5565,70 +5406,52 @@ class TestsOfRepairingLinksToOrgFiles(unittest.TestCase):
 
         self.assertEqual(repairMethod,expectedRepairMethod)
 
-        if runWithPauses and (not showLog1):
-            print 'Look for succesful repair of link to fileB' % filenameA
+        if self.runWithPauses and (not showLog1):
+            print 'Look for succesful repair of link to fileB' % self.filenameA
             wait_on_user_input()
     
         #####################################################
-        if runWithPauses and (not showLog1):
+        if self.runWithPauses and (not showLog1):
             print 'Finally, restoring files on disk to original configuration\n'
-
-        os.remove(filenameA)
-        os.remove(newNameB)
-        os.remove(symlinkToFileB_Name)
 
     #head
     def test_12(self):
         '''a test of attemptRepairUsingSymlinksTable'''
 
-        reset_database()
-
-        runDebuggerOnlyInRepairStep=False
-        runDebuggerInEveryStep=False
-        runWithPauses=False
-
-        filenameA='20160817TestFile.org'
-        filenameB='20160817TestFileLinkTarget.org'
-        symlinkToFileB_Name='symlinkTo'+filenameB
-
-        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org()
-
-        self.failUnless(os.path.exists(filenameA))
-        self.failUnless(os.path.exists(filenameB))
-        self.failUnless(os.path.exists(symlinkToFileB_Name))
+        self.assertEqual(os.getcwd(),origWorkingDir)
     
-        if runWithPauses:
+        if self.runWithPauses:
             blurbList=['fileB is an org file','fileA and fileB start out without unique IDs','fileA gets a unique ID','fileB gets a unique ID']
             blurbList.extend(['fileB is moved to another folder','basename of fileB is changed','resulting broken link to fileB in fileA is repaired'])
             blurbList.extend(['fileA is edited so that repaired link to fileB is reverted to the original value of a symlink','repair of this broken link tests symlinks table repair method'])
             blurb1="\n".join(blurbList)
             print blurb1
 
-            print 'fileA is %s and fileB is %s' % (filenameA,filenameB)
+            print 'fileA is %s and fileB is %s' % (self.filenameA,self.filenameB)
 
             wait_on_user_input('Now pausing to review nature of test')
 
         #####################################################
 
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         self.assertEqual(len(fileA.linksToOrgFilesList),1) # 'fileA has a single link to an org file'
-        self.assertEqual(fileA.linksToOrgFilesList[0].targetObj.filenameAP,os.path.join(os.getcwd(),filenameB)) # a link to fileB is found in fileA
+        self.assertEqual(fileA.linksToOrgFilesList[0].targetObj.filenameAP,os.path.join(os.getcwd(),self.filenameB)) # a link to fileB is found in fileA
 
-        if runWithPauses and (not showLog1):
-            print 'Analyzed fileA %s; unique ID was inserted' % filenameA
+        if self.runWithPauses and (not showLog1):
+            print 'Analyzed fileA %s; unique ID was inserted' % self.filenameA
             wait_on_user_input()
 
         # #####################################################
     
         showLog1=False
-        fileB=operate_on_fileA_w(filenameB,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileB=operate_on_fileA_w(self.filenameB,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         self.failUnless(fileB.uniqueID)
 
-        if runWithPauses and (not showLog1):
-            print 'Analyzed fileB %s; unique ID was inserted' % filenameB
+        if self.runWithPauses and (not showLog1):
+            print 'Analyzed fileB %s; unique ID was inserted' % self.filenameB
             wait_on_user_input()
 
         #####################################################
@@ -5636,18 +5459,18 @@ class TestsOfRepairingLinksToOrgFiles(unittest.TestCase):
         origFolder=os.path.split(fileA.filenameAP)[0]
     
         #move fileB and change basename
-        newNameB=os.path.join(anotherFolder,'NoName.org')
-        os.rename(filenameB,newNameB)
+        self.newNameB=os.path.join(anotherFolder,'NoName.org')
+        os.rename(self.filenameB,self.newNameB)
 
-        if runWithPauses and (not showLog1):
-            print 'Just moved fileB %s to %s' % (filenameB,newNameB)
+        if self.runWithPauses and (not showLog1):
+            print 'Just moved fileB %s to %s' % (self.filenameB,self.newNameB)
 
         #####################################################
 
-        # print 'Now analyzing fileA %s after moving and renaming fileB; look for succesful repair of link to fileB' % filenameA
+        # print 'Now analyzing fileA %s after moving and renaming fileB; look for succesful repair of link to fileB' % self.filenameA
 
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=(runDebuggerOnlyInRepairStep or runDebuggerInEveryStep),isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=(self.runDebuggerOnlyInRepairStep or self.runDebuggerInEveryStep),isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         self.failUnless(fileA.linksToOrgFilesList[0].targetObj.repaired)
 
@@ -5656,8 +5479,8 @@ class TestsOfRepairingLinksToOrgFiles(unittest.TestCase):
 
         self.assertEqual(repairMethod,expectedRepairMethod)
 
-        if runWithPauses and (not showLog1):
-            print 'Analyzed fileA %s after moving and renaming fileB; look for succesful repair of link to fileB' % filenameA
+        if self.runWithPauses and (not showLog1):
+            print 'Analyzed fileA %s after moving and renaming fileB; look for succesful repair of link to fileB' % self.filenameA
             wait_on_user_input()
 
         #####################################################
@@ -5666,30 +5489,30 @@ class TestsOfRepairingLinksToOrgFiles(unittest.TestCase):
         # this will not detect if symlinkB is gone from disk, because broken symlink fails os.path.exists
         # assert os.path.exists(symlinkB), 'Symlink %s is missing; cannot proceed with Test 12' % symlinkB
 
-        self.failUnless(os.path.islink(symlinkToFileB_Name))
+        self.failUnless(os.path.islink(self.symlinkToFileB_Name))
 
-        inp=file(filenameA,'r')
+        inp=file(self.filenameA,'r')
         oldLines2=[a for a in inp.readlines() if a.strip()]  #gets rid of lines that are just a newline \n character
-        self.failUnless(newNameB in oldLines2[-1])
-        oldLines2[-1]=oldLines2[-1].replace(newNameB,symlinkToFileB_Name)  #change the one outward link in filenameA to point to previous symlink to fileB
+        self.failUnless(self.newNameB in oldLines2[-1])
+        oldLines2[-1]=oldLines2[-1].replace(self.newNameB,self.symlinkToFileB_Name)  #change the one outward link in self.filenameA to point to previous symlink to fileB
         inp.close()
-        out=file(filenameA,'w')
+        out=file(self.filenameA,'w')
         out.writelines(oldLines2)
         out.close()
 
         # print 'Just rewrote fileA so that link points to symlink that pointed to previous fileB'
 
         #must do this or else script will convert symlink into what it points to, which would prevent repair by symlinks table
-        tempSymlinkB=symlinkToFileB_Name+'.temp'
-        os.rename(symlinkToFileB_Name,tempSymlinkB)
+        tempSymlinkB=self.symlinkToFileB_Name+'.temp'
+        os.rename(self.symlinkToFileB_Name,tempSymlinkB)
 
-        if runWithPauses and (not showLog1):
+        if self.runWithPauses and (not showLog1):
             print 'Just rewrote fileA so that link points to broken symlink that points to previous fileB'
 
         #####################################################
 
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=(runDebuggerOnlyInRepairStep or runDebuggerInEveryStep),isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=(self.runDebuggerOnlyInRepairStep or self.runDebuggerInEveryStep),isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         self.failUnless(fileA.linksToOrgFilesList[0].targetObj.repaired)
 
@@ -5699,38 +5522,33 @@ class TestsOfRepairingLinksToOrgFiles(unittest.TestCase):
 
         self.assertEqual(repairMethod,expectedRepairMethod)
 
-        if runWithPauses and (not showLog1):
+        if self.runWithPauses and (not showLog1):
             print 'Look for succesful repair of link to fileB'
             wait_on_user_input()
     
         #####################################################
-        if runWithPauses and (not showLog1):
+        if self.runWithPauses and (not showLog1):
             print 'Finally, restoring files on disk to original configuration\n'
 
-        os.remove(filenameA)
-        os.remove(newNameB)
-        os.remove(symlinkToFileB_Name+'.temp')
+        self.assertEqual(os.getcwd(),origWorkingDir)
 
-
-class TestsOfRepairingLinksToNonOrgFiles(unittest.TestCase):
+class TestsOfRepairingLinksToOrgFilesPunc(unittest.TestCase):
     def test_1(self):
-        '''fileA links to fileB; fileB is a non org file; move fileB while keeping its basename the same'''
-
-        reset_database()
+        '''now the links are followed by punctuation'''
 
         #lately have preferred to just insert pudb.set_trace() in this script
-        runDebuggerOnlyInRepairStep=False
-        runDebuggerInEveryStep=False
-        runWithPauses=False
+        self.runDebuggerOnlyInRepairStep=False
+        self.runDebuggerInEveryStep=False
+        self.runWithPauses=False
 
-        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_non_org()
+        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_org_punc()
 
         self.failUnless(os.path.exists(filenameA))
         self.failUnless(os.path.exists(filenameB))
         self.failUnless(os.path.exists(symlinkToFileB_Name))
     
-        if runWithPauses:
-            blurbList=['fileB is a non org file']
+        if self.runWithPauses:
+            blurbList=['fileB is an org file','fileA and fileB start out without unique IDs','fileA gets a unique ID','fileB does not get a unique ID']
             blurbList.extend(['fileB is moved to another folder','basename of fileB is kept the same','an attempt is made to repair broken link to fileB in fileA'])
             blurb1="\n".join(blurbList)
             print blurb1
@@ -5742,14 +5560,13 @@ class TestsOfRepairingLinksToNonOrgFiles(unittest.TestCase):
         #####################################################
     
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(filenameA,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
-        self.assertEqual(len(fileA.linksToNonOrgFilesList),1) # 'fileA has a single link to a non org file'
-        self.assertEqual(fileA.linksToNonOrgFilesList[0].targetObj.filenameAP,os.path.join(os.getcwd(),filenameB)) # a link to fileB is found in fileA
-        self.failUnless(fileA.linksToNonOrgFilesList[0].targetObj.changedFromSymlinkToNonSymlink)
+        self.assertEqual(len(fileA.linksToOrgFilesList),1) # 'fileA has a single link to an org file'
+        self.assertEqual(fileA.linksToOrgFilesList[0].targetObj.filenameAP,os.path.join(os.getcwd(),filenameB)) # a link to fileB is found in fileA
 
-        if runWithPauses and (not showLog1):
-            print 'Analyzed fileA %s; unique ID was inserted' % filenameA
+        if self.runWithPauses and (not showLog1):
+            print 'Now analyzing fileA %s; unique ID was inserted' % filenameA
 
             wait_on_user_input()
 
@@ -5758,16 +5575,113 @@ class TestsOfRepairingLinksToNonOrgFiles(unittest.TestCase):
         origFolder=os.path.split(fileA.filenameAP)[0]
     
         #move fileB but keep basename the same
-        newNameB=os.path.join(anotherFolder,filenameB)
-        os.rename(filenameB,newNameB)
+        self.newNameB=os.path.join(anotherFolder,filenameB)
+        os.rename(filenameB,self.newNameB)
         # print 'Just Moved fileB %s to folder %s while keeping basenameB the same' % (filenameB,anotherFolder)
 
+        self.failIf(fileA.linksToOrgFilesList[0].targetObj.uniqueID) #fileB will not get a unique ID
         #####################################################
 
         # print 'Now analyzing fileA %s a second time after moving fileB without changing basenameB; look for successful repair of link to fileB' % filenameA
 
         showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=(runDebuggerOnlyInRepairStep or runDebuggerInEveryStep),isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
+        fileA=operate_on_fileA_w(filenameA,runDebugger=(self.runDebuggerOnlyInRepairStep or self.runDebuggerInEveryStep),isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
+
+        self.failUnless(fileA.linksToOrgFilesList[0].targetObj.repaired)
+
+        expectedRepairMethod='attemptRepairViaBasenameMatchOnDisk'
+        repairMethod=fileA.linksToOrgFilesList[0].targetObj.repairedVia
+
+        self.assertEqual(repairMethod,expectedRepairMethod)
+
+        if self.runWithPauses and (not showLog1):
+            print 'Just moved fileB %s to folder %s while keeping basenameB the same' % (filenameB,anotherFolder)
+            print 'Now analyzing fileA %s a second time after moving fileB without changing basenameB; look for successful repair of link to fileB via %s' % (filenameA,expectedRepairMethod)
+            wait_on_user_input()
+    
+        #####################################################
+        if self.runWithPauses and (not showLog1):
+            print 'Finally, restoring files on disk to original configuration\n'
+
+        os.remove(filenameA)
+        os.remove(self.newNameB)
+        os.remove(symlinkToFileB_Name)
+
+class TestsOfRepairingLinksToNonOrgFiles(unittest.TestCase):
+    def setUp(self):
+
+        reset_database()
+
+        self.runDebuggerOnlyInRepairStep=False
+        self.runDebuggerInEveryStep=False
+        self.runWithPauses=False
+
+        self.filenameA,self.filenameB,self.symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_non_org()
+
+    def tearDown(self):
+
+        if os.path.exists(self.filenameA):
+            os.remove(self.filenameA)
+
+        if os.path.exists(self.filenameB):
+            os.remove(self.filenameB)
+
+        if os.path.exists(self.symlinkToFileB_Name) or os.path.islink(self.symlinkToFileB_Name):
+            os.remove(self.symlinkToFileB_Name)
+
+        if os.path.exists(self.symlinkToFileB_Name+'.temp') or os.path.islink(self.symlinkToFileB_Name+'.temp'):
+            os.remove(self.symlinkToFileB_Name+'.temp')
+
+        try:
+            self.newNameB
+            os.remove(self.newNameB)
+        except:
+            pass
+
+    def test_1(self):
+        '''fileA links to fileB; fileB is a non org file; move fileB while keeping its basename the same'''
+
+        self.assertEqual(os.getcwd(),origWorkingDir)
+
+        if self.runWithPauses:
+            blurbList=['fileB is a non org file']
+            blurbList.extend(['fileB is moved to another folder','basename of fileB is kept the same','an attempt is made to repair broken link to fileB in fileA'])
+            blurb1="\n".join(blurbList)
+            print blurb1
+
+            print 'fileA is %s and fileB is %s' % (self.filenameA,self.filenameB)
+
+            wait_on_user_input('Now pausing to review nature of test')
+
+        #####################################################
+    
+        showLog1=False
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
+
+        self.assertEqual(len(fileA.linksToNonOrgFilesList),1) # 'fileA has a single link to a non org file'
+        self.assertEqual(fileA.linksToNonOrgFilesList[0].targetObj.filenameAP,os.path.join(os.getcwd(),self.filenameB)) # a link to fileB is found in fileA
+        self.failUnless(fileA.linksToNonOrgFilesList[0].targetObj.changedFromSymlinkToNonSymlink)
+
+        if self.runWithPauses and (not showLog1):
+            print 'Analyzed fileA %s; unique ID was inserted' % self.filenameA
+
+            wait_on_user_input()
+
+        #####################################################
+    
+        origFolder=os.path.split(fileA.filenameAP)[0]
+    
+        #move fileB but keep basename the same
+        self.newNameB=os.path.join(anotherFolder,self.filenameB)
+        os.rename(self.filenameB,self.newNameB)
+        # print 'Just Moved fileB %s to folder %s while keeping basenameB the same' % (self.filenameB,anotherFolder)
+
+        #####################################################
+
+        # print 'Now analyzing fileA %s a second time after moving fileB without changing basenameB; look for successful repair of link to fileB' % self.filenameA
+
+        showLog1=False
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=(self.runDebuggerOnlyInRepairStep or self.runDebuggerInEveryStep),isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
 
         self.failUnless(fileA.linksToNonOrgFilesList[0].targetObj.repaired)
 
@@ -5776,18 +5690,180 @@ class TestsOfRepairingLinksToNonOrgFiles(unittest.TestCase):
 
         self.assertEqual(repairMethod,expectedRepairMethod)
 
-        if runWithPauses and (not showLog1):
-            print 'Just moved fileB %s to folder %s while keeping basenameB the same' % (filenameB,anotherFolder)
-            print 'Analyzed fileA %s a second time after moving fileB without changing basenameB; look for successful repair of link to fileB via %s' % (filenameA,expectedRepairMethod)
+        if self.runWithPauses and (not showLog1):
+            print 'Just moved fileB %s to folder %s while keeping basenameB the same' % (self.filenameB,anotherFolder)
+            print 'Analyzed fileA %s a second time after moving fileB without changing basenameB; look for successful repair of link to fileB via %s' % (self.filenameA,expectedRepairMethod)
             wait_on_user_input()
     
         #####################################################
-        if runWithPauses and (not showLog1):
+        if self.runWithPauses and (not showLog1):
             print 'Finally, restoring files on disk to original configuration\n'
 
-        os.remove(filenameA)
-        os.remove(newNameB)
-        os.remove(symlinkToFileB_Name)
+        self.assertEqual(os.getcwd(),origWorkingDir)
+
+    #head
+    #head skip test2
+    def test_3(self):
+        '''fileA links to fileB; fileB is a non org file; move and rename fileB; repair of link to fileB should not be possible'''
+
+        self.assertEqual(os.getcwd(),origWorkingDir)
+
+        if self.runWithPauses:
+            blurbList=['fileB is a non org file']
+            blurbList.extend(['fileB is moved to another folder','basename of fileB is changed','repair should not be possible'])
+            blurb1="\n".join(blurbList)
+            print blurb1
+
+            print 'fileA is %s and fileB is %s' % (self.filenameA,self.filenameB)
+
+            wait_on_user_input('Now pausing to review nature of test')
+
+        #####################################################
+    
+        showLog1=False
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
+
+        self.assertEqual(len(fileA.linksToNonOrgFilesList),1) # 'fileA has a single link to a non org file'
+        self.assertEqual(fileA.linksToNonOrgFilesList[0].targetObj.filenameAP,os.path.join(os.getcwd(),self.filenameB)) # a link to fileB is found in fileA
+        self.failUnless(fileA.linksToNonOrgFilesList[0].targetObj.changedFromSymlinkToNonSymlink)
+
+        if self.runWithPauses and (not showLog1):
+            print 'Analyzed fileA %s; unique ID was inserted' % self.filenameA
+
+            wait_on_user_input()
+
+        #####################################################
+    
+        origFolder=os.path.split(fileA.filenameAP)[0]
+    
+        self.newNameB=os.path.join(anotherFolder,'NoName.txt')
+        os.rename(self.filenameB,self.newNameB)
+
+        self.failIf(os.path.exists(self.filenameB))
+        self.failIf(os.path.exists(self.symlinkToFileB_Name))
+
+        #####################################################
+
+        showLog1=False
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=(self.runDebuggerOnlyInRepairStep or self.runDebuggerInEveryStep),isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
+
+        self.failIf(fileA.linksToNonOrgFilesList[0].targetObj.repaired)
+
+        expectedRepairMethod=None
+        repairMethod=fileA.linksToNonOrgFilesList[0].targetObj.repairedVia
+
+        self.assertEqual(repairMethod,expectedRepairMethod)
+
+        if self.runWithPauses and (not showLog1):
+            print 'Just moved fileB %s to %s' % (self.filenameB,self.newNameB)
+            print 'Analyzed fileA a second time; look for failed repair of link to fileB'
+            wait_on_user_input()
+    
+        #####################################################
+        if self.runWithPauses and (not showLog1):
+            print 'Finally, restoring files on disk to original configuration\n'
+
+        self.assertEqual(os.getcwd(),origWorkingDir)
+
+    #head
+    def test_4(self):
+        '''a test of attemptRepairUsingSymlinksTable'''
+
+        #lately have preferred to just insert pudb.set_trace() in this script
+        self.runDebuggerOnlyInRepairStep=False
+        self.runDebuggerInEveryStep=False
+        self.runWithPauses=False
+
+        self.filenameA,self.filenameB,self.symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_non_org()
+
+        self.failUnless(os.path.exists(self.filenameA))
+        self.failUnless(os.path.exists(self.filenameB))
+        self.failUnless(os.path.exists(self.symlinkToFileB_Name))
+    
+        if self.runWithPauses:
+            blurbList=['fileA links to a symlink that points to fileB','fileB is a non org file','analyze fileA to build database']
+            blurbList.extend(['edit fileA so that single link is again to the symlink','change name of symlink on disk so script cannot find it','repair broken link in fileA via symlinks table method'])
+            blurb1="\n".join(blurbList)
+            print blurb1
+
+            print 'fileA is %s and fileB is %s' % (self.filenameA,self.filenameB)
+
+            wait_on_user_input('Now pausing to review nature of test')
+
+        #####################################################
+    
+        showLog1=False
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
+
+        self.assertEqual(len(fileA.linksToNonOrgFilesList),1) # 'fileA has a single link to a non org file'
+        self.assertEqual(fileA.linksToNonOrgFilesList[0].targetObj.filenameAP,os.path.join(os.getcwd(),self.filenameB)) # a link to fileB is found in fileA
+        self.failUnless(fileA.linksToNonOrgFilesList[0].targetObj.changedFromSymlinkToNonSymlink)
+
+        if self.runWithPauses and (not showLog1):
+            print 'Analyzed fileA %s; unique ID was inserted' % self.filenameA
+            wait_on_user_input()
+
+        #####################################################
+
+        # origFolder=os.path.split(fileA.filenameAP)[0]
+    
+        # self.newNameB=os.path.join(anotherFolder,'NoName.txt')
+
+        # os.rename(self.filenameB,self.newNameB)
+
+        #####################################################
+
+        #rewrite fileA such that link is the original symlink
+
+        self.failUnless(os.path.islink(self.symlinkToFileB_Name))
+
+        self.filenameB_AP=os.path.join(os.getcwd(),self.filenameB)
+
+        inp=file(self.filenameA,'r')
+        oldLines2=[a for a in inp.readlines() if a.strip()]  #gets rid of lines that are just a newline \n character
+        self.failUnless(self.filenameB_AP in oldLines2[-1])
+        oldLines2[-1]=oldLines2[-1].replace(self.filenameB_AP,self.symlinkToFileB_Name)  #change the one outward link in self.filenameA to point to previous symlink to fileB
+        inp.close()
+        out=file(self.filenameA,'w')
+        out.writelines(oldLines2)
+        out.close()
+
+        #now rename or delete the symlink
+        #must do this or else script will convert symlink into what it points to, which would prevent repair by symlinks table
+        tempSymlinkB=self.symlinkToFileB_Name+'.temp'
+        os.rename(self.symlinkToFileB_Name,tempSymlinkB)
+
+        if self.runWithPauses and (not showLog1):
+            print 'Just renamed the symlink so orgFixLinks cannot find it.'
+            print 'Just rewrote fileA so that the link is the original symlink'
+
+        #####################################################
+
+        showLog1=False
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=(self.runDebuggerOnlyInRepairStep or self.runDebuggerInEveryStep),isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
+
+        self.failUnless(fileA.linksToNonOrgFilesList[0].targetObj.repaired)
+
+        expectedRepairMethod='attemptRepairUsingSymlinksTable'
+
+        repairMethod=fileA.linksToNonOrgFilesList[0].targetObj.repairedVia
+
+        self.assertEqual(repairMethod,expectedRepairMethod)
+
+        if self.runWithPauses and (not showLog1):
+            print 'Look for succesful repair of link to fileB'
+
+            wait_on_user_input()
+    
+        #####################################################
+        if self.runWithPauses and (not showLog1):
+            print 'Finally, restoring files on disk to original configuration\n'
+
+    def junkTest(self):
+        pass
+
+
+class TestsOfRepairingLinksToNonOrgFilesPunc(unittest.TestCase):
     def test_1p(self):
         '''links now followed by punctuation'''
 
@@ -5833,8 +5909,8 @@ class TestsOfRepairingLinksToNonOrgFiles(unittest.TestCase):
         origFolder=os.path.split(fileA.filenameAP)[0]
     
         #move fileB but keep basename the same
-        newNameB=os.path.join(anotherFolder,filenameB)
-        os.rename(filenameB,newNameB)
+        self.newNameB=os.path.join(anotherFolder,filenameB)
+        os.rename(filenameB,self.newNameB)
         # print 'Just Moved fileB %s to folder %s while keeping basenameB the same' % (filenameB,anotherFolder)
 
         #####################################################
@@ -5861,185 +5937,8 @@ class TestsOfRepairingLinksToNonOrgFiles(unittest.TestCase):
             print 'Finally, restoring files on disk to original configuration\n'
 
         os.remove(filenameA)
-        os.remove(newNameB)
+        os.remove(self.newNameB)
         os.remove(symlinkToFileB_Name)
-    #head
-    #head skip test2
-    def test_3(self):
-        '''fileA links to fileB; fileB is a non org file; move and rename fileB; repair of link to fileB should not be possible'''
-
-        reset_database()
-
-        #lately have preferred to just insert pudb.set_trace() in this script
-        runDebuggerOnlyInRepairStep=False
-        runDebuggerInEveryStep=False
-        runWithPauses=False
-
-        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_non_org()
-
-        self.failUnless(os.path.exists(filenameA))
-        self.failUnless(os.path.exists(filenameB))
-        self.failUnless(os.path.exists(symlinkToFileB_Name))
-    
-        if runWithPauses:
-            blurbList=['fileB is a non org file']
-            blurbList.extend(['fileB is moved to another folder','basename of fileB is changed','repair should not be possible'])
-            blurb1="\n".join(blurbList)
-            print blurb1
-
-            print 'fileA is %s and fileB is %s' % (filenameA,filenameB)
-
-            wait_on_user_input('Now pausing to review nature of test')
-
-        #####################################################
-    
-        showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
-
-        self.assertEqual(len(fileA.linksToNonOrgFilesList),1) # 'fileA has a single link to a non org file'
-        self.assertEqual(fileA.linksToNonOrgFilesList[0].targetObj.filenameAP,os.path.join(os.getcwd(),filenameB)) # a link to fileB is found in fileA
-        self.failUnless(fileA.linksToNonOrgFilesList[0].targetObj.changedFromSymlinkToNonSymlink)
-
-        if runWithPauses and (not showLog1):
-            print 'Analyzed fileA %s; unique ID was inserted' % filenameA
-
-            wait_on_user_input()
-
-        #####################################################
-    
-        origFolder=os.path.split(fileA.filenameAP)[0]
-    
-        newNameB=os.path.join(anotherFolder,'NoName.txt')
-        os.rename(filenameB,newNameB)
-
-        #####################################################
-
-        showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=(runDebuggerOnlyInRepairStep or runDebuggerInEveryStep),isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
-
-        self.failIf(fileA.linksToNonOrgFilesList[0].targetObj.repaired)
-
-        expectedRepairMethod=None
-        repairMethod=fileA.linksToNonOrgFilesList[0].targetObj.repairedVia
-
-        self.assertEqual(repairMethod,expectedRepairMethod)
-
-        if runWithPauses and (not showLog1):
-            print 'Just moved fileB %s to %s' % (filenameB,newNameB)
-            print 'Analyzed fileA a second time; look for failed repair of link to fileB'
-            wait_on_user_input()
-    
-        #####################################################
-        if runWithPauses and (not showLog1):
-            print 'Finally, restoring files on disk to original configuration\n'
-
-        os.remove(filenameA)
-        os.remove(newNameB)
-        os.remove(symlinkToFileB_Name)
-
-    #head
-    def test_4(self):
-        '''a test of attemptRepairUsingSymlinksTable'''
-
-        reset_database()
-
-        #lately have preferred to just insert pudb.set_trace() in this script
-        runDebuggerOnlyInRepairStep=False
-        runDebuggerInEveryStep=False
-        runWithPauses=False
-
-        filenameA,filenameB,symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_non_org()
-
-        self.failUnless(os.path.exists(filenameA))
-        self.failUnless(os.path.exists(filenameB))
-        self.failUnless(os.path.exists(symlinkToFileB_Name))
-    
-        if runWithPauses:
-            blurbList=['fileA links to a symlink that points to fileB','fileB is a non org file','analyze fileA to build database']
-            blurbList.extend(['edit fileA so that single link is again to the symlink','change name of symlink on disk so script cannot find it','repair broken link in fileA via symlinks table method'])
-            blurb1="\n".join(blurbList)
-            print blurb1
-
-            print 'fileA is %s and fileB is %s' % (filenameA,filenameB)
-
-            wait_on_user_input('Now pausing to review nature of test')
-
-        #####################################################
-    
-        showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
-
-        self.assertEqual(len(fileA.linksToNonOrgFilesList),1) # 'fileA has a single link to a non org file'
-        self.assertEqual(fileA.linksToNonOrgFilesList[0].targetObj.filenameAP,os.path.join(os.getcwd(),filenameB)) # a link to fileB is found in fileA
-        self.failUnless(fileA.linksToNonOrgFilesList[0].targetObj.changedFromSymlinkToNonSymlink)
-
-        if runWithPauses and (not showLog1):
-            print 'Analyzed fileA %s; unique ID was inserted' % filenameA
-            wait_on_user_input()
-
-        #####################################################
-
-        # origFolder=os.path.split(fileA.filenameAP)[0]
-    
-        # newNameB=os.path.join(anotherFolder,'NoName.txt')
-
-        # os.rename(filenameB,newNameB)
-
-        #####################################################
-
-        #rewrite fileA such that link is the original symlink
-
-        self.failUnless(os.path.islink(symlinkToFileB_Name))
-
-        filenameB_AP=os.path.join(os.getcwd(),filenameB)
-
-        inp=file(filenameA,'r')
-        oldLines2=[a for a in inp.readlines() if a.strip()]  #gets rid of lines that are just a newline \n character
-        self.failUnless(filenameB_AP in oldLines2[-1])
-        oldLines2[-1]=oldLines2[-1].replace(filenameB_AP,symlinkToFileB_Name)  #change the one outward link in filenameA to point to previous symlink to fileB
-        inp.close()
-        out=file(filenameA,'w')
-        out.writelines(oldLines2)
-        out.close()
-
-        #now rename or delete the symlink
-        #must do this or else script will convert symlink into what it points to, which would prevent repair by symlinks table
-        tempSymlinkB=symlinkToFileB_Name+'.temp'
-        os.rename(symlinkToFileB_Name,tempSymlinkB)
-
-        if runWithPauses and (not showLog1):
-            print 'Just renamed the symlink so orgFixLinks cannot find it.'
-            print 'Just rewrote fileA so that the link is the original symlink'
-
-        #####################################################
-
-        showLog1=False
-        fileA=operate_on_fileA_w(filenameA,runDebugger=(runDebuggerOnlyInRepairStep or runDebuggerInEveryStep),isDryRun=False,showLog=(showLog1 and runWithPauses),runWPauses=runWithPauses)
-
-        self.failUnless(fileA.linksToNonOrgFilesList[0].targetObj.repaired)
-
-        expectedRepairMethod='attemptRepairUsingSymlinksTable'
-
-        repairMethod=fileA.linksToNonOrgFilesList[0].targetObj.repairedVia
-
-        self.assertEqual(repairMethod,expectedRepairMethod)
-
-        if runWithPauses and (not showLog1):
-            print 'Look for succesful repair of link to fileB'
-
-            wait_on_user_input()
-    
-        #####################################################
-        if runWithPauses and (not showLog1):
-            print 'Finally, restoring files on disk to original configuration\n'
-
-        os.remove(filenameA)
-        os.remove(filenameB)
-        os.remove(symlinkToFileB_Name+'.temp')
-
-
-    def junkTest(self):
-        pass
 
 #head
 #head
@@ -6230,6 +6129,8 @@ if (not os.path.exists(anotherFolder)):
 
 assert os.path.exists(anotherFolder), 'Cannot proceed since assuming the folder %s exists' % anotherFolder
 anotherFolder2=os.path.join(DocumentsFolderAP,'TemporaryOrgFixLinksTests1','TemporaryOrgFixLinksTests2')
+#head
+origWorkingDir=os.getcwd()
 #head
 if __name__ == "__main__":
     try:

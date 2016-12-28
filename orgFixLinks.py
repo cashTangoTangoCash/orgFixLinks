@@ -18,7 +18,7 @@ import shutil
 import sqlite3
 import time
 import logging
-import glob
+import glob  #https://pymotw.com/2/glob/
 import traceback
 import threading
 import select
@@ -3922,7 +3922,7 @@ def clean_up_on_error_in_operate_on_fileA(fileA,err1,deleteOldLogs,isDryRun,show
     if showLog:
         display_log_file()
 
-def operate_on_fileA(filename,userFixesLinksManually=False,runDebugger=False,debuggerAlreadyRunning=False,isDryRun=False,showLog=False,repairLinks=True,keepBackup=True,deleteOldLogs=True,doLessIfRecentlyFullyAnalyzed=False):
+def operate_on_fileA(filename,userFixesLinksManually=False,runDebugger=False,debuggerAlreadyRunning=False,isDryRun=False,showLog=False,repairLinks=True,keepBackup=True,deleteOldLogs=True,doLessIfRecentlyFullyAnalyzed=False,addHeader=False):
     '''analyze a chosen org file
     try to repair its links
     rewrite the file
@@ -4455,7 +4455,7 @@ def clean_up_before_ending_spidering_run(isDryRun,messg1=None):
 
     store_past_interactive_repairs()
 
-def spider_starting_w_fileA(filename,maxTime=None,maxN=None,hitReturnToStop=True,userFixesLinksManually=False,runDebugger=False,debuggerAlreadyRunning=False,isDryRun=False,showLog=False,repairLinks=True,keepBackup=True,deleteOldLogs=True,skipIfRecentlySpidered=False):
+def spider_starting_w_fileA(filename,maxTime=None,maxN=None,hitReturnToStop=True,userFixesLinksManually=False,runDebugger=False,debuggerAlreadyRunning=False,isDryRun=False,showLog=False,repairLinks=True,keepBackup=True,deleteOldLogs=True,skipIfRecentlySpidered=False,addHeader=False):
     '''
     start spidering org files on local disk, beginning with filename.
     filename needs to be absolute path
@@ -4585,6 +4585,45 @@ def spider_starting_w_fileA(filename,maxTime=None,maxN=None,hitReturnToStop=True
     clean_up_before_ending_spidering_run(isDryRun,messg1='Completed spidering run')
 
 #head
+def get_list_of_files_in_glob_file(globFilename,workingDir):
+    '''read the file globFilename and return lists of files and directories referenced in it via glob.glob'''
+
+    #https://pymotw.com/2/glob/
+
+    orgFileMatches=[]
+    # nonOrgFileMatches=[]
+    folderMatches=[]
+
+    if os.path.exists(globFilename):
+        file1=open(globFilename,'r')
+        lines1=file1.readlines()
+        file1.close()
+
+        os.chdir(workingDir)
+
+        for line1 in lines1:
+            #TODO: the glob approach will reject anything that does not exist on disk, so cannot ignore something that is not on disk; this is not ideal
+
+            matches1=[a for a in glob.glob(line1.strip())]  # a list, no matter what
+
+            dirsInMatches1=[a for a in matches1 if os.path.isdir(a)]
+            dirsInMatches1_NTS=[a.rstrip('/') for a in dirsInMatches1]  #NTS=no trailing slash
+            folderMatches.extend(dirsInMatches1_NTS)
+        
+            matches2=[a for a in matches1 if (not (a in dirsInMatches1))]
+
+            orgFilenamesInMatches2=[a for a in matches2 if a.endswith('.org')]
+            orgFileMatches.extend(orgFilenamesInMatches2)
+
+            # nonOrgFilenamesInMatches2=[a for a in matches2 if (not a.endswith('.org'))]
+            # nonOrgFileMatches.extend(nonOrgFilenamesInMatches2)
+
+        os.chdir(origFolder)
+
+        return orgFileMatches,folderMatches
+    else:
+        return [],[]
+
 def get_list_of_all_repairable_org_files(mainFolderAP):
     '''
     spider routine queue can run dry
@@ -4623,13 +4662,13 @@ def get_list_of_all_repairable_org_files(mainFolderAP):
 
     return allOrgFilenamesAP
 
-def operate_on_all_org_files(maxTime=None,maxN=None,hitReturnToStop=True,userFixesLinksManually=False,runDebugger=False,debuggerAlreadyRunning=False,isDryRun=False,showLog=False,repairLinks=True,keepBackup=True,deleteOldLogs=True,skipIfRecentlySpidered=False):
+def operate_on_all_org_files(maxTime=None,maxN=None,hitReturnToStop=True,userFixesLinksManually=False,runDebugger=False,debuggerAlreadyRunning=False,isDryRun=False,showLog=False,repairLinks=True,keepBackup=True,deleteOldLogs=True,skipIfRecentlySpidered=False,addHeader=False):
     '''
     this one does not spider; it just walks every org file
     practically: skipIfRecentlySpidered input should be set to True
     '''
 
-    logging.info('Now operating on all org files on disc')
+    logging.info('Now operating on all org files on disk')
 
     if runDebugger and not debuggerAlreadyRunning:
         pudb.set_trace()
@@ -4757,13 +4796,19 @@ def make_regex_ordered_lists():
 def usage():
 
     messg1='''
+    Before running orgFixLinks.py on your org files, first run orgFixLinksTests.py, and resolve any errors it reports
+
+    example of running orgFixLinks.py:
+    python -O orgFixLinks.py -uD -f /home/userName/Documents/myOrgFilename.org -N 20 -t 300
+
     flags with no input argument:
     -h, --help: show this help blurb
+    -H, --addHeader: add a header to org files that are not excluded via a file .orgFixLinksNoHeader
     -u, --userFixesLinks: when automatic link repair fails and it makes sense to do so, prompt user to fix broken links manually (menu-driven)
     -n, --noSpideringStopViaKeystroke: normally spidering can be stopped via typing anything then hitting enter key; -n disables this.  also set by -d.
     -d, --debug:  run script in pudb.  additionally sets -n.
     -D, --dryRun:  make no changes to org files on disk.  make a copy of database and make changes to the copy.
-    -l, --showLog:  use pager less to display log file after operating on each org file; this gives you time to inspect a rewritten org file in dry run mode before it's reverted to original
+    -l, --showLog:  display log file in terminal after operating on each org file; this gives user time to inspect a rewritten org file in dry run mode before the file is reverted to original
     -b, --noBackup: do not make .bak copy of each org file before replacing it on disk
     -q, --quickMode: when a file has been recently spidered, just look up outward links in database and move to next file to spider, rather than making full representation, repairing links, etc;  intention is to speed things up
 
@@ -4773,12 +4818,14 @@ def usage():
     -N, --maxFilesToSpider:  max number of files to spider, an integer
     -t, --maxTimeToSpider: max time to spend spidering (seconds)
 
+    useful python flags:
     python -O:  -O flag turns off assert statements in the script orgFixLinks.py.  Assert statements identify associated preconfigured error conditions.  Suppressing them via -O flag speeds up script execution.
 
-    example call:
-    python -O orgFixLinks.py -uD -f /home/userName/Documents/myOrgFilename.org -N 20 -t 300
-
-    a separate script that carries out some automated tests of this script is orgFixLinksTests.py
+    files that affect the behavior of orgFixLinks.py:
+    pastInteractiveRepairs.csv: contains data from past runs of orgFixLinks.py in which a user interactively repaired broken links
+    orgFilesDryRunCopy.sqlite, orgFiles.sqlite: sqlite database used by orgFixLinks.py
+    .orgFixLinksNoHeader: list of org files that should not get a header added by orgFixLinks.py; similar behavior to .gitignore in git
+    .orgFixLinksIgnore: list of org files that should not be ignored by orgFixLinks.py; similar behavior to .gitignore in git  
     '''
     print messg1
 
@@ -4797,6 +4844,7 @@ def main():
     userFixesLinksManually=False
     keepBackup=True
     skipIfRecentlySpidered=False
+    addHeader=False
     # ---------------------------------------------------------
     #process command line inputs
     #dive into python 10.6
@@ -4810,6 +4858,9 @@ def main():
         if opt in ("-h","--help"):
             usage()
             sys.exit()
+
+        elif opt in ("-H","--addHeader"):
+            addHeader=True
 
         elif opt in ("-u","--userFixesLinks"):
             userFixesLinksManually=True
@@ -4883,10 +4934,10 @@ def main():
     set_up_database()
 
     if fileA1:  #user has supplied a file to start spidering with via command line
-        spider_starting_w_fileA(filename=fileA1,maxTime=maxTime,maxN=maxN,hitReturnToStop=hitReturnToStop,userFixesLinksManually=userFixesLinksManually,runDebugger=runDebugger,debuggerAlreadyRunning=debuggerAlreadyRunning,isDryRun=isDryRun,showLog=showLog,keepBackup=keepBackup,skipIfRecentlySpidered=skipIfRecentlySpidered)
+        spider_starting_w_fileA(filename=fileA1,maxTime=maxTime,maxN=maxN,hitReturnToStop=hitReturnToStop,userFixesLinksManually=userFixesLinksManually,runDebugger=runDebugger,debuggerAlreadyRunning=debuggerAlreadyRunning,isDryRun=isDryRun,showLog=showLog,keepBackup=keepBackup,skipIfRecentlySpidered=skipIfRecentlySpidered,addHeader=addHeader)
 
     else: #user did not specify a file to start with; just walk all org files
-        operate_on_all_org_files(maxTime=maxTime,maxN=maxN,hitReturnToStop=hitReturnToStop,userFixesLinksManually=userFixesLinksManually,runDebugger=runDebugger,debuggerAlreadyRunning=debuggerAlreadyRunning,isDryRun=isDryRun,showLog=showLog,keepBackup=keepBackup,skipIfRecentlySpidered=skipIfRecentlySpidered)
+        operate_on_all_org_files(maxTime=maxTime,maxN=maxN,hitReturnToStop=hitReturnToStop,userFixesLinksManually=userFixesLinksManually,runDebugger=runDebugger,debuggerAlreadyRunning=debuggerAlreadyRunning,isDryRun=isDryRun,showLog=showLog,keepBackup=keepBackup,skipIfRecentlySpidered=skipIfRecentlySpidered,addHeader=addHeader)
 
     print 'Run completed: log file %s contains %s errors and %s warnings\n' % (logFilename,logging.error.counter,logging.warning.counter)
     db1.cur.close()
