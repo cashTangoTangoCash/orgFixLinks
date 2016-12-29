@@ -38,10 +38,6 @@ class CannotMakeFullRepresentationError(Exception):
 class CannotReconcileFileWithDatabaseError(Exception):
     '''unable to reconcile file with sqlite database'''
     pass
-class CannotProcessOutgoingLinksError(Exception):
-    '''unable to process outgoing links from org file'''
-    pass
-
 class CannotRegenerateFileError(Exception):
     '''unable to regenerate org file from full representation'''
     pass
@@ -2854,6 +2850,8 @@ class OrgFile(LocalFile):
 
         self.orgFilesThatLinkToMe=[]
 
+        self.hasNewHeader=False
+
         #turn_logging_back_on_at_initial_level()
 
     def endsInDotOrg(self):
@@ -3226,6 +3224,8 @@ class OrgFile(LocalFile):
         self.headerMainlineNode=list_of_child_nodes_from_lines(headerLines,self)[0]
         self.mainlineNodes=[self.headerMainlineNode]+self.bodyMainlineNodes  #if there was an original header, it is discarded
 
+        self.hasNewHeader=True
+
     def fullRepresentationToNewLines(self):
         '''
         OrgFile Class
@@ -3235,7 +3235,11 @@ class OrgFile(LocalFile):
 
         assert self.fullRepresentation, 'have not first generated full representation of %s' % self.filenameAP
 
-        assert self.headerMainlineNode, 'forgot to generate header for %s' % self.filenameAP
+        # assert self.headerMainlineNode, 'forgot to generate header for %s' % self.filenameAP
+
+        if not self.hasNewHeader:
+            self.numOfHeaderLines=0
+            self.mainlineNodes=self.bodyMainlineNodes  #if there was an original header, it is discarded
 
         self.newLines=[]
         #the following will recursively walk the tree of nodes, assembling line list
@@ -3249,15 +3253,22 @@ class OrgFile(LocalFile):
 
         assert not self.inHeader, 'unwanted method call on file from link in machine-generated header'
 
-        if (len(self.newLines)-self.numOfHeaderLines)<len(self.oldBodyLines):
-            return False
-        else:
-            return True
+        if self.hasNewHeader:
+            if (len(self.newLines)-self.numOfHeaderLines)<len(self.oldBodyLines):
+                return False
+            else:
+                return True
 
-        if (len(self.newLinesMinusHeader)<len(self.oldBodyLines)):
-            return False
-        else:
-            return True
+            if (len(self.newLinesMinusHeader)<len(self.oldBodyLines)):
+                return False
+            else:
+                return True
+
+        else:  #rewritten file will not have a header
+            if len(self.newLines)<len(self.oldBodyLines):
+                return False
+            else:
+                return True
 
     def rewriteFileFromNewLines(self,keepBackup=False):
         '''OrgFile Class'''
@@ -4030,40 +4041,40 @@ def operate_on_fileA(filename,userFixesLinksManually=False,runDebugger=False,deb
         raise CannotReconcileFileWithDatabaseError("Could not reconcile %s with database" % fileA.filenameAP)
 
     #((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((
-    try:
-        #don't want old outward links from fileA in linksto table: wipe them out
-        db1.linksToOrgTable.removeEntriesMatchingFromFile(fileA)
-        db1.linksToNonOrgTable.removeEntriesMatchingFromFile(fileA)
 
-        #now go through the list of outgoing links to org files
-        fileA.addUniqueIDsFromHeaderToOutgoingOrgLinkTargets() #this adds unique ID from header node of fileA to target files of links
+    #don't want old outward links from fileA in linksto table: wipe them out
+    db1.linksToOrgTable.removeEntriesMatchingFromFile(fileA)
+    db1.linksToNonOrgTable.removeEntriesMatchingFromFile(fileA)
 
-        # raise Exception("exception for test purposes")
+    #now go through the list of outgoing links to org files
+    fileA.addUniqueIDsFromHeaderToOutgoingOrgLinkTargets() #this adds unique ID from header node of fileA to target files of links
 
-        logging.debug('Now analyzing outward links to org files in %s' % fileA.filenameAP)
+    # raise Exception("exception for test purposes")
 
-        linkBlacklistStrings=['/env/','/venv/','/PStuff/']  #TODO setting modify for your own usage
+    logging.debug('Now analyzing outward links to org files in %s' % fileA.filenameAP)
 
-        DocumentsFoldernameAP=os.path.join(os.path.expanduser('~'),'Documents')
+    linkBlacklistStrings=['/env/','/venv/','/PStuff/']  #TODO setting modify for your own usage
 
-        #only want to fix links that point in Documents folder
-        for linkB in [a for a in fileA.linksToOrgFilesList if (a.targetObj.filenameAP.startswith(DocumentsFoldernameAP) and not [b for b in linkBlacklistStrings if (b in a.targetObj.filenameAP)])]:  #for each outgoing link to an org file
-            fileB=linkB.targetObj
-            logging.debug('Now analyzing %s which is outward link from fileA %s' % (fileB.filenameAP,fileA.filenameAP))
+    DocumentsFoldernameAP=os.path.join(os.path.expanduser('~'),'Documents')
 
-            originalFileB=linkB.originalTargetObj
-            linkB.testIfWorking()
+    #only want to fix links that point in Documents folder
+    for linkB in [a for a in fileA.linksToOrgFilesList if (a.targetObj.filenameAP.startswith(DocumentsFoldernameAP) and not [b for b in linkBlacklistStrings if (b in a.targetObj.filenameAP)])]:  #for each outgoing link to an org file
 
-            if fileB.exists:  #linkB is working
-                linkB.databaseHousekeepingForWorkingLink()
-                continue  #go on to next link
+        fileB=linkB.targetObj
+        logging.debug('Now analyzing %s which is outward link from fileA %s' % (fileB.filenameAP,fileA.filenameAP))
 
-            if (not repairLinks):
-                linkB.databaseHousekeepingForBrokenLink()
-                continue
+        originalFileB=linkB.originalTargetObj
+        linkB.testIfWorking()
 
-            #TODO want to use try except here; if automated routines can't fix a particular link, just log the error, leave the link broken, and move on
+        if fileB.exists:  #linkB is working
+            linkB.databaseHousekeepingForWorkingLink()
+            continue  #go on to next link
 
+        if (not repairLinks):
+            linkB.databaseHousekeepingForBrokenLink()
+            continue
+
+        try:
             if fileB.uniqueIDFromHeader:
                 #look for unique ID from header in database
                 aRetVal=linkB.attemptRepairUsingUniqueIDFromHeaderAndDatabase()
@@ -4240,32 +4251,34 @@ def operate_on_fileA(filename,userFixesLinksManually=False,runDebugger=False,deb
 
                 linkB.giveUpOnRepairing()
                 continue
+        except Exception as err1:
+            linkB.giveUpOnRepairing()
+            logging.error('An exception occured while attempting to repair link %s in file %s: %s' % (linkB.targetObj.filenameAP,linkB.sourceFile.filenameAP,err1))
+            continue
 
 
+    #NON ORG
 
+    #below is the second section for non org
+    #now go through the list of outgoing links to non-org files
 
+    logging.debug('Now analyzing outward links to non org files in %s' % fileA.filenameAP)
 
-        #NON ORG
+    for linkB in [a for a in fileA.linksToNonOrgFilesList if (a.targetObj.filenameAP.startswith(DocumentsFoldernameAP) and not [b for b in linkBlacklistStrings if (b in a.targetObj.filenameAP)])]:  #for each outgoing link to a non org file
+        fileB=linkB.targetObj
+        logging.debug('Now analyzing %s which is outward link from fileA %s' % (fileB.filenameAP,fileA.filenameAP))
+        originalFileB=linkB.originalTargetObj
+        linkB.testIfWorking()
 
-        #below is the second section for non org
-        #now go through the list of outgoing links to non-org files
+        if fileB.exists:  #linkB is working
+            linkB.databaseHousekeepingForWorkingLink()
+            continue  #go on to next link
 
-        logging.debug('Now analyzing outward links to non org files in %s' % fileA.filenameAP)
+        if (not repairLinks):
+            linkB.databaseHousekeepingForBrokenLink()
+            continue
 
-        for linkB in [a for a in fileA.linksToNonOrgFilesList if (a.targetObj.filenameAP.startswith(DocumentsFoldernameAP) and not [b for b in linkBlacklistStrings if (b in a.targetObj.filenameAP)])]:  #for each outgoing link to a non org file
-            fileB=linkB.targetObj
-            logging.debug('Now analyzing %s which is outward link from fileA %s' % (fileB.filenameAP,fileA.filenameAP))
-            originalFileB=linkB.originalTargetObj
-            linkB.testIfWorking()
-
-            if fileB.exists:  #linkB is working
-                linkB.databaseHousekeepingForWorkingLink()
-                continue  #go on to next link
-
-            if (not repairLinks):
-                linkB.databaseHousekeepingForBrokenLink()
-                continue
-
+        try:
             #look for database entry with same filenameAP
             aRetVal=linkB.attemptRepairViaCheckDatabaseForNameMatch()
             fileB=linkB.targetObj
@@ -4369,11 +4382,11 @@ def operate_on_fileA(filename,userFixesLinksManually=False,runDebugger=False,deb
             linkB.giveUpOnRepairing()
             continue
 
-    except Exception as err1:
+        except Exception as err1:
+            linkB.giveUpOnRepairing()
+            logging.error('An exception occured while attempting to repair link %s in file %s: %s' % (linkB.targetObj.filenameAP,linkB.sourceFile.filenameAP,err1))
+            continue
 
-        clean_up_on_error_in_operate_on_fileA(fileA,err1,deleteOldLogs,isDryRun,showLog)
-
-        raise CannotProcessOutgoingLinksError("Could not process outgoing links of %s" % filename)
 
     try:
         # raise Exception("exception for test purposes")
@@ -4381,9 +4394,13 @@ def operate_on_fileA(filename,userFixesLinksManually=False,runDebugger=False,deb
         traverse_nodes_to_regen_after_link_updates(fileA.bodyMainlineNodes)
 
         fileA.makeListOfOrgFilesThatLinkToMe()
-        fileA.makeNewHeader()
+
+        if addHeader:
+            fileA.makeNewHeader()
+
         fileA.fullRepresentationToNewLines()
         assert fileA.sanityChecksBeforeRewriteFile(), 'sanity checks failed for rewrite of %s' % fileA.filenameAP
+
     except Exception as err1:
 
         clean_up_on_error_in_operate_on_fileA(fileA,err1,deleteOldLogs,isDryRun,showLog)
@@ -4479,7 +4496,7 @@ def spider_starting_w_fileA(filename,maxTime=None,maxN=None,hitReturnToStop=True
         assert fileA.exists, '\nInitial org file to begin spidering, %s, does not exist; quitting\n' % fileA.filenameAP 
         del fileA
 
-        fileA=operate_on_fileA(filename=filename,userFixesLinksManually=userFixesLinksManually,runDebugger=runDebugger,debuggerAlreadyRunning=debuggerAlreadyRunning,isDryRun=isDryRun,showLog=showLog,repairLinks=repairLinks,keepBackup=keepBackup,deleteOldLogs=deleteOldLogs,doLessIfRecentlyFullyAnalyzed=skipIfRecentlySpidered)
+        fileA=operate_on_fileA(filename=filename,userFixesLinksManually=userFixesLinksManually,runDebugger=runDebugger,debuggerAlreadyRunning=debuggerAlreadyRunning,isDryRun=isDryRun,showLog=showLog,repairLinks=repairLinks,keepBackup=keepBackup,deleteOldLogs=deleteOldLogs,doLessIfRecentlyFullyAnalyzed=skipIfRecentlySpidered,addHeader=addHeader)
         if fileA=='Quit':
             messg1='User quit during processing of %s; quitting spidering' % filename
 
@@ -4540,7 +4557,7 @@ def spider_starting_w_fileA(filename,maxTime=None,maxN=None,hitReturnToStop=True
             print messg1
 
         try:
-            fileA=operate_on_fileA(filename=filename,userFixesLinksManually=userFixesLinksManually,runDebugger=runDebugger,debuggerAlreadyRunning=debuggerAlreadyRunning,isDryRun=isDryRun,showLog=showLog,repairLinks=repairLinks,keepBackup=keepBackup,deleteOldLogs=deleteOldLogs,doLessIfRecentlyFullyAnalyzed=skipIfRecentlySpidered)
+            fileA=operate_on_fileA(filename=filename,userFixesLinksManually=userFixesLinksManually,runDebugger=runDebugger,debuggerAlreadyRunning=debuggerAlreadyRunning,isDryRun=isDryRun,showLog=showLog,repairLinks=repairLinks,keepBackup=keepBackup,deleteOldLogs=deleteOldLogs,doLessIfRecentlyFullyAnalyzed=skipIfRecentlySpidered,addHeader=addHeader)
             if fileA=='Quit':
                 messg1='User quit during processing of %s; quitting spidering' % filename
 
@@ -4719,7 +4736,7 @@ def operate_on_all_org_files(maxTime=None,maxN=None,hitReturnToStop=True,userFix
             print messg1
 
         try:
-            fileA=operate_on_fileA(filename=filename,userFixesLinksManually=userFixesLinksManually,runDebugger=runDebugger,debuggerAlreadyRunning=debuggerAlreadyRunning,isDryRun=isDryRun,showLog=showLog,repairLinks=repairLinks,keepBackup=keepBackup,deleteOldLogs=deleteOldLogs,doLessIfRecentlyFullyAnalyzed=skipIfRecentlySpidered)
+            fileA=operate_on_fileA(filename=filename,userFixesLinksManually=userFixesLinksManually,runDebugger=runDebugger,debuggerAlreadyRunning=debuggerAlreadyRunning,isDryRun=isDryRun,showLog=showLog,repairLinks=repairLinks,keepBackup=keepBackup,deleteOldLogs=deleteOldLogs,doLessIfRecentlyFullyAnalyzed=skipIfRecentlySpidered,addHeader=addHeader)
             if fileA=='Quit':
                 messg1='User quit during processing of %s; quitting spidering' % filename
 
