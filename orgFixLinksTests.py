@@ -4171,6 +4171,17 @@ class TestGetListOfFolderNamesGivenFilename(unittest.TestCase):
         self.assertEqual(retList,['home','username','folder1','folder2'])  #WARNING this function has no way to tell what is a folder and what is a non-folder
         #since it is not assumed that an abs path filename exists on disk
 
+class TestGetListOfFolderNamesGivenFoldername(unittest.TestCase):
+    def test_1(self):
+        foldername1='/home/username/folder1/folder2/folder3'
+        retList=OFL.get_list_of_folder_names_given_foldername(foldername1)
+        self.assertEqual(retList,['home','username','folder1','folder2','folder3'])
+
+    def test_2(self):
+        foldername1='/home/username/folder1/folder2/folder3/'
+        retList=OFL.get_list_of_folder_names_given_foldername(foldername1)
+        self.assertEqual(retList,['home','username','folder1','folder2','folder3'])
+
 class TestOneListStartsWithAnother(unittest.TestCase):
     def test_1(self):
         oneList=[1,2,3]
@@ -4527,6 +4538,60 @@ class TestOperateOnFileA(unittest.TestCase):
 #head skip test clean_up_before_ending_spidering_run
 #head skip test spider_starting_w_fileA
 #head skip test get_list_of_all_repairable_org_files
+class TestFolderIsBlacklistedBasedOnSingleFolderNameInPath(unittest.TestCase):
+    def test_1(self):
+        blackList1=['username']
+        dirname='/home/username/cabbage'
+        self.failUnless(OFL.folder_is_blacklisted_based_on_single_folder_name_in_path(dirname,blackList1))
+
+    def test_2(self):
+        blackList1=['cabbage']
+        dirname='/home/username/cabbage/'
+        self.failUnless(OFL.folder_is_blacklisted_based_on_single_folder_name_in_path(dirname,blackList1))
+
+    def test_3(self):
+        blackList1=['birds']
+        dirname='/home/username/cabbage'
+        self.failIf(OFL.folder_is_blacklisted_based_on_single_folder_name_in_path(dirname,blackList1))
+
+class TestFileIsBlacklistedBasedOnSingleFolderNameInPath(unittest.TestCase):
+    def test_1(self):
+        blackList1=['username']
+        filename='/home/username/cabbage.txt'
+        self.failUnless(OFL.folder_is_blacklisted_based_on_single_folder_name_in_path(filename,blackList1))
+
+    def test_2(self):
+        blackList1=['birds']
+        filename='/home/username/cabbage.txt'
+        self.failIf(OFL.folder_is_blacklisted_based_on_single_folder_name_in_path(filename,blackList1))
+
+#head
+class TestFileIsBlacklistedBasedOnFileAPAndFolderAPLists(unittest.TestCase):
+    def test_1(self):
+        blacklistFilesAP=['/home/username/file1.txt']
+        blacklistFoldersAP=[]
+        filenameAP='/home/username/file1.txt'
+        self.failUnless(OFL.file_is_blacklisted_based_on_fileAP_and_folderAP_lists(filenameAP,blacklistFilesAP,blacklistFoldersAP))
+
+    def test_2(self):
+        blacklistFilesAP=['/home/username/file2.txt']
+        blacklistFoldersAP=[]
+        filenameAP='/home/username/file1.txt'
+        self.failIf(OFL.file_is_blacklisted_based_on_fileAP_and_folderAP_lists(filenameAP,blacklistFilesAP,blacklistFoldersAP))
+
+    def test_3(self):
+        blacklistFilesAP=[]
+        blacklistFoldersAP=['/home/username']
+        filenameAP='/home/username/file1.txt'
+        self.failUnless(OFL.file_is_blacklisted_based_on_fileAP_and_folderAP_lists(filenameAP,blacklistFilesAP,blacklistFoldersAP))
+
+    def test_4(self):
+        blacklistFilesAP=[]
+        blacklistFoldersAP=['/home/username/']
+        filenameAP='/home/username/file1.txt'
+        self.failUnless(OFL.file_is_blacklisted_based_on_fileAP_and_folderAP_lists(filenameAP,blacklistFilesAP,blacklistFoldersAP))
+
+#head
 class TestGetListOfFilesInGlobFile(unittest.TestCase):
     def setUp(self):
         #create 3 empty test folders

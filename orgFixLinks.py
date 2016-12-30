@@ -765,7 +765,8 @@ class FilenameAPsTable(DatabaseTable):
 
         db1.conn.commit()
 
-        logging.debug('added %s to table %s at index %s' % (name,self.tableName,db1.cur.lastrowid))
+        if db1.cur.lastrowid:  #db1.cur.lastrowid is None if nothing added
+            logging.debug('added %s to table %s at index %s' % (name,self.tableName,db1.cur.lastrowid))
 
     def lookupID(self,name):
         '''FilenameAPsTable Class
@@ -823,7 +824,8 @@ class PathToBasenameTable(DatabaseTable):
 
         db1.conn.commit()
 
-        logging.debug('added %s to table %s at index %s' % (name,self.tableName,db1.cur.lastrowid))
+        if db1.cur.lastrowid:
+            logging.debug('added %s to table %s at index %s' % (name,self.tableName,db1.cur.lastrowid))
 
     def lookupID(self,name):
         '''PathToBasenameTable Class
@@ -881,7 +883,8 @@ class BasenameTable(DatabaseTable):
 
         db1.conn.commit()
 
-        logging.debug('added %s to table %s at index %s' % (name,self.tableName,db1.cur.lastrowid))
+        if db1.cur.lastrowid:
+            logging.debug('added %s to table %s at index %s' % (name,self.tableName,db1.cur.lastrowid))
 
     def lookupID(self,name):
         '''BasenameTable Class
@@ -3767,6 +3770,7 @@ def get_folder_name_AP_given_filename(filename1):
         return folderName
     else:  #foldername expected to be ''
         return os.getcwd()
+
 def get_list_of_folder_names_given_filename(filenameAP1):
     '''return list of all folders in a filenameAP; assumes filenameAP is not a folder'''
 
@@ -3777,6 +3781,30 @@ def get_list_of_folder_names_given_filename(filenameAP1):
     folder1=os.path.basename(absPathFolder1)
     retList.append(folder1)
     remainder=os.path.split(absPathFolder1)[0]
+
+    while len(remainder)>1:
+        nextFolder=os.path.basename(remainder)
+        retList.append(nextFolder)
+        remainder=os.path.split(remainder)[0]
+
+    retList.reverse()
+
+    return retList
+
+def get_list_of_folder_names_given_foldername(foldernameAP1):
+    '''return list of all folders in a foldernameAP'''
+
+    if os.path.exists(foldernameAP1):
+        assert os.path.isdir(foldernameAP1),'Misuse of get_list_of_folder_names_given_foldername: %s exists on disk and is not a folder' % foldernameAP1
+
+    retList=[]
+
+    if foldernameAP1.endswith('/'):
+        foldernameAP1=foldernameAP1.rstrip('/')
+
+    folder1=os.path.basename(foldernameAP1)
+    retList.append(folder1)
+    remainder=os.path.split(foldernameAP1)[0]
 
     while len(remainder)>1:
         nextFolder=os.path.basename(remainder)
@@ -4654,6 +4682,54 @@ def spider_starting_w_fileA(filename,maxTime=None,maxN=None,hitReturnToStop=True
     clean_up_before_ending_spidering_run(isDryRun,messg1='Completed spidering run')
 
 #head
+def folder_is_blacklisted_based_on_single_folder_name_in_path(dirnameAP,blacklistOfSingleFolderNames):
+
+    if os.path.exists(dirnameAP):
+        assert os.path.isdir(dirnameAP),'Misuse of folder_is_blacklisted_based_on_single_folder_name_in_path: %s exists on disk but is not a folder' % dirnameAP
+
+    if dirnameAP.endswith('/'):
+        dirnameAP=dirnameAP.rstrip('/')
+
+    dirnameFolderNameList=get_list_of_folder_names_given_foldername(dirnameAP)
+
+    blacklisted=False
+    for folderBasename in blacklistOfSingleFolderNames:
+        if folderBasename in dirnameFolderNameList:
+            return True
+
+    return False
+
+def file_is_blacklisted_based_on_single_folder_name_in_path(filenameAP,blacklistOfSingleFolderNames):
+
+    if os.path.exists(filenameAP):
+        assert (not os.path.isdir(filenameAP)),'Misuse of file_is_blacklisted_based_on_single_folder_name_in_path: %s exists on disk and is a folder' % filenameAP
+
+    assert (not filenameAP.endswith('/')),'Misuse of file_is_blacklisted_based_on_single_folder_name_in_path: %s has trailing slash' % filenameAP
+
+    filenameFolderNameList=get_list_of_folder_names_given_filename(filenameAP)
+
+    blacklisted=False
+    for folderBasename in blacklistOfSingleFolderNames:
+        if folderBasename in filenameFolderNameList:
+            return True
+
+    return False
+
+#head
+def file_is_blacklisted_based_on_fileAP_and_folderAP_lists(filenameAP,filenameAPBlacklist,foldernameAPBlacklist):
+    if filenameAP in filenameAPBlacklist:
+        return True
+
+    folderListFile1=get_list_of_folder_names_given_filename(filenameAP)
+    for blacklistFolder in foldernameAPBlacklist:
+        folderListBlacklistFolder=get_list_of_folder_names_given_foldername(blacklistFolder)
+
+        if one_list_starts_with_another(folderListFile1,folderListBlacklistFolder):
+            return True
+
+    return False
+
+#head
 def get_list_of_files_in_glob_file(globFilename,workingDir):
     '''read the file globFilename and return lists of files and directories referenced in it via glob.glob'''
 
@@ -4695,6 +4771,7 @@ def get_list_of_files_in_glob_file(globFilename,workingDir):
     else:
         return [],[]
 
+#head
 def get_list_of_all_repairable_org_files(mainFolderAP):
     '''
     walk files on disk starting at mainFolderAP.  return list of org files to operate on.  blacklist defined by blackListFolderBasenames is applied.
@@ -4704,29 +4781,21 @@ def get_list_of_all_repairable_org_files(mainFolderAP):
 
     allOrgFilenamesAP=[]
 
+    #TODO count how many files blacklisted via each mode and record data in log file
+
     for (dirname, dirs, files) in os.walk(mainFolderAP):
+        '''blacklists are applied here'''
 
-        #make a list of all folder names (non-abs-path) corresponding to dirname, which is abs path
-
-        dirnameFolderNameList=get_list_of_folder_names_given_filename(dirname)
-        dirnameFolderNameList.append(os.path.basename(dirname))  #assuming dirname does not end with slash
-
-        blacklisted=False
-        for folderBasename in blackListFolderBasenames:
-            if folderBasename in dirnameFolderNameList:
-                blacklisted=True
-                continue
-
-        if blacklisted:
+        #apply a first blacklist based on list of foldernames e.g. ['env','venv']
+        if folder_is_blacklisted_based_on_single_folder_name_in_path(dirname,blackListFolderBasenames):
             continue
 
-        #this code looks like it does nothing, since nothing is done with dirs?
-        # for folderBasename in blackListFolderBasenames:
-        #     if folderBasename in dirs:
-        #         dirs.remove(folderBasename)
-
         orgFilenameAPsInDir=[os.path.join(dirname,a) for a in files if a.endswith('.org')]
-        orgFileObjsInDir=[OrgFile(a,inHeader=False,leaveAsSymlink=True) for a in orgFilenameAPsInDir]
+
+        #apply a second blacklist based on a config file on disk and the use of glob.glob to generate blacklisted filenameAPs and foldernameAPs
+        #TODO not the most efficient way to blacklist:
+        orgFilenamesAfterBlacklist=[a for a in orgFilenameAPsInDir if (not file_is_blacklisted_based_on_fileAP_and_folderAP_lists(a,orgFilesNotToSpider,foldersNotToSpider))]
+        orgFileObjsInDir=[OrgFile(a,inHeader=False,leaveAsSymlink=True) for a in orgFilenamesAfterBlacklist]
 
         finalList=[]
 
@@ -4744,8 +4813,8 @@ def get_list_of_all_repairable_org_files(mainFolderAP):
 
 def operate_on_all_org_files(maxTime=None,maxN=None,hitReturnToStop=True,userFixesLinksManually=False,runDebugger=False,debuggerAlreadyRunning=False,isDryRun=False,showLog=False,repairLinks=True,keepBackup=True,deleteOldLogs=True,skipIfRecentlySpidered=False,addHeader=False):
     '''
-    this one does not spider; it just walks every org file
-    practically: skipIfRecentlySpidered input should be set to True
+    this one does not spider; it just walks every org file.
+    practically: skipIfRecentlySpidered input should be set to True.
     '''
 
     logging.info('Now operating on all org files on disk')
@@ -4759,37 +4828,12 @@ def operate_on_all_org_files(maxTime=None,maxN=None,hitReturnToStop=True,userFix
 
     DocumentsFoldernameAP=os.path.join(os.path.expanduser('~'),'Documents')
 
-    filesToWalkP=get_list_of_all_repairable_org_files(DocumentsFoldernameAP)  #blacklistFolderBasenames has been applied; these are filenameAP
-    filesToWalk=[a for a in filesToWalkP if ((a not in orgFilesNotToSpider) and (get_folder_name_AP_given_filename(a) not in foldersNotToSpider))]  #TODO not blacklisting as desired
-
-    filesToWalk=[]
-    for file1 in filesToWalkP:
-
-        if file1 in orgFilesNotToSpider:
-            continue  #blacklisted
-
-        #TODO blacklist if any of foldersNotToSpider are in the path of get_folder_name_given_filename(file1)
-        blackListed=False
-        folderListFile1=get_list_of_folder_names_given_filename(file1)
-        for blacklistFolder in foldersNotToSpider:
-            folderListBlacklistFolder=get_list_of_folder_names_given_filename(blacklistFolder)
-            folderListBlacklistFolder.append(os.path.basename(blacklistFolder))
-
-            if one_list_starts_with_another(folderListFile1,folderListBlacklistFolder):
-                blackListed=True
-                continue
-
-            if one_list_starts_with_another(folderListBlacklistFolder,folderListFile1):
-                blackListed=True
-                continue
-
-        if blackListed:
-            continue
-
-        filesToWalk.append(file1)
+    filesToWalk=get_list_of_all_repairable_org_files(DocumentsFoldernameAP)  #all blacklists are applied insider here
 
     NFilesToWalk=len(filesToWalk)
+
     logging.debug('%s total org files found to walk (operate_on_all_org_files)' % NFilesToWalk)
+
     count=0
 
     spiderTime=time.time()-globalStartTime
@@ -4939,6 +4983,8 @@ def usage():
 
 #head
 def main():
+    global debuggerAlreadyRunning
+
     #initialize variables that could be changed via command line inputs
     fileA1=None
     isDryRun=False
@@ -5087,7 +5133,7 @@ maxLinesInANodeToAnalyze=1000  #setting  idea is that sometimes a user will past
 # if set too small, will not be able to get uniqueIDs in header when header contains many links
 secondsSinceFullyAnalyzedCutoff=2*24*60*60  #setting elapsed seconds since org file last fully analyzed; cutoff to be considered recently analyzed  24 hr/day * 60 min/hr * 60 sec/min
 maxLengthOfVisibleLinkText=5  #setting that affects length of visible text (length of description in [[link][description]]) in a link to a local file
-
+debuggerAlreadyRunning=False #initialize
 #head
 if __name__ <> "__main__":
     #want to be able to import things from this module for testing, without logging taking place
