@@ -4150,6 +4150,63 @@ class TestFindAllNameMatchesViaBash(unittest.TestCase):
         self.assertEqual(os.getcwd(),origWorkingDir)
 
 #head skip test find_all_name_matches_via_bash_for_directories
+class TestGetFolderNameAPGivenFilename(unittest.TestCase):
+    def test_1(self):
+        ret=OFL.get_folder_name_AP_given_filename('aMadeUpFilename.nonsenseExt')
+        self.assertEqual(ret,os.getcwd())
+
+    def test_2(self):
+        ret=OFL.get_folder_name_AP_given_filename(os.path.join(anotherFolder,'aMadeUpFilename.nonsenseExt'))
+        self.assertEqual(ret,anotherFolder)
+
+class TestGetListOfFolderNamesGivenFilename(unittest.TestCase):
+    def test_1(self):
+        filename1='/home/username/folder1/folder2/folder3/filename.txt'
+        retList=OFL.get_list_of_folder_names_given_filename(filename1)
+        self.assertEqual(retList,['home','username','folder1','folder2','folder3'])
+
+    def test_2(self):
+        filename1='/home/username/folder1/folder2/folder3'
+        retList=OFL.get_list_of_folder_names_given_filename(filename1)
+        self.assertEqual(retList,['home','username','folder1','folder2'])  #WARNING this function has no way to tell what is a folder and what is a non-folder
+        #since it is not assumed that an abs path filename exists on disk
+
+class TestOneListStartsWithAnother(unittest.TestCase):
+    def test_1(self):
+        oneList=[1,2,3]
+        anotherList=[1,2,3,4,5]
+        self.failUnless(OFL.one_list_starts_with_another(anotherList,oneList))
+        self.failIf(OFL.one_list_starts_with_another(oneList,anotherList))
+
+    def test_2(self):
+        oneList=[1,2,3]
+        oneList.reverse()
+        anotherList=[1,2,3,4,5]
+        self.failIf(OFL.one_list_starts_with_another(anotherList,oneList))
+        self.failIf(OFL.one_list_starts_with_another(oneList,anotherList))
+
+class TestIsBlacklistedBasedOnAFoldername(unittest.TestCase):
+    def test_1(self):
+
+        tempBackup1=OFL.blackListFolderBasenames
+        OFL.blackListFolderBasenames=['venv']
+
+
+        filename1='/home/username/folder1/folder2/folder3/filename.txt'
+        self.failIf(OFL.is_blacklisted_based_on_a_foldername(filename1))
+
+        OFL.blackListFolderBasenames=tempBackup1
+
+    def test_2(self):
+
+        tempBackup1=OFL.blackListFolderBasenames
+        OFL.blackListFolderBasenames=['venv']
+
+        filename1='/home/username/venv/folder1/folder2/folder3/filename.txt'
+        self.failUnless(OFL.is_blacklisted_based_on_a_foldername(filename1))
+
+        OFL.blackListFolderBasenames=tempBackup1
+
 #head skip test of set_up_database 
 #head skip test user_chooses_element_from_list_or_rejects_all; how to simulate user typing something at a prompt?
 #head skip test of get_past_interactive_repairs_dict
@@ -4517,18 +4574,18 @@ class TestGetListOfFilesInGlobFile(unittest.TestCase):
 
     def test_1B(self):
         '''what about a trailing slash?'''
-        globFileLines=[self.folder1+'/'+'\n']
+        globFileLines=[self.folder1+'/'+'\n']  #trailing slash
 
         globFile=open(self.globFilename,'w')
         globFile.writelines(globFileLines)
         globFile.close()
 
         expectedOrgFileList=[]
-        expectedFolderList=[self.folder1]
+        expectedFolderList=[self.folder1] #no trailing slash
 
         ret1,ret2=OFL.get_list_of_files_in_glob_file(self.globFilename,origWorkingDir)
         self.assertEqual(expectedOrgFileList,ret1)
-        self.assertEqual(expectedFolderList,ret2)
+        self.assertEqual(expectedFolderList,ret2) #no trailing slash
 
     def test_2(self):
         '''find one org file identified by abs path filename'''
@@ -4565,7 +4622,7 @@ class TestGetListOfFilesInGlobFile(unittest.TestCase):
             globFile.close()
 
             expectedOrgFileList=[]
-            expectedFolderList=[]
+            expectedFolderList=[]  #since working directory does not have folder 'TemporaryOrgFixLinksTests3'
 
             ret1,ret2=OFL.get_list_of_files_in_glob_file(self.globFilename,origWorkingDir)
             self.assertEqual(expectedOrgFileList,ret1)
@@ -4583,8 +4640,8 @@ class TestGetListOfFilesInGlobFile(unittest.TestCase):
         globFile.close()
 
         expectedOrgFileList=[]
-        # expectedFolderList=[self.folder3]
-        expectedFolderList=['TemporaryOrgFixLinksTests3']
+        expectedFolderList=[self.folder3]  #this is abs path
+        # expectedFolderList=['TemporaryOrgFixLinksTests3']
 
         ret1,ret2=OFL.get_list_of_files_in_glob_file(self.globFilename,os.getcwd())
         self.assertEqual(expectedOrgFileList,ret1)
@@ -4613,6 +4670,8 @@ class TestGetListOfFilesInGlobFile(unittest.TestCase):
 #head
 class TestGetListOfAllRepairableOrgFiles(unittest.TestCase):
     def setUp(self):
+        os.chdir(origWorkingDir)
+
         if os.path.exists(anotherFolder):
             shutil.rmtree(anotherFolder)
 
@@ -4631,10 +4690,16 @@ class TestGetListOfAllRepairableOrgFiles(unittest.TestCase):
         if os.path.exists(self.symlinkToFileB_AP) or os.path.islink(self.symlinkToFileB_AP):
             os.remove(self.symlinkToFileB_AP)
 
+        try:
+            self.folder4AP
+            shutil.rmtree(self.folder4AP)
+        except:
+            pass
+
+        os.chdir(origWorkingDir)
+
     def test_1(self):
         '''simple test: a folder with three existing files'''
-
-        self.assertEqual(os.getcwd(),origWorkingDir)
 
         retList=OFL.get_list_of_all_repairable_org_files(anotherFolder)
 
@@ -4642,8 +4707,6 @@ class TestGetListOfAllRepairableOrgFiles(unittest.TestCase):
 
         self.assertEqual(len(expectedList),len(retList))
         self.assertEqual(set(expectedList),set(retList))
-
-        self.assertEqual(os.getcwd(),origWorkingDir)
 
     def test_2(self):
         '''a folder with one existing file and one broken symlink'''
@@ -4656,6 +4719,29 @@ class TestGetListOfAllRepairableOrgFiles(unittest.TestCase):
 
         self.assertEqual(len(expectedList),len(retList))
         self.assertEqual(set(expectedList),set(retList))
+
+    def test_3(self):
+        '''test blacklist feature'''
+
+        tempBackup1=OFL.blackListFolderBasenames
+        OFL.blackListFolderBasenames=['venv']
+
+        os.makedirs(os.path.join(anotherFolder,'venv'))
+        self.folder4AP=os.path.join(anotherFolder,'venv')
+        folder5AP=os.path.join(self.folder4AP,'folder5Name')
+        os.makedirs(folder5AP)
+
+        testFile4AP=os.path.join(self.folder4AP,'testFile4.org')
+        open(testFile4AP,'a').close()
+
+        testFile5AP=os.path.join(folder5AP,'testFile5.org')
+        open(testFile5AP,'a').close()
+
+        retList=OFL.get_list_of_all_repairable_org_files(testFile4AP)
+
+        OFL.blackListFolderBasenames=tempBackup1  #restore original
+
+        self.failIf(retList)
 
 #head skip test operate_on_all_org_files
 #head skip test make_regex_dicts

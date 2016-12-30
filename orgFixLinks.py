@@ -26,6 +26,7 @@ import urllib2
 # import shelve
 import csv
 
+#what are all these comments starting with head?  this is for Outline Mode in Emacs for Python.
 #head  User-defined exception classes:
 class CannotInitiallyOperateOnOrgFileError(Exception):
     '''unable to do initial operations on org file'''
@@ -3756,6 +3757,56 @@ def find_all_name_matches_via_bash_for_directories(textToMatch):
     return returnList1
 
 #head
+def get_folder_name_AP_given_filename(filename1):
+    '''return absolute path name of the folder which contains filename1'''
+
+    #will still return a folder, even if the file does not exist on disk
+
+    folderName=os.path.split(filename1)[0]
+    if folderName:
+        return folderName
+    else:  #foldername expected to be ''
+        return os.getcwd()
+def get_list_of_folder_names_given_filename(filenameAP1):
+    '''return list of all folders in a filenameAP; assumes filenameAP is not a folder'''
+
+    retList=[]
+
+    absPathFolder1=get_folder_name_AP_given_filename(filenameAP1)  #/home/username/folder1/folder2
+
+    folder1=os.path.basename(absPathFolder1)
+    retList.append(folder1)
+    remainder=os.path.split(absPathFolder1)[0]
+
+    while len(remainder)>1:
+        nextFolder=os.path.basename(remainder)
+        retList.append(nextFolder)
+        remainder=os.path.split(remainder)[0]
+
+    retList.reverse()
+
+    return retList
+
+def one_list_starts_with_another(list1,list2):
+    if len(list1)<len(list2):
+        return False
+
+    zippedLists=zip(list1,list2)
+    for tuple1 in zippedLists:
+        if tuple1[0]<>tuple1[1]:
+            return False
+    return True
+
+def is_blacklisted_based_on_a_foldername(filenameAP1):
+    '''this assumes filenameAP1 is not a folder'''
+    folderList=get_list_of_folder_names_given_filename(filenameAP1)
+    for a in blackListFolderBasenames:
+        if a in folderList:
+            return True
+
+    return False
+
+#head
 def set_up_database():
     global db1
 
@@ -4506,8 +4557,7 @@ def spider_starting_w_fileA(filename,maxTime=None,maxN=None,hitReturnToStop=True
 
     except Exception as err:
         print 'An exception happened: %s' % str(err)
-        logging.error('An exception happened: %s' % str(err))
-        logging.info('Stopping spidering because of error in analyzing the first file in a spidering run: %s' % filename)
+        logging.error('Stopping spidering because of error %s in analyzing the first file in a spidering run: %s' % (str(err),filename))
 
         print_and_log_traceback()
 
@@ -4517,7 +4567,9 @@ def spider_starting_w_fileA(filename,maxTime=None,maxN=None,hitReturnToStop=True
 
     filesSpidered.append(fileA)  #files you have already spidered this session
 
-    filesToSpider=[a.targetObj for a in fileA.linksToOrgFilesList if (a.targetObj.exists and (a.targetObj not in filesSpidered))]
+    filesToSpiderBB=[a.targetObj for a in fileA.linksToOrgFilesList if (a.targetObj.exists and (a.targetObj not in filesSpidered))]  #BB=before blacklist
+
+    filesToSpider=[a for a in filesToSpiderBB if ((a.filenameAP not in orgFilesNotToSpider) and (get_folder_name_AP_given_filename(a.filenameAP) not in foldersNotToSpider) and (not is_blacklisted_based_on_a_foldername(a.filenameAP)))]  #apply blacklists
 
     spiderTime=time.time()-globalStartTime
 
@@ -4625,12 +4677,14 @@ def get_list_of_files_in_glob_file(globFilename,workingDir):
 
             dirsInMatches1=[a for a in matches1 if os.path.isdir(a)]
             dirsInMatches1_NTS=[a.rstrip('/') for a in dirsInMatches1]  #NTS=no trailing slash
-            folderMatches.extend(dirsInMatches1_NTS)
+            dirsInMatches1_AP=[os.path.abspath(a) for a in dirsInMatches1_NTS]  #make sure all are absolute path
+            folderMatches.extend(dirsInMatches1_AP)
         
             matches2=[a for a in matches1 if (not (a in dirsInMatches1))]
 
             orgFilenamesInMatches2=[a for a in matches2 if a.endswith('.org')]
-            orgFileMatches.extend(orgFilenamesInMatches2)
+            orgFilenamesInMatches2_AP=[os.path.abspath(a) for a in orgFilenamesInMatches2]
+            orgFileMatches.extend(orgFilenamesInMatches2_AP)
 
             # nonOrgFilenamesInMatches2=[a for a in matches2 if (not a.endswith('.org'))]
             # nonOrgFileMatches.extend(nonOrgFilenamesInMatches2)
@@ -4643,29 +4697,35 @@ def get_list_of_files_in_glob_file(globFilename,workingDir):
 
 def get_list_of_all_repairable_org_files(mainFolderAP):
     '''
-    spider routine queue can run dry
-    instead of spidering, get a list of all org files on disc that I would want to repair
+    walk files on disk starting at mainFolderAP.  return list of org files to operate on.  blacklist defined by blackListFolderBasenames is applied.
     '''
 
     assert os.path.exists(mainFolderAP), 'cannot get list of all org files in %s because it does not exist' % mainFolderAP
 
-    dirsVisitedBeforeAP=[]
     allOrgFilenamesAP=[]
 
-    #TODO having trouble with this function returning a list that includes broken symlinks
-
     for (dirname, dirs, files) in os.walk(mainFolderAP):
-        dirsAP=[os.path.join(dirname,a) for a in dirs]
-        for dir1 in dirsVisitedBeforeAP:
-            if dir1 in dirsAP:
-                dirs.remove(os.path.split(dir1)[1])
-        if 'env' in dirs:
-            dirs.remove('env')  #don't visit env directories
-        if 'venv' in dirs:
-            dirs.remove('venv')  #don't visit venv directories
 
-        orgBasenamesInDir=[a for a in files if a.endswith('.org')]
-        orgFilenameAPsInDir=[os.path.join(dirname,a) for a in orgBasenamesInDir]
+        #make a list of all folder names (non-abs-path) corresponding to dirname, which is abs path
+
+        dirnameFolderNameList=get_list_of_folder_names_given_filename(dirname)
+        dirnameFolderNameList.append(os.path.basename(dirname))  #assuming dirname does not end with slash
+
+        blacklisted=False
+        for folderBasename in blackListFolderBasenames:
+            if folderBasename in dirnameFolderNameList:
+                blacklisted=True
+                continue
+
+        if blacklisted:
+            continue
+
+        #this code looks like it does nothing, since nothing is done with dirs?
+        # for folderBasename in blackListFolderBasenames:
+        #     if folderBasename in dirs:
+        #         dirs.remove(folderBasename)
+
+        orgFilenameAPsInDir=[os.path.join(dirname,a) for a in files if a.endswith('.org')]
         orgFileObjsInDir=[OrgFile(a,inHeader=False,leaveAsSymlink=True) for a in orgFilenameAPsInDir]
 
         finalList=[]
@@ -4675,9 +4735,12 @@ def get_list_of_all_repairable_org_files(mainFolderAP):
                 finalList.append(a.filenameAP)
 
         allOrgFilenamesAP.extend(finalList)
-        dirsVisitedBeforeAP.append(dirname)
 
-    return allOrgFilenamesAP
+    #http://stackoverflow.com/questions/6593979/how-to-convert-a-set-to-a-list-in-python
+    allOrgFilenamesAP_Set=set(allOrgFilenamesAP)
+    allOrgFilenamesAP_List=list(allOrgFilenamesAP_Set)
+
+    return allOrgFilenamesAP_List
 
 def operate_on_all_org_files(maxTime=None,maxN=None,hitReturnToStop=True,userFixesLinksManually=False,runDebugger=False,debuggerAlreadyRunning=False,isDryRun=False,showLog=False,repairLinks=True,keepBackup=True,deleteOldLogs=True,skipIfRecentlySpidered=False,addHeader=False):
     '''
@@ -4696,7 +4759,35 @@ def operate_on_all_org_files(maxTime=None,maxN=None,hitReturnToStop=True,userFix
 
     DocumentsFoldernameAP=os.path.join(os.path.expanduser('~'),'Documents')
 
-    filesToWalk=get_list_of_all_repairable_org_files(DocumentsFoldernameAP)
+    filesToWalkP=get_list_of_all_repairable_org_files(DocumentsFoldernameAP)  #blacklistFolderBasenames has been applied; these are filenameAP
+    filesToWalk=[a for a in filesToWalkP if ((a not in orgFilesNotToSpider) and (get_folder_name_AP_given_filename(a) not in foldersNotToSpider))]  #TODO not blacklisting as desired
+
+    filesToWalk=[]
+    for file1 in filesToWalkP:
+
+        if file1 in orgFilesNotToSpider:
+            continue  #blacklisted
+
+        #TODO blacklist if any of foldersNotToSpider are in the path of get_folder_name_given_filename(file1)
+        blackListed=False
+        folderListFile1=get_list_of_folder_names_given_filename(file1)
+        for blacklistFolder in foldersNotToSpider:
+            folderListBlacklistFolder=get_list_of_folder_names_given_filename(blacklistFolder)
+            folderListBlacklistFolder.append(os.path.basename(blacklistFolder))
+
+            if one_list_starts_with_another(folderListFile1,folderListBlacklistFolder):
+                blackListed=True
+                continue
+
+            if one_list_starts_with_another(folderListBlacklistFolder,folderListFile1):
+                blackListed=True
+                continue
+
+        if blackListed:
+            continue
+
+        filesToWalk.append(file1)
+
     NFilesToWalk=len(filesToWalk)
     logging.debug('%s total org files found to walk (operate_on_all_org_files)' % NFilesToWalk)
     count=0
@@ -4866,7 +4957,7 @@ def main():
     #process command line inputs
     #dive into python 10.6
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hundDlbqf:L:N:t:", ["help","userFixesLinks","noSpideringStopViaKeystroke","debug","dryRun","showLog","noBackup","quickMode","file=","loggingLevel=","maxFilesToSpider=","maxTimeToSpider="])
+        opts, args = getopt.getopt(sys.argv[1:], "hHundDlbqf:L:N:t:", ["help","addHeader","userFixesLinks","noSpideringStopViaKeystroke","debug","dryRun","showLog","noBackup","quickMode","file=","loggingLevel=","maxFilesToSpider=","maxTimeToSpider="])
     except getopt.GetoptError:
         usage()
         sys.exit(2)
@@ -4973,7 +5064,17 @@ origFolder=os.getcwd()
 pastInteractiveRepairs=get_past_interactive_repairs_dict()  # a dictionary for storing past interactive repairs of broken links
 #head
 asteriskRegex=re.compile('(?P<asterisks>^\*+) ')
-
+#head
+if os.path.exists('.OFLDoNotSpider'):
+    #because of glob.glob, it is required that these exist on disk
+    orgFilesNotToSpider,foldersNotToSpider=get_list_of_files_in_glob_file('.OFLDoNotSpider',origFolder)
+else:
+    orgFilesNotToSpider=[]
+    foldersNotToSpider=[]
+#head
+#the preceding used get_list_of_files_in_glob_file, which is based on glob.glob.  I don't see how to use glob.glob to blacklist when the path contains a named folder.  so:
+blackListFolderBasenames=['env','venv','PStuff']  #setting; it is not required that these folders exist on disk
+#head
 #list of compiled regex for identifying class of link; has particular order for identifying link in [[link][description]]
 regexOrderedListBrackets,regexOrderedListNoBrackets=make_regex_ordered_lists()
 
