@@ -2924,6 +2924,8 @@ class Test_OFL_OrgFile(unittest.TestCase):
         self.failIf(outgoingOrgLinkTarget.uniqueIDFromHeader)
 
     #head skip test checkConsistencyOfThreeUniqueIDDataItems; appears non-obvious how to construct tests
+    #head skip test of processOutwardLinksToOrgFiles
+    #head skip test of processOutwardLinksToNonOrgFiles
     def test_1_makeListOfOrgFilesThatLinkToMe(self):
         '''test OrgFile.makeListOfOrgFilesThatLinkToMe'''
 
@@ -4094,8 +4096,7 @@ class TestTraverseNodesToReachDesiredNode(unittest.TestCase):
 #head skip test of turn_off_logging, or TODO use test-first to get it working, then use it when wanted to suppress logging for files in header
 #head skip test of turn_logging_back_on_at_initial_level
 #head skip test of display_log_file
-#head skip test walk_files_looking_for_name_match
-#head skip test walk_org_files_looking_for_unique_id_match
+#head TODO test walk_org_files_looking_for_unique_id_match
 class TestFindAllNameMatchesViaBash(unittest.TestCase):
     '''time.sleep duration must be set properly for this to pass'''
     def test_1(self):
@@ -4150,6 +4151,7 @@ class TestFindAllNameMatchesViaBash(unittest.TestCase):
         self.assertEqual(os.getcwd(),origWorkingDir)
 
 #head skip test find_all_name_matches_via_bash_for_directories
+#head functions used for blacklisting
 class TestGetFolderNameAPGivenFilename(unittest.TestCase):
     def test_1(self):
         ret=OFL.get_folder_name_AP_given_filename('aMadeUpFilename.nonsenseExt')
@@ -4182,6 +4184,36 @@ class TestGetListOfFolderNamesGivenFoldername(unittest.TestCase):
         retList=OFL.get_list_of_folder_names_given_foldername(foldername1)
         self.assertEqual(retList,['home','username','folder1','folder2','folder3'])
 
+#head functions used for blacklisting based on a single folder in a path; e.g. do not have env folder in the path
+class TestFolderIsBlacklistedBasedOnSingleFolderNameInPath(unittest.TestCase):
+    def test_1(self):
+        blackList1=['username']
+        dirname='/home/username/cabbage'
+        self.failUnless(OFL.folder_is_blacklisted_based_on_single_folder_name_in_path(dirname,blackList1))
+
+    def test_2(self):
+        blackList1=['cabbage']
+        dirname='/home/username/cabbage/'
+        self.failUnless(OFL.folder_is_blacklisted_based_on_single_folder_name_in_path(dirname,blackList1))
+
+    def test_3(self):
+        blackList1=['birds']
+        dirname='/home/username/cabbage'
+        self.failIf(OFL.folder_is_blacklisted_based_on_single_folder_name_in_path(dirname,blackList1))
+
+class TestFileIsBlacklistedBasedOnSingleFolderNameInPath(unittest.TestCase):
+    def test_1(self):
+        blackList1=['username']
+        filename='/home/username/cabbage.txt'
+        self.failUnless(OFL.folder_is_blacklisted_based_on_single_folder_name_in_path(filename,blackList1))
+
+    def test_2(self):
+        blackList1=['birds']
+        filename='/home/username/cabbage.txt'
+        self.failIf(OFL.folder_is_blacklisted_based_on_single_folder_name_in_path(filename,blackList1))
+
+#head
+#head functions used for blacklisting based on lists of filenameAPs, foldernameAPs
 class TestOneListStartsWithAnother(unittest.TestCase):
     def test_1(self):
         oneList=[1,2,3]
@@ -4196,27 +4228,245 @@ class TestOneListStartsWithAnother(unittest.TestCase):
         self.failIf(OFL.one_list_starts_with_another(anotherList,oneList))
         self.failIf(OFL.one_list_starts_with_another(oneList,anotherList))
 
-class TestIsBlacklistedBasedOnAFoldername(unittest.TestCase):
+class TestFileIsBlacklistedBasedOnFileAPAndFolderAPLists(unittest.TestCase):
     def test_1(self):
-
-        tempBackup1=OFL.blackListFolderBasenames
-        OFL.blackListFolderBasenames=['venv']
-
-
-        filename1='/home/username/folder1/folder2/folder3/filename.txt'
-        self.failIf(OFL.is_blacklisted_based_on_a_foldername(filename1))
-
-        OFL.blackListFolderBasenames=tempBackup1
+        blacklistFilesAP=['/home/username/file1.txt']
+        blacklistFoldersAP=[]
+        filenameAP='/home/username/file1.txt'
+        self.failUnless(OFL.file_is_blacklisted_based_on_fileAP_and_folderAP_lists(filenameAP,blacklistFilesAP,blacklistFoldersAP))
 
     def test_2(self):
+        blacklistFilesAP=['/home/username/file2.txt']
+        blacklistFoldersAP=[]
+        filenameAP='/home/username/file1.txt'
+        self.failIf(OFL.file_is_blacklisted_based_on_fileAP_and_folderAP_lists(filenameAP,blacklistFilesAP,blacklistFoldersAP))
 
-        tempBackup1=OFL.blackListFolderBasenames
-        OFL.blackListFolderBasenames=['venv']
+    def test_3(self):
+        blacklistFilesAP=[]
+        blacklistFoldersAP=['/home/username']
+        filenameAP='/home/username/file1.txt'
+        self.failUnless(OFL.file_is_blacklisted_based_on_fileAP_and_folderAP_lists(filenameAP,blacklistFilesAP,blacklistFoldersAP))
 
-        filename1='/home/username/venv/folder1/folder2/folder3/filename.txt'
-        self.failUnless(OFL.is_blacklisted_based_on_a_foldername(filename1))
+    def test_4(self):
+        blacklistFilesAP=[]
+        blacklistFoldersAP=['/home/username/']
+        filenameAP='/home/username/file1.txt'
+        self.failUnless(OFL.file_is_blacklisted_based_on_fileAP_and_folderAP_lists(filenameAP,blacklistFilesAP,blacklistFoldersAP))
 
-        OFL.blackListFolderBasenames=tempBackup1
+#head
+class TestGetListOfFilesInGlobFile(unittest.TestCase):
+    def setUp(self):
+        #create 3 empty test folders; these are all abs path filenames
+
+        self.folder1=os.path.join(DocumentsFolderAP,'TemporaryOrgFixLinksTests1')
+        self.folder2=os.path.join(self.folder1,'TemporaryOrgFixLinksTests2')
+        self.folder3=os.path.join(self.folder2,'TemporaryOrgFixLinksTests3')
+
+        #erase folder1 and all its contents
+        if os.path.exists(self.folder1):
+            shutil.rmtree(self.folder1)
+
+        os.makedirs(self.folder3)  #create folder1, folder2, folder3
+
+        self.globFilename='testGetListOfFilesInGlobFile.txt'
+
+        os.chdir(origWorkingDir)
+
+    def tearDown(self):
+        #erase folder1 and all its contents
+        if os.path.exists(self.folder1):
+            shutil.rmtree(self.folder1)
+
+        os.makedirs(self.folder3)  #create folder1, folder2, folder3
+
+        if os.path.exists(self.globFilename):
+            os.remove(self.globFilename)
+
+        os.chdir(origWorkingDir)
+
+    #head glob file contains one abs path foldername
+    def test_1(self):
+        '''find one folder identified by abs path filename'''
+        globFileLines=[self.folder1+'\n']
+
+        globFile=open(self.globFilename,'w')
+        globFile.writelines(globFileLines)
+        globFile.close()
+
+        expectedOrgFileList=[]
+        expectedFolderList=[self.folder1]
+
+        ret1,ret2=OFL.get_list_of_files_in_glob_file(self.globFilename,origWorkingDir,fileType='org')
+        self.assertEqual(expectedOrgFileList,ret1)
+        self.assertEqual(expectedFolderList,ret2)
+
+    def test_1B(self):
+        '''what about a trailing slash?'''
+        globFileLines=[self.folder1+'/'+'\n']  #trailing slash
+
+        globFile=open(self.globFilename,'w')
+        globFile.writelines(globFileLines)
+        globFile.close()
+
+        expectedOrgFileList=[]
+        expectedFolderList=[self.folder1] #no trailing slash
+
+        ret1,ret2=OFL.get_list_of_files_in_glob_file(self.globFilename,origWorkingDir)
+        self.assertEqual(expectedOrgFileList,ret1)
+        self.assertEqual(expectedFolderList,ret2) #no trailing slash
+
+    #head glob file contains one abs path org filename
+    def test_2(self):
+        '''find one org file identified by abs path filename'''
+        testFilenameAP=os.path.join(self.folder3,'testFile.org')
+
+        touch_file(testFilenameAP)
+
+        globFileLines=[testFilenameAP+'\n']
+
+        globFile=open(self.globFilename,'w')
+        globFile.writelines(globFileLines)
+        globFile.close()
+
+        expectedOrgFileList=[testFilenameAP]
+        expectedFolderList=[]
+
+        ret1,ret2=OFL.get_list_of_files_in_glob_file(self.globFilename,origWorkingDir,fileType='org')
+        self.assertEqual(expectedOrgFileList,ret1)
+        self.assertEqual(expectedFolderList,ret2)
+
+        os.remove(testFilenameAP)
+
+    #head glob file contains one relative path filename of a folder
+    def test_3(self):
+        '''illustrate abs path vs relative path behavior'''
+        if os.path.isdir('TemporaryOrgFixLinksTests3'):
+            #your filesystem somehow has this folder in the current working directory, so this test will not work as intended
+            pass
+        else:
+            globFileLines=['TemporaryOrgFixLinksTests3'+'\n']
+
+            globFile=open(self.globFilename,'w')
+            globFile.writelines(globFileLines)
+            globFile.close()
+
+            expectedOrgFileList=[]
+            expectedFolderList=[]  #since working directory does not have folder 'TemporaryOrgFixLinksTests3'
+
+            ret1,ret2=OFL.get_list_of_files_in_glob_file(self.globFilename,origWorkingDir)
+            self.assertEqual(expectedOrgFileList,ret1)
+            self.assertEqual(expectedFolderList,ret2)
+
+    def test_4(self):
+        '''illustrate abs path vs relative path behavior'''
+
+        os.chdir(self.folder2)
+
+        globFileLines=['TemporaryOrgFixLinksTests3'+'\n']
+            
+        globFile=open(self.globFilename,'w')
+        globFile.writelines(globFileLines)
+        globFile.close()
+
+        expectedOrgFileList=[]
+        expectedFolderList=[self.folder3]  #this is abs path
+        # expectedFolderList=['TemporaryOrgFixLinksTests3']
+
+        ret1,ret2=OFL.get_list_of_files_in_glob_file(self.globFilename,os.getcwd())
+        self.assertEqual(expectedOrgFileList,ret1)
+        self.assertEqual(expectedFolderList,ret2)
+
+    def test_5(self):
+        '''illustrate abs path vs relative path behavior'''
+
+        # os.chdir(self.folder2)
+
+        globFileLines=['TemporaryOrgFixLinksTests3'+'\n']
+            
+        globFile=open(self.globFilename,'w')
+        globFile.writelines(globFileLines)
+        globFile.close()
+
+        expectedOrgFileList=[]
+        # expectedFolderList=[self.folder3]
+        # expectedFolderList=['TemporaryOrgFixLinksTests3']
+        expectedFolderList=[]
+
+        ret1,ret2=OFL.get_list_of_files_in_glob_file(self.globFilename,origWorkingDir)
+        self.assertEqual(expectedOrgFileList,ret1)
+        self.assertEqual(expectedFolderList,ret2)
+
+    #head glob file contains one abs path non org filename
+    def test_6(self):
+        '''find one non-org file identified by abs path filename'''
+        testFilenameAP=os.path.join(self.folder3,'testFile.txt')
+
+        touch_file(testFilenameAP)
+
+        globFileLines=[testFilenameAP+'\n']
+
+        globFile=open(self.globFilename,'w')
+        globFile.writelines(globFileLines)
+        globFile.close()
+
+        expectedNonOrgFileList=[testFilenameAP]
+        expectedFolderList=[]
+
+        ret1,ret2=OFL.get_list_of_files_in_glob_file(self.globFilename,origWorkingDir,fileType='orgNon')
+        self.assertEqual(expectedNonOrgFileList,ret1)
+        self.assertEqual(expectedFolderList,ret2)
+
+        os.remove(testFilenameAP)
+    #head test discriminate between org and non org files
+    def test_7(self):
+        '''with one org and one non org file in glob file, read the org filename from glob file'''
+        orgTestFilenameAP=os.path.join(self.folder3,'testFile.org')
+        nonOrgTestFilenameAP=os.path.join(self.folder3,'testFile.txt')
+
+        touch_file(orgTestFilenameAP)
+        touch_file(nonOrgTestFilenameAP)
+
+        globFileLines=[orgTestFilenameAP+'\n']
+        globFileLines.append(nonOrgTestFilenameAP+'\n')
+
+        globFile=open(self.globFilename,'w')
+        globFile.writelines(globFileLines)
+        globFile.close()
+
+        expectedOrgFileList=[orgTestFilenameAP]
+        expectedFolderList=[]
+
+        ret1,ret2=OFL.get_list_of_files_in_glob_file(self.globFilename,origWorkingDir,fileType='org')
+        self.assertEqual(expectedOrgFileList,ret1)
+        self.assertEqual(expectedFolderList,ret2)
+
+        os.remove(orgTestFilenameAP)
+        os.remove(nonOrgTestFilenameAP)
+
+    def test_8(self):
+        '''with one org and one non org file in glob file, read the non-org filename from glob file'''
+        orgTestFilenameAP=os.path.join(self.folder3,'testFile.org')
+        nonOrgTestFilenameAP=os.path.join(self.folder3,'testFile.txt')
+
+        touch_file(orgTestFilenameAP)
+        touch_file(nonOrgTestFilenameAP)
+
+        globFileLines=[orgTestFilenameAP+'\n']
+        globFileLines.append(nonOrgTestFilenameAP+'\n')
+
+        globFile=open(self.globFilename,'w')
+        globFile.writelines(globFileLines)
+        globFile.close()
+
+        expectedNonOrgFileList=[nonOrgTestFilenameAP]
+        expectedFolderList=[]
+
+        ret1,ret2=OFL.get_list_of_files_in_glob_file(self.globFilename,origWorkingDir,fileType='nonOrg')
+        self.assertEqual(expectedNonOrgFileList,ret1)
+        self.assertEqual(expectedFolderList,ret2)
+
+        os.remove(orgTestFilenameAP)
+        os.remove(nonOrgTestFilenameAP)
 
 #head skip test of set_up_database 
 #head skip test user_chooses_element_from_list_or_rejects_all; how to simulate user typing something at a prompt?
@@ -4538,200 +4788,6 @@ class TestOperateOnFileA(unittest.TestCase):
 #head skip test clean_up_before_ending_spidering_run
 #head skip test spider_starting_w_fileA
 #head skip test get_list_of_all_repairable_org_files
-class TestFolderIsBlacklistedBasedOnSingleFolderNameInPath(unittest.TestCase):
-    def test_1(self):
-        blackList1=['username']
-        dirname='/home/username/cabbage'
-        self.failUnless(OFL.folder_is_blacklisted_based_on_single_folder_name_in_path(dirname,blackList1))
-
-    def test_2(self):
-        blackList1=['cabbage']
-        dirname='/home/username/cabbage/'
-        self.failUnless(OFL.folder_is_blacklisted_based_on_single_folder_name_in_path(dirname,blackList1))
-
-    def test_3(self):
-        blackList1=['birds']
-        dirname='/home/username/cabbage'
-        self.failIf(OFL.folder_is_blacklisted_based_on_single_folder_name_in_path(dirname,blackList1))
-
-class TestFileIsBlacklistedBasedOnSingleFolderNameInPath(unittest.TestCase):
-    def test_1(self):
-        blackList1=['username']
-        filename='/home/username/cabbage.txt'
-        self.failUnless(OFL.folder_is_blacklisted_based_on_single_folder_name_in_path(filename,blackList1))
-
-    def test_2(self):
-        blackList1=['birds']
-        filename='/home/username/cabbage.txt'
-        self.failIf(OFL.folder_is_blacklisted_based_on_single_folder_name_in_path(filename,blackList1))
-
-#head
-class TestFileIsBlacklistedBasedOnFileAPAndFolderAPLists(unittest.TestCase):
-    def test_1(self):
-        blacklistFilesAP=['/home/username/file1.txt']
-        blacklistFoldersAP=[]
-        filenameAP='/home/username/file1.txt'
-        self.failUnless(OFL.file_is_blacklisted_based_on_fileAP_and_folderAP_lists(filenameAP,blacklistFilesAP,blacklistFoldersAP))
-
-    def test_2(self):
-        blacklistFilesAP=['/home/username/file2.txt']
-        blacklistFoldersAP=[]
-        filenameAP='/home/username/file1.txt'
-        self.failIf(OFL.file_is_blacklisted_based_on_fileAP_and_folderAP_lists(filenameAP,blacklistFilesAP,blacklistFoldersAP))
-
-    def test_3(self):
-        blacklistFilesAP=[]
-        blacklistFoldersAP=['/home/username']
-        filenameAP='/home/username/file1.txt'
-        self.failUnless(OFL.file_is_blacklisted_based_on_fileAP_and_folderAP_lists(filenameAP,blacklistFilesAP,blacklistFoldersAP))
-
-    def test_4(self):
-        blacklistFilesAP=[]
-        blacklistFoldersAP=['/home/username/']
-        filenameAP='/home/username/file1.txt'
-        self.failUnless(OFL.file_is_blacklisted_based_on_fileAP_and_folderAP_lists(filenameAP,blacklistFilesAP,blacklistFoldersAP))
-
-#head
-class TestGetListOfFilesInGlobFile(unittest.TestCase):
-    def setUp(self):
-        #create 3 empty test folders
-
-        self.folder1=os.path.join(DocumentsFolderAP,'TemporaryOrgFixLinksTests1')
-        self.folder2=os.path.join(self.folder1,'TemporaryOrgFixLinksTests2')
-        self.folder3=os.path.join(self.folder2,'TemporaryOrgFixLinksTests3')
-
-        #erase folder1 and all its contents
-        if os.path.exists(self.folder1):
-            shutil.rmtree(self.folder1)
-
-        os.makedirs(self.folder3)  #create folder1, folder2, folder3
-
-        self.globFilename='testGetListOfFilesInGlobFile.txt'
-
-        os.chdir(origWorkingDir)
-
-    def tearDown(self):
-        #erase folder1 and all its contents
-        if os.path.exists(self.folder1):
-            shutil.rmtree(self.folder1)
-
-        os.makedirs(self.folder3)  #create folder1, folder2, folder3
-
-        if os.path.exists(self.globFilename):
-            os.remove(self.globFilename)
-
-        os.chdir(origWorkingDir)
-
-    def test_1(self):
-        '''find one folder identified by abs path filename'''
-        globFileLines=[self.folder1+'\n']
-
-        globFile=open(self.globFilename,'w')
-        globFile.writelines(globFileLines)
-        globFile.close()
-
-        expectedOrgFileList=[]
-        expectedFolderList=[self.folder1]
-
-        ret1,ret2=OFL.get_list_of_files_in_glob_file(self.globFilename,origWorkingDir)
-        self.assertEqual(expectedOrgFileList,ret1)
-        self.assertEqual(expectedFolderList,ret2)
-
-    def test_1B(self):
-        '''what about a trailing slash?'''
-        globFileLines=[self.folder1+'/'+'\n']  #trailing slash
-
-        globFile=open(self.globFilename,'w')
-        globFile.writelines(globFileLines)
-        globFile.close()
-
-        expectedOrgFileList=[]
-        expectedFolderList=[self.folder1] #no trailing slash
-
-        ret1,ret2=OFL.get_list_of_files_in_glob_file(self.globFilename,origWorkingDir)
-        self.assertEqual(expectedOrgFileList,ret1)
-        self.assertEqual(expectedFolderList,ret2) #no trailing slash
-
-    def test_2(self):
-        '''find one org file identified by abs path filename'''
-        testFilenameAP=os.path.join(self.folder3,'testFile.org')
-
-        #http://stackoverflow.com/questions/12654772/create-empty-file-using-python
-        open(testFilenameAP,'a').close()
-
-        globFileLines=[testFilenameAP+'\n']
-
-        globFile=open(self.globFilename,'w')
-        globFile.writelines(globFileLines)
-        globFile.close()
-
-        expectedOrgFileList=[testFilenameAP]
-        expectedFolderList=[]
-
-        ret1,ret2=OFL.get_list_of_files_in_glob_file(self.globFilename,origWorkingDir)
-        self.assertEqual(expectedOrgFileList,ret1)
-        self.assertEqual(expectedFolderList,ret2)
-
-        os.remove(testFilenameAP)
-
-    def test_3(self):
-        '''illustrate abs path vs relative path behavior'''
-        if os.path.isdir('TemporaryOrgFixLinksTests3'):
-            #your filesystem somehow has this folder in the current working directory, so this test will not work as intended
-            pass
-        else:
-            globFileLines=['TemporaryOrgFixLinksTests3'+'\n']
-
-            globFile=open(self.globFilename,'w')
-            globFile.writelines(globFileLines)
-            globFile.close()
-
-            expectedOrgFileList=[]
-            expectedFolderList=[]  #since working directory does not have folder 'TemporaryOrgFixLinksTests3'
-
-            ret1,ret2=OFL.get_list_of_files_in_glob_file(self.globFilename,origWorkingDir)
-            self.assertEqual(expectedOrgFileList,ret1)
-            self.assertEqual(expectedFolderList,ret2)
-
-    def test_4(self):
-        '''illustrate abs path vs relative path behavior'''
-
-        os.chdir(self.folder2)
-
-        globFileLines=['TemporaryOrgFixLinksTests3'+'\n']
-            
-        globFile=open(self.globFilename,'w')
-        globFile.writelines(globFileLines)
-        globFile.close()
-
-        expectedOrgFileList=[]
-        expectedFolderList=[self.folder3]  #this is abs path
-        # expectedFolderList=['TemporaryOrgFixLinksTests3']
-
-        ret1,ret2=OFL.get_list_of_files_in_glob_file(self.globFilename,os.getcwd())
-        self.assertEqual(expectedOrgFileList,ret1)
-        self.assertEqual(expectedFolderList,ret2)
-
-    def test_5(self):
-        '''illustrate abs path vs relative path behavior'''
-
-        # os.chdir(self.folder2)
-
-        globFileLines=['TemporaryOrgFixLinksTests3'+'\n']
-            
-        globFile=open(self.globFilename,'w')
-        globFile.writelines(globFileLines)
-        globFile.close()
-
-        expectedOrgFileList=[]
-        # expectedFolderList=[self.folder3]
-        # expectedFolderList=['TemporaryOrgFixLinksTests3']
-        expectedFolderList=[]
-
-        ret1,ret2=OFL.get_list_of_files_in_glob_file(self.globFilename,origWorkingDir)
-        self.assertEqual(expectedOrgFileList,ret1)
-        self.assertEqual(expectedFolderList,ret2)
-
 #head
 class TestGetListOfAllRepairableOrgFiles(unittest.TestCase):
     def setUp(self):
@@ -4797,10 +4853,10 @@ class TestGetListOfAllRepairableOrgFiles(unittest.TestCase):
         os.makedirs(folder5AP)
 
         testFile4AP=os.path.join(self.folder4AP,'testFile4.org')
-        open(testFile4AP,'a').close()
+        touch_file(testFile4AP)
 
         testFile5AP=os.path.join(folder5AP,'testFile5.org')
-        open(testFile5AP,'a').close()
+        touch_file(testFile5AP)
 
         retList=OFL.get_list_of_all_repairable_org_files(testFile4AP)
 
@@ -6365,6 +6421,11 @@ class TestsOfRepairingLinksToNonOrgFilesPunc(unittest.TestCase):
 #head
 #head
 #head
+#head
+def touch_file(filename1):
+    #http://stackoverflow.com/questions/12654772/create-empty-file-using-python
+    open(filename1,'a').close()
+
 #head
 def reset_database():
     #if reset_database is inserted at the beginning of every single test, runtime of this script goes up drastically

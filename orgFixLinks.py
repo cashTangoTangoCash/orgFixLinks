@@ -3114,6 +3114,376 @@ class OrgFile(LocalFile):
         # logging.debug('three unique ID parameters for %s have been found to be mutually consistent',self.filenameAP)
 
     #head
+    def processOutwardLinksToOrgFiles(userFixesLinksManually=False,isDryRun=False,showLog=False,repairLinks=True,deleteOldLogs=True):
+        #don't want old outward links from fileA in linksto table: wipe them out
+        db1.linksToOrgTable.removeEntriesMatchingFromFile(self)
+
+        self.addUniqueIDsFromHeaderToOutgoingOrgLinkTargets() #this adds unique ID from header node of self to target files of links
+
+        logging.debug('Now analyzing outward links to org files in %s' % self.filenameAP)
+
+        DocumentsFoldernameAP=os.path.join(os.path.expanduser('~'),'Documents')
+
+        #setting: only want to process links that point in Documents folder; a whitelist
+        linksToProcess=[a for a in self.linksToOrgFilesList if (a.targetObj.filenameAP.startswith(DocumentsFoldernameAP))]
+
+        for linkB in linksToProcess: #for each outgoing link to an org file
+
+            fileB=linkB.targetObj
+            logging.debug('Now analyzing %s which is outward link from fileA %s' % (fileB.filenameAP,self.filenameAP))
+
+            originalFileB=linkB.originalTargetObj
+            linkB.testIfWorking()
+
+            if fileB.exists:  #linkB is working
+                linkB.databaseHousekeepingForWorkingLink()
+                continue  #go on to next link
+
+            if (not repairLinks):
+                linkB.databaseHousekeepingForBrokenLink()
+                continue
+
+            if file_is_blacklisted_based_on_single_folder_name_in_path(fileB.filenameAP,blackListFolderBasenamesForLinkRepair):
+                logging.debug('Not repairing link to %s since a folder in its path is in blackListFolderBasenamesForLinkRepair' % fileB.filenameAP)
+                linkB.databaseHousekeepingForBrokenLink()
+                continue
+
+            if file_is_blacklisted_based_on_fileAP_and_folderAP_lists(fileB.filenameAP,orgFilesNotToRepairLinksTo,foldersWithFilesNotToRepairLinksTo):
+                logging.debug('Not repairing link to %s since it is blacklisted in .OFLDoNotRepairLink' % fileB.filenameAP)
+                linkB.databaseHousekeepingForBrokenLink()
+                continue
+
+            try:
+                if fileB.uniqueIDFromHeader:
+                    #look for unique ID from header in database
+                    aRetVal=linkB.attemptRepairUsingUniqueIDFromHeaderAndDatabase()
+                    fileB=linkB.targetObj
+                    if aRetVal=="repaired" or aRetVal=="databaseShowsMaxRepairAttempts": continue
+                    if aRetVal=="databaseRecordIsAMissingFile" or aRetVal=="noDatabaseRecordFound":
+                        #use bash find to get list of files with same basename; look inside each one for unique ID from header
+                        #idea is: file was moved to different folder, but basename was unchanged
+                        aRetVal=linkB.attemptRepairViaUniqueIDFromHeaderAndBashFind()
+                        fileB=linkB.targetObj
+                        if aRetVal=="repaired": continue
+                        if not aRetVal:  #find command did not find a file with same basename and containing desired unique ID
+                            #now walk the files on disk and look inside each one for desired unique ID
+                            aRetVal=linkB.attemptRepairByLookingInsideFilesForUniqueID(fileB.uniqueIDFromHeader)
+                            if aRetVal=="repaired": continue
+                            if not aRetVal:
+                                linkB.giveUpOnRepairing()
+                                continue
+                if not fileB.uniqueIDFromHeader:
+                    #look for database entry with same filenameAP
+                    aRetVal=linkB.attemptRepairViaCheckDatabaseForNameMatch()
+                    fileB=linkB.targetObj
+                    if aRetVal=="repaired" or aRetVal=="databaseShowsMaxRepairAttempts": continue
+                    if aRetVal=="databaseRecordIsAMissingFile":
+                        if fileB.uniqueIDFromDatabase:
+                            aRetVal=linkB.attemptRepairViaUniqueIDFromDatabaseAndBashFind()
+                            fileB=linkB.targetObj
+                            if aRetVal=="repaired": continue
+                            if not aRetVal:  #find command did not find a file with same basename and containing desired unique ID
+                                #now walk the files on disk and look inside each one for desired unique ID
+                                aRetVal=linkB.attemptRepairByLookingInsideFilesForUniqueID(fileB.uniqueIDFromDatabase)
+                                fileB=linkB.targetObj
+                                if aRetVal=="repaired": continue
+                                if not aRetVal:
+                                    linkB.giveUpOnRepairing()
+                                    continue
+                        else:  #file is in database by filenameAP and database has no unique ID
+                            # attempt to repair via bash find and same basename; take most recently modified
+                            aRetVal=linkB.attemptRepairViaBasenameMatchOnDisk()
+                            fileB=linkB.targetObj
+                            if aRetVal=="repaired": continue
+
+                            #try changing basename from name.org to nameMain.org
+                            aRetVal=linkB.attemptRepairByAddingMain()
+                            fileB=linkB.targetObj
+                            if aRetVal=="repaired": continue
+
+                            if fileB.filenameAP.endswith('Main.org'):
+                                aRetVal=linkB.attemptRepairByRemovingMain()
+                                fileB=linkB.targetObj
+                                if aRetVal=="repaired": continue
+
+                    #look for database entry with same basename
+                    #skip; seems like too loose of a match
+
+                    #try table previousFilenamesOrg
+                    aRetVal=linkB.attemptRepairUsingTablePreviousFilenames()
+                    fileB=linkB.targetObj
+                    if aRetVal=="repaired" or aRetVal=="databaseShowsMaxRepairAttempts": continue
+                    if aRetVal=="databaseRecordIsAMissingFile":
+                        #is there a unique ID in database?
+                        if fileB.uniqueIDFromDatabase:
+                            aRetVal=linkB.attemptRepairViaExpectedUniqueIDAndBashFind(fileB.uniqueIDFromDatabase)
+                            fileB=linkB.targetObj
+                            if aRetVal=="repaired": continue
+                            if not aRetVal:  #find command did not find a file with same basename and containing desired unique ID
+                                #now walk the files on disk and look inside each one for desired unique ID
+                                aRetVal=linkB.attemptRepairByLookingInsideFilesForUniqueID(fileB.uniqueIDFromDatabase)
+                                fileB=linkB.targetObj
+                                if aRetVal=="repaired": continue
+                                if not aRetVal:
+                                    linkB.giveUpOnRepairing()
+                                    continue
+                        else:  #database entry has no unique ID
+                            #attempt to repair via bash find and same basename; take most recently modified
+                            aRetVal=linkB.attemptRepairViaBasenameMatchOnDisk()
+                            fileB=linkB.targetObj
+                            if aRetVal=="repaired": continue
+
+                            #try changing basename from name.org to nameMain.org
+                            aRetVal=linkB.attemptRepairByAddingMain()
+                            fileB=linkB.targetObj
+                            if aRetVal=="repaired": continue
+
+                            if fileB.filenameAP.endswith('Main.org'):
+                                aRetVal=linkB.attemptRepairByRemovingMain()
+                                fileB=linkB.targetObj
+                                if aRetVal=="repaired": continue
+
+                    #try table symlinksOrg
+                    aRetVal=linkB.attemptRepairUsingSymlinksTable()
+                    fileB=linkB.targetObj
+                    if aRetVal=="repaired" or aRetVal=="databaseShowsMaxRepairAttempts": continue
+                    if aRetVal=="databaseRecordIsAMissingFile":
+                        #is there a unique ID in database?
+                        if fileB.uniqueIDFromDatabase:
+                            aRetVal=linkB.attemptRepairViaExpectedUniqueIDAndBashFind(fileB.uniqueIDFromDatabase)
+                            fileB=linkB.targetObj
+                            if aRetVal=="repaired": continue
+                            if not aRetVal:  #find command did not find a file with same basename and containing desired unique ID
+                                #now walk the files on disk and look inside each one for desired unique ID
+                                aRetVal=linkB.attemptRepairByLookingInsideFilesForUniqueID(fileB.uniqueIDFromDatabase)
+                                fileB=linkB.targetObj
+                                if aRetVal=="repaired": continue
+                                if not aRetVal:
+                                    linkB.giveUpOnRepairing()
+                                    continue
+                        else:  #database entry has no unique ID
+                            #attempt to repair via bash find and same basename; take most recently modified
+                            aRetVal=linkB.attemptRepairViaBasenameMatchOnDisk()
+                            fileB=linkB.targetObj
+                            if aRetVal=="repaired": continue
+
+                            #try changing basename from name.org to nameMain.org
+                            aRetVal=linkB.attemptRepairByAddingMain()
+                            fileB=linkB.targetObj
+                            if aRetVal=="repaired": continue
+
+                            if fileB.filenameAP.endswith('Main.org'):
+                                aRetVal=linkB.attemptRepairByRemovingMain()
+                                fileB=linkB.targetObj
+                                if aRetVal=="repaired": continue
+
+                    #try using bash find to look for basename match on disk
+                    aRetVal=linkB.attemptRepairViaBasenameMatchOnDisk()
+                    fileB=linkB.targetObj
+                    if aRetVal=="repaired": continue
+
+                    #try changing basename from name.org to nameMain.org
+                    aRetVal=linkB.attemptRepairByAddingMain()
+                    fileB=linkB.targetObj
+                    if aRetVal=="repaired": continue
+
+                    if fileB.filenameAP.endswith('Main.org'):
+                        aRetVal=linkB.attemptRepairByRemovingMain()
+                        fileB=linkB.targetObj
+                        if aRetVal=="repaired": continue
+
+                    try:
+                        if pastInteractiveRepairs[fileB.filenameAP]=='UserChoseToSkipRepairingThis':
+                            logging.debug('Dictionary of past interactive repairs identifies %s as a link you skipped manually repairing in the past; skip repairing it' % fileB.filenameAP)
+                            linkB.giveUpOnRepairing()
+                            continue
+                    except KeyError:
+                        pass
+
+                    aRetVal=linkB.attemptRepairViaPastUserRepairs()
+                    fileB=linkB.targetObj
+                    if aRetVal=="repaired": continue
+
+                    if userFixesLinksManually and self.userManuallyFixesMyOutgoingLinks:
+                        aRetVal=linkB.attemptRepairViaInteractingWithUser()
+                        if aRetVal=='Quit':
+                            os.chdir(origFolder)
+                            logging.debug('Changed directory to %s' % origFolder)
+
+                            if deleteOldLogs:
+                                remove_old_logs('*OrgFixLinks.log')
+
+                            db1.conn.commit()
+                            # db1.cur.close()
+
+                            if (not isDryRun) and (__name__=="__main__"):
+                                shutil.copy2(dryRunDatabaseName,databaseName)
+                                logging.debug('Real run not dry run: Copied %s to %s' % (dryRunDatabaseName,databaseName))
+
+                            if showLog:
+                                display_log_file()
+
+                            return 'Quit'
+
+                        fileB=linkB.targetObj
+                        if aRetVal=="repaired": continue
+
+                    linkB.giveUpOnRepairing()
+                    continue
+            except Exception as err1:
+                linkB.giveUpOnRepairing()
+                logging.error('An exception occured while attempting to repair link %s in file %s: %s' % (linkB.targetObj.filenameAP,linkB.sourceFile.filenameAP,err1))
+                continue
+
+    #head
+    def processOutwardLinksToNonOrgFiles(userFixesLinksManually=False,isDryRun=False,showLog=False,repairLinks=True,deleteOldLogs=True):
+        #don't want old outward links from fileA in linksto table: wipe them out
+
+        db1.linksToNonOrgTable.removeEntriesMatchingFromFile(self)
+
+        logging.debug('Now analyzing outward links to non org files in %s' % self.filenameAP)
+
+        DocumentsFoldernameAP=os.path.join(os.path.expanduser('~'),'Documents')
+
+        #setting: only want to process links that point in Documents folder; a whitelist
+        linksToProcess=[a for a in self.linksToNonOrgFilesList if (a.targetObj.filenameAP.startswith(DocumentsFoldernameAP))]
+
+        for linkB in linksToProcess: #for each outgoing link to a non org file
+
+            fileB=linkB.targetObj
+            logging.debug('Now analyzing %s which is outward link from fileA %s' % (fileB.filenameAP,self.filenameAP))
+
+            originalFileB=linkB.originalTargetObj
+            linkB.testIfWorking()
+
+            if fileB.exists:  #linkB is working
+                linkB.databaseHousekeepingForWorkingLink()
+                continue  #go on to next link
+
+            if (not repairLinks):
+                linkB.databaseHousekeepingForBrokenLink()
+                continue
+
+            if file_is_blacklisted_based_on_single_folder_name_in_path(fileB.filenameAP,blackListFolderBasenamesForLinkRepair):
+                logging.debug('Not repairing link to %s since a folder in its path is in blackListFolderBasenamesForLinkRepair' % fileB.filenameAP)
+                linkB.databaseHousekeepingForBrokenLink()
+                continue
+
+            if file_is_blacklisted_based_on_fileAP_and_folderAP_lists(fileB.filenameAP,nonOrgFilesNotToRepairLinksTo,foldersWithFilesNotToRepairLinksTo):
+                logging.debug('Not repairing link to %s since it is blacklisted in .OFLDoNotRepairLink' % fileB.filenameAP)
+                linkB.databaseHousekeepingForBrokenLink()
+                continue
+
+            try:
+                #look for database entry with same filenameAP
+                aRetVal=linkB.attemptRepairViaCheckDatabaseForNameMatch()
+                fileB=linkB.targetObj
+                if aRetVal=="repaired" or aRetVal=="databaseShowsMaxRepairAttempts": continue
+                if aRetVal=="databaseRecordIsAMissingFile":
+                    #attempt to repair via bash find and same basename; take most recently modified
+                    if '%20' in fileB.filenameAP:
+                        #http://stackoverflow.com/questions/11768070/transform-url-string-into-normal-string-in-python-20-to-space-etc
+                        aRetVal=linkB.attemptRepairViaBasenameMatchOnDisk(transform1=True)
+                        fileB=linkB.targetObj
+                        if aRetVal=="repaired": continue
+
+                    aRetVal=linkB.attemptRepairViaBasenameMatchOnDisk()
+                    fileB=linkB.targetObj
+                    if aRetVal=="repaired": continue
+
+                #look for database entry with same basename
+                #skip; seems like too loose of a match
+
+                #try table previousFilenamesNonOrg
+                aRetVal=linkB.attemptRepairUsingTablePreviousFilenames()
+                fileB=linkB.targetObj
+                if aRetVal=="repaired" or aRetVal=="databaseShowsMaxRepairAttempts": continue
+                if aRetVal=="databaseRecordIsAMissingFile":
+                    #attempt to repair via bash find and same basename; take most recently modified
+
+                    if '%20' in fileB.filenameAP:
+                        #http://stackoverflow.com/questions/11768070/transform-url-string-into-normal-string-in-python-20-to-space-etc
+                        aRetVal=linkB.attemptRepairViaBasenameMatchOnDisk(transform1=True)
+                        fileB=linkB.targetObj
+                        if aRetVal=="repaired": continue
+
+                    aRetVal=linkB.attemptRepairViaBasenameMatchOnDisk()
+                    fileB=linkB.targetObj
+                    if aRetVal=="repaired": continue
+
+                #try table symlinksNonOrg
+                aRetVal=linkB.attemptRepairUsingSymlinksTable()
+                fileB=linkB.targetObj
+                if aRetVal=="repaired" or aRetVal=="databaseShowsMaxRepairAttempts": continue
+                if aRetVal=="databaseRecordIsAMissingFile":
+                    #attempt to repair via bash find and same basename; take most recently modified
+
+                    if '%20' in fileB.filenameAP:
+                        #http://stackoverflow.com/questions/11768070/transform-url-string-into-normal-string-in-python-20-to-space-etc
+                        aRetVal=linkB.attemptRepairViaBasenameMatchOnDisk(transform1=True)
+                        fileB=linkB.targetObj
+                        if aRetVal=="repaired": continue
+
+                    aRetVal=linkB.attemptRepairViaBasenameMatchOnDisk()
+                    fileB=linkB.targetObj
+                    if aRetVal=="repaired": continue
+
+                #try using bash find to look for basename match on disk
+
+                if '%20' in fileB.filenameAP:
+                    #http://stackoverflow.com/questions/11768070/transform-url-string-into-normal-string-in-python-20-to-space-etc
+                    aRetVal=linkB.attemptRepairViaBasenameMatchOnDisk(transform1=True)
+                    fileB=linkB.targetObj
+                    if aRetVal=="repaired": continue
+
+                aRetVal=linkB.attemptRepairViaBasenameMatchOnDisk()
+                fileB=linkB.targetObj
+                if aRetVal=="repaired": continue
+
+                try:
+                    if pastInteractiveRepairs[fileB.filenameAP]=='UserChoseToSkipRepairingThis':
+                        logging.debug('Dictionary of past interactive repairs identifies %s as a link you skipped manually repairing in the past; skip repairing it' % fileB.filenameAP)
+                        linkB.giveUpOnRepairing()
+                        continue
+                except KeyError:
+                    pass
+
+                aRetVal=linkB.attemptRepairViaPastUserRepairs()
+                fileB=linkB.targetObj
+                if aRetVal=="repaired": continue
+
+                if userFixesLinksManually and self.userManuallyFixesMyOutgoingLinks:
+                    aRetVal=linkB.attemptRepairViaInteractingWithUser()
+                    if aRetVal=='Quit':
+                        os.chdir(origFolder)
+                        logging.debug('Changed directory to %s' % origFolder)
+
+                        if deleteOldLogs:
+                            remove_old_logs('*OrgFixLinks.log')
+
+                        db1.conn.commit()
+                        # db1.cur.close()
+
+                        if (not isDryRun) and (__name__=="__main__"):
+                            shutil.copy2(dryRunDatabaseName,databaseName)
+                            logging.debug('Real run not dry run: Copied %s to %s' % (dryRunDatabaseName,databaseName))
+
+                        if showLog:
+                            display_log_file()
+
+                        return 'Quit'
+                    fileB=linkB.targetObj
+                    if aRetVal=="repaired": continue
+
+                linkB.giveUpOnRepairing()
+                continue
+
+            except Exception as err1:
+                linkB.giveUpOnRepairing()
+                logging.error('An exception occured while attempting to repair link %s in file %s: %s' % (linkB.targetObj.filenameAP,linkB.sourceFile.filenameAP,err1))
+                continue
+
+    #head
     def makeListOfOrgFilesThatLinkToMe(self):
         '''OrgFile class'''
 
@@ -3629,38 +3999,12 @@ def display_log_file():
         subprocess.Popen(cmd1.split(),shell=False).wait()
 
 #head
-def walk_files_looking_for_name_match(nameAP):
-    '''
-    nameAP is absolute path filename
-    '''
-
-    # basenameToMatch=os.path.basename(nameAP)
-    (pathRemainder,basenameToMatch)=os.path.split(nameAP)
-
-    dirsVisitedBeforeAP=[]
-
-    userFolderFilenameAP=os.path.expanduser('~')  # should evaluate to /home/userName
-
-    while (pathRemainder != userFolderFilenameAP) and (pathRemainder != (userFolderFilenameAP+'/')):
-        #last folder to walk should be Documents
-        for (dirname, dirs, files) in os.walk(pathRemainder):
-            dirsAP=[os.path.join(dirname,a) for a in dirs]
-            for dir1 in dirsVisitedBeforeAP:
-                if dir1 in dirsAP:
-                    dirs.remove(os.path.split(dir1)[1])
-            if 'env' in dirs:
-                dirs.remove('env')  #don't visit env directories
-            if 'venv' in dirs:
-                dirs.remove('venv')  #don't visit venv directories
-            if (basenameToMatch in files) or (basenameToMatch in dirs):
-                return os.path.join(dirname,basenameToMatch)
-            dirsVisitedBeforeAP.append(dirname)
-        (pathRemainder,base1)=os.path.split(pathRemainder)
-
 def walk_org_files_looking_for_unique_id_match(uniqueIDToMatch,oldNameAP):
     '''
     oldNameAP is used to choose a folder to start looking in
     '''
+
+    #TODO seems like this odd mix of top down os.walk and bottom-up choice of initial folder for os.walk needs rethinking
 
     (pathRemainder,basename1)=os.path.split(oldNameAP)
 
@@ -3671,14 +4015,25 @@ def walk_org_files_looking_for_unique_id_match(uniqueIDToMatch,oldNameAP):
     while (pathRemainder != userFolderFilenameAP) and (pathRemainder != (userFolderFilenameAP+'/')):
         #last folder to walk should be Documents
         for (dirname, dirs, files) in os.walk(pathRemainder):
+
+            if folder_is_blacklisted_based_on_single_folder_name_in_path(dirname,blackListFolderBasenamesForLinkRepair):
+                for dir in dirs:
+                    dirs.remove(dir)  #the walk is influenced by in-place changes to dirs: https://docs.python.org/2/library/os.html
+                    # logging.debug('Not walking into folder %s due to blacklist blackListFolderBasenamesForLinkRepair' % dirname)
+                continue
+
+            #remove directories visited before from walk
             dirsAP=[os.path.join(dirname,a) for a in dirs]
             for dir1 in dirsVisitedBeforeAP:
                 if dir1 in dirsAP:
                     dirs.remove(os.path.split(dir1)[1])
-            if 'env' in dirs:
-                dirs.remove('env')  #don't visit env directories
-            if 'venv' in dirs:
-                dirs.remove('venv')  #don't visit venv directories
+
+            for dir in dirs:
+                if dir in blackListFolderBasenamesForLinkRepair:
+                    dirs.remove(dir)
+
+            #TODO could add second mode of blacklisting as in get_list_of_all_repairable_org_files
+
             #select list of files that do not appear in database
             knownBasenamesInDirname=db1.myOrgFilesTable.lookupBasenamesInFolder(pathRemainder)  # a list; TODO could also get known symlink names and known previous filenames
             allBasenamesInDirnameThatAreOrg=[a for a in files if a.endswith('.org')]
@@ -3686,7 +4041,7 @@ def walk_org_files_looking_for_unique_id_match(uniqueIDToMatch,oldNameAP):
                 if (not knownBasenamesInDirname) or (name not in knownBasenamesInDirname):  #database does not have this basename in this folder
                     newOrgFile=OrgFile(os.path.join(dirname,name),False)
                     if newOrgFile.exists:  #if it was broken symlink, it will not exist
-                        newOrgFile.lookInsideForUniqueID()
+                        newOrgFile.lookInsideForUniqueID()  #does not require full representation to be made
                         if newOrgFile.uniqueID and newOrgFile.uniqueID==uniqueIDToMatch:
                             return newOrgFile
                         else:
@@ -3698,8 +4053,7 @@ def walk_org_files_looking_for_unique_id_match(uniqueIDToMatch,oldNameAP):
 
 def find_all_name_matches_via_bash(textToMatch):
     '''
-    my python effort walk_files_looking_for_name_match runs slowly
-    use linux utilities to find files faster
+    use linux utilities to find files quickly
     expecting this to return list of name matches
     sorted by last modified with most recent last
 
@@ -3731,8 +4085,7 @@ def find_all_name_matches_via_bash(textToMatch):
 
 def find_all_name_matches_via_bash_for_directories(textToMatch):
     '''
-    my python effort walk_files_looking_for_name_match runs slowly
-    use linux utilities to find files faster
+    use linux utilities to find files quickly.
     expecting this to return list of name matches
     sorted by last modified with most recent last
 
@@ -3760,12 +4113,16 @@ def find_all_name_matches_via_bash_for_directories(textToMatch):
     return returnList1
 
 #head
+#head
+#head functions used in blacklisting
 def get_folder_name_AP_given_filename(filename1):
     '''return absolute path name of the folder which contains filename1'''
 
     #will still return a folder, even if the file does not exist on disk
 
-    folderName=os.path.split(filename1)[0]
+    filename1AP=os.path.abspath(filename1)
+
+    folderName=os.path.split(filename1AP)[0]
     if folderName:
         return folderName
     else:  #foldername expected to be ''
@@ -3815,6 +4172,42 @@ def get_list_of_folder_names_given_foldername(foldernameAP1):
 
     return retList
 
+#head functions used for blacklisting based on a single folder in a path; e.g. do not have env folder in the path
+def folder_is_blacklisted_based_on_single_folder_name_in_path(dirnameAP,blacklistOfSingleFolderNames):
+
+    if os.path.exists(dirnameAP):
+        assert os.path.isdir(dirnameAP),'Misuse of folder_is_blacklisted_based_on_single_folder_name_in_path: %s exists on disk but is not a folder' % dirnameAP
+
+    if dirnameAP.endswith('/'):
+        dirnameAP=dirnameAP.rstrip('/')
+
+    dirnameFolderNameList=get_list_of_folder_names_given_foldername(dirnameAP)
+
+    blacklisted=False
+    for folderBasename in blacklistOfSingleFolderNames:
+        if folderBasename in dirnameFolderNameList:
+            return True
+
+    return False
+
+def file_is_blacklisted_based_on_single_folder_name_in_path(filenameAP,blacklistOfSingleFolderNames):
+
+    if os.path.exists(filenameAP):
+        assert (not os.path.isdir(filenameAP)),'Misuse of file_is_blacklisted_based_on_single_folder_name_in_path: %s exists on disk and is a folder' % filenameAP
+
+    assert (not filenameAP.endswith('/')),'Misuse of file_is_blacklisted_based_on_single_folder_name_in_path: %s has trailing slash' % filenameAP
+
+    filenameFolderNameList=get_list_of_folder_names_given_filename(filenameAP)
+
+    blacklisted=False
+    for folderBasename in blacklistOfSingleFolderNames:
+        if folderBasename in filenameFolderNameList:
+            return True
+
+    return False
+
+#head
+#head functions used for blacklisting based on lists of filenameAPs, foldernameAPs
 def one_list_starts_with_another(list1,list2):
     if len(list1)<len(list2):
         return False
@@ -3825,15 +4218,77 @@ def one_list_starts_with_another(list1,list2):
             return False
     return True
 
-def is_blacklisted_based_on_a_foldername(filenameAP1):
-    '''this assumes filenameAP1 is not a folder'''
-    folderList=get_list_of_folder_names_given_filename(filenameAP1)
-    for a in blackListFolderBasenames:
-        if a in folderList:
+def file_is_blacklisted_based_on_fileAP_and_folderAP_lists(filenameAP,filenameAPBlacklist,foldernameAPBlacklist):
+    if filenameAP in filenameAPBlacklist:
+        return True
+
+    folderListFile1=get_list_of_folder_names_given_filename(filenameAP)
+    for blacklistFolder in foldernameAPBlacklist:
+        folderListBlacklistFolder=get_list_of_folder_names_given_foldername(blacklistFolder)
+
+        if one_list_starts_with_another(folderListFile1,folderListBlacklistFolder):
             return True
 
     return False
 
+#head
+def get_list_of_files_in_glob_file(globFilename,workingDir,fileType='org'):
+    '''read the file globFilename and return lists of files and directories referenced in it via glob.glob'''
+
+    #https://pymotw.com/2/glob/
+
+    orgFileMatches=[]
+    nonOrgFileMatches=[]
+    folderMatches=[]
+
+    if os.path.exists(globFilename):
+        file1=open(globFilename,'r')
+        lines1=file1.readlines()
+        file1.close()
+
+        os.chdir(workingDir)
+
+        for line1 in lines1:
+            #TODO: the glob approach will reject anything that does not exist on disk, so cannot ignore something that is not on disk (or unencrypted); this is not ideal
+
+            matches1=[a for a in glob.glob(line1.strip())]  # a list, no matter what
+
+            dirsInMatches1=[a for a in matches1 if os.path.isdir(a)]
+            dirsInMatches1_NTS=[a.rstrip('/') for a in dirsInMatches1]  #NTS=no trailing slash
+            dirsInMatches1_AP=[os.path.abspath(a) for a in dirsInMatches1_NTS]  #make sure all are absolute path
+            folderMatches.extend(dirsInMatches1_AP)
+        
+            matches2=[a for a in matches1 if (not (a in dirsInMatches1))]
+
+            orgFilenamesInMatches2=[a for a in matches2 if a.endswith('.org')]
+            orgFilenamesInMatches2_AP=[os.path.abspath(a) for a in orgFilenamesInMatches2]
+            orgFileMatches.extend(orgFilenamesInMatches2_AP)
+
+            nonOrgFilenamesInMatches2=[a for a in matches2 if (not a.endswith('.org'))]
+            nonOrgFileMatches.extend(nonOrgFilenamesInMatches2)
+
+        os.chdir(origFolder)
+
+        if fileType=='org':
+            return orgFileMatches,folderMatches
+        else:
+            return nonOrgFileMatches,folderMatches
+    else:
+        return [],[]
+
+#head
+#head composite blacklist for a file to spider
+def file_to_be_spidered_is_blacklisted_composite(filenameAP1):
+    DocumentsFoldernameAP=os.path.join(os.path.expanduser('~'),'Documents')
+
+    if (not filenameAP1.startswith(DocumentsFoldernameAP)):
+        return True  #blacklisted: only want to spider inside Documents folder
+
+    #LEFT OFF LEFTOFF look at process links methods in OrgFile
+
+    return False
+
+#head
 #head
 def set_up_database():
     global db1
@@ -4120,356 +4575,10 @@ def operate_on_fileA(filename,userFixesLinksManually=False,runDebugger=False,deb
         raise CannotReconcileFileWithDatabaseError("Could not reconcile %s with database" % fileA.filenameAP)
 
     #((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((
-
-    #don't want old outward links from fileA in linksto table: wipe them out
-    db1.linksToOrgTable.removeEntriesMatchingFromFile(fileA)
-    db1.linksToNonOrgTable.removeEntriesMatchingFromFile(fileA)
-
-    #now go through the list of outgoing links to org files
-    fileA.addUniqueIDsFromHeaderToOutgoingOrgLinkTargets() #this adds unique ID from header node of fileA to target files of links
-
-    # raise Exception("exception for test purposes")
-
-    logging.debug('Now analyzing outward links to org files in %s' % fileA.filenameAP)
-
-    linkBlacklistStrings=['/env/','/venv/','/PStuff/']  #TODO setting modify for your own usage
-
-    DocumentsFoldernameAP=os.path.join(os.path.expanduser('~'),'Documents')
-
-    #only want to fix links that point in Documents folder
-    for linkB in [a for a in fileA.linksToOrgFilesList if (a.targetObj.filenameAP.startswith(DocumentsFoldernameAP) and not [b for b in linkBlacklistStrings if (b in a.targetObj.filenameAP)])]:  #for each outgoing link to an org file
-
-        fileB=linkB.targetObj
-        logging.debug('Now analyzing %s which is outward link from fileA %s' % (fileB.filenameAP,fileA.filenameAP))
-
-        originalFileB=linkB.originalTargetObj
-        linkB.testIfWorking()
-
-        if fileB.exists:  #linkB is working
-            linkB.databaseHousekeepingForWorkingLink()
-            continue  #go on to next link
-
-        if (not repairLinks):
-            linkB.databaseHousekeepingForBrokenLink()
-            continue
-
-        try:
-            if fileB.uniqueIDFromHeader:
-                #look for unique ID from header in database
-                aRetVal=linkB.attemptRepairUsingUniqueIDFromHeaderAndDatabase()
-                fileB=linkB.targetObj
-                if aRetVal=="repaired" or aRetVal=="databaseShowsMaxRepairAttempts": continue
-                if aRetVal=="databaseRecordIsAMissingFile" or aRetVal=="noDatabaseRecordFound":
-                    #use bash find to get list of files with same basename; look inside each one for unique ID from header
-                    #idea is: file was moved to different folder, but basename was unchanged
-                    aRetVal=linkB.attemptRepairViaUniqueIDFromHeaderAndBashFind()
-                    fileB=linkB.targetObj
-                    if aRetVal=="repaired": continue
-                    if not aRetVal:  #find command did not find a file with same basename and containing desired unique ID
-                        #now walk the files on disk and look inside each one for desired unique ID
-                        aRetVal=linkB.attemptRepairByLookingInsideFilesForUniqueID(fileB.uniqueIDFromHeader)
-                        if aRetVal=="repaired": continue
-                        if not aRetVal:
-                            linkB.giveUpOnRepairing()
-                            continue
-            if not fileB.uniqueIDFromHeader:
-                #look for database entry with same filenameAP
-                aRetVal=linkB.attemptRepairViaCheckDatabaseForNameMatch()
-                fileB=linkB.targetObj
-                if aRetVal=="repaired" or aRetVal=="databaseShowsMaxRepairAttempts": continue
-                if aRetVal=="databaseRecordIsAMissingFile":
-                    if fileB.uniqueIDFromDatabase:
-                        aRetVal=linkB.attemptRepairViaUniqueIDFromDatabaseAndBashFind()
-                        fileB=linkB.targetObj
-                        if aRetVal=="repaired": continue
-                        if not aRetVal:  #find command did not find a file with same basename and containing desired unique ID
-                            #now walk the files on disk and look inside each one for desired unique ID
-                            aRetVal=linkB.attemptRepairByLookingInsideFilesForUniqueID(fileB.uniqueIDFromDatabase)
-                            fileB=linkB.targetObj
-                            if aRetVal=="repaired": continue
-                            if not aRetVal:
-                                linkB.giveUpOnRepairing()
-                                continue
-                    else:  #file is in database by filenameAP and database has no unique ID
-                        # attempt to repair via bash find and same basename; take most recently modified
-                        aRetVal=linkB.attemptRepairViaBasenameMatchOnDisk()
-                        fileB=linkB.targetObj
-                        if aRetVal=="repaired": continue
- 
-                        #try changing basename from name.org to nameMain.org
-                        aRetVal=linkB.attemptRepairByAddingMain()
-                        fileB=linkB.targetObj
-                        if aRetVal=="repaired": continue
-
-                        if fileB.filenameAP.endswith('Main.org'):
-                            aRetVal=linkB.attemptRepairByRemovingMain()
-                            fileB=linkB.targetObj
-                            if aRetVal=="repaired": continue
-
-                #look for database entry with same basename
-                #skip; seems like too loose of a match
-
-                #try table previousFilenamesOrg
-                aRetVal=linkB.attemptRepairUsingTablePreviousFilenames()
-                fileB=linkB.targetObj
-                if aRetVal=="repaired" or aRetVal=="databaseShowsMaxRepairAttempts": continue
-                if aRetVal=="databaseRecordIsAMissingFile":
-                    #is there a unique ID in database?
-                    if fileB.uniqueIDFromDatabase:
-                        aRetVal=linkB.attemptRepairViaExpectedUniqueIDAndBashFind(fileB.uniqueIDFromDatabase)
-                        fileB=linkB.targetObj
-                        if aRetVal=="repaired": continue
-                        if not aRetVal:  #find command did not find a file with same basename and containing desired unique ID
-                            #now walk the files on disk and look inside each one for desired unique ID
-                            aRetVal=linkB.attemptRepairByLookingInsideFilesForUniqueID(fileB.uniqueIDFromDatabase)
-                            fileB=linkB.targetObj
-                            if aRetVal=="repaired": continue
-                            if not aRetVal:
-                                linkB.giveUpOnRepairing()
-                                continue
-                    else:  #database entry has no unique ID
-                        #attempt to repair via bash find and same basename; take most recently modified
-                        aRetVal=linkB.attemptRepairViaBasenameMatchOnDisk()
-                        fileB=linkB.targetObj
-                        if aRetVal=="repaired": continue
-
-                        #try changing basename from name.org to nameMain.org
-                        aRetVal=linkB.attemptRepairByAddingMain()
-                        fileB=linkB.targetObj
-                        if aRetVal=="repaired": continue
-
-                        if fileB.filenameAP.endswith('Main.org'):
-                            aRetVal=linkB.attemptRepairByRemovingMain()
-                            fileB=linkB.targetObj
-                            if aRetVal=="repaired": continue
-
-                #try table symlinksOrg
-                aRetVal=linkB.attemptRepairUsingSymlinksTable()
-                fileB=linkB.targetObj
-                if aRetVal=="repaired" or aRetVal=="databaseShowsMaxRepairAttempts": continue
-                if aRetVal=="databaseRecordIsAMissingFile":
-                    #is there a unique ID in database?
-                    if fileB.uniqueIDFromDatabase:
-                        aRetVal=linkB.attemptRepairViaExpectedUniqueIDAndBashFind(fileB.uniqueIDFromDatabase)
-                        fileB=linkB.targetObj
-                        if aRetVal=="repaired": continue
-                        if not aRetVal:  #find command did not find a file with same basename and containing desired unique ID
-                            #now walk the files on disk and look inside each one for desired unique ID
-                            aRetVal=linkB.attemptRepairByLookingInsideFilesForUniqueID(fileB.uniqueIDFromDatabase)
-                            fileB=linkB.targetObj
-                            if aRetVal=="repaired": continue
-                            if not aRetVal:
-                                linkB.giveUpOnRepairing()
-                                continue
-                    else:  #database entry has no unique ID
-                        #attempt to repair via bash find and same basename; take most recently modified
-                        aRetVal=linkB.attemptRepairViaBasenameMatchOnDisk()
-                        fileB=linkB.targetObj
-                        if aRetVal=="repaired": continue
-
-                        #try changing basename from name.org to nameMain.org
-                        aRetVal=linkB.attemptRepairByAddingMain()
-                        fileB=linkB.targetObj
-                        if aRetVal=="repaired": continue
-
-                        if fileB.filenameAP.endswith('Main.org'):
-                            aRetVal=linkB.attemptRepairByRemovingMain()
-                            fileB=linkB.targetObj
-                            if aRetVal=="repaired": continue
-
-                #try using bash find to look for basename match on disk
-                aRetVal=linkB.attemptRepairViaBasenameMatchOnDisk()
-                fileB=linkB.targetObj
-                if aRetVal=="repaired": continue
-
-                #try changing basename from name.org to nameMain.org
-                aRetVal=linkB.attemptRepairByAddingMain()
-                fileB=linkB.targetObj
-                if aRetVal=="repaired": continue
-
-                if fileB.filenameAP.endswith('Main.org'):
-                    aRetVal=linkB.attemptRepairByRemovingMain()
-                    fileB=linkB.targetObj
-                    if aRetVal=="repaired": continue
-
-                try:
-                    if pastInteractiveRepairs[fileB.filenameAP]=='UserChoseToSkipRepairingThis':
-                        logging.debug('Dictionary of past interactive repairs identifies %s as a link you skipped manually repairing in the past; skip repairing it' % fileB.filenameAP)
-                        linkB.giveUpOnRepairing()
-                        continue
-                except KeyError:
-                    pass
-
-                aRetVal=linkB.attemptRepairViaPastUserRepairs()
-                fileB=linkB.targetObj
-                if aRetVal=="repaired": continue
-
-                if userFixesLinksManually and fileA.userManuallyFixesMyOutgoingLinks:
-                    aRetVal=linkB.attemptRepairViaInteractingWithUser()
-                    if aRetVal=='Quit':
-                        os.chdir(origFolder)
-                        logging.debug('Changed directory to %s' % origFolder)
-
-                        if deleteOldLogs:
-                            remove_old_logs('*OrgFixLinks.log')
-
-                        db1.conn.commit()
-                        # db1.cur.close()
-
-                        if (not isDryRun) and (__name__=="__main__"):
-                            shutil.copy2(dryRunDatabaseName,databaseName)
-                            logging.debug('Real run not dry run: Copied %s to %s' % (dryRunDatabaseName,databaseName))
-
-                        if showLog:
-                            display_log_file()
-
-                        return 'Quit'
-
-                    fileB=linkB.targetObj
-                    if aRetVal=="repaired": continue
-
-                linkB.giveUpOnRepairing()
-                continue
-        except Exception as err1:
-            linkB.giveUpOnRepairing()
-            logging.error('An exception occured while attempting to repair link %s in file %s: %s' % (linkB.targetObj.filenameAP,linkB.sourceFile.filenameAP,err1))
-            continue
-
-
-    #NON ORG
-
-    #below is the second section for non org
-    #now go through the list of outgoing links to non-org files
-
-    logging.debug('Now analyzing outward links to non org files in %s' % fileA.filenameAP)
-
-    for linkB in [a for a in fileA.linksToNonOrgFilesList if (a.targetObj.filenameAP.startswith(DocumentsFoldernameAP) and not [b for b in linkBlacklistStrings if (b in a.targetObj.filenameAP)])]:  #for each outgoing link to a non org file
-        fileB=linkB.targetObj
-        logging.debug('Now analyzing %s which is outward link from fileA %s' % (fileB.filenameAP,fileA.filenameAP))
-        originalFileB=linkB.originalTargetObj
-        linkB.testIfWorking()
-
-        if fileB.exists:  #linkB is working
-            linkB.databaseHousekeepingForWorkingLink()
-            continue  #go on to next link
-
-        if (not repairLinks):
-            linkB.databaseHousekeepingForBrokenLink()
-            continue
-
-        try:
-            #look for database entry with same filenameAP
-            aRetVal=linkB.attemptRepairViaCheckDatabaseForNameMatch()
-            fileB=linkB.targetObj
-            if aRetVal=="repaired" or aRetVal=="databaseShowsMaxRepairAttempts": continue
-            if aRetVal=="databaseRecordIsAMissingFile":
-                #attempt to repair via bash find and same basename; take most recently modified
-                if '%20' in fileB.filenameAP:
-                    #http://stackoverflow.com/questions/11768070/transform-url-string-into-normal-string-in-python-20-to-space-etc
-                    aRetVal=linkB.attemptRepairViaBasenameMatchOnDisk(transform1=True)
-                    fileB=linkB.targetObj
-                    if aRetVal=="repaired": continue
-
-                aRetVal=linkB.attemptRepairViaBasenameMatchOnDisk()
-                fileB=linkB.targetObj
-                if aRetVal=="repaired": continue
-
-            #look for database entry with same basename
-            #skip; seems like too loose of a match
-
-            #try table previousFilenamesNonOrg
-            aRetVal=linkB.attemptRepairUsingTablePreviousFilenames()
-            fileB=linkB.targetObj
-            if aRetVal=="repaired" or aRetVal=="databaseShowsMaxRepairAttempts": continue
-            if aRetVal=="databaseRecordIsAMissingFile":
-                #attempt to repair via bash find and same basename; take most recently modified
-
-                if '%20' in fileB.filenameAP:
-                    #http://stackoverflow.com/questions/11768070/transform-url-string-into-normal-string-in-python-20-to-space-etc
-                    aRetVal=linkB.attemptRepairViaBasenameMatchOnDisk(transform1=True)
-                    fileB=linkB.targetObj
-                    if aRetVal=="repaired": continue
-
-                aRetVal=linkB.attemptRepairViaBasenameMatchOnDisk()
-                fileB=linkB.targetObj
-                if aRetVal=="repaired": continue
-
-            #try table symlinksNonOrg
-            aRetVal=linkB.attemptRepairUsingSymlinksTable()
-            fileB=linkB.targetObj
-            if aRetVal=="repaired" or aRetVal=="databaseShowsMaxRepairAttempts": continue
-            if aRetVal=="databaseRecordIsAMissingFile":
-                #attempt to repair via bash find and same basename; take most recently modified
-
-                if '%20' in fileB.filenameAP:
-                    #http://stackoverflow.com/questions/11768070/transform-url-string-into-normal-string-in-python-20-to-space-etc
-                    aRetVal=linkB.attemptRepairViaBasenameMatchOnDisk(transform1=True)
-                    fileB=linkB.targetObj
-                    if aRetVal=="repaired": continue
-
-                aRetVal=linkB.attemptRepairViaBasenameMatchOnDisk()
-                fileB=linkB.targetObj
-                if aRetVal=="repaired": continue
-
-            #try using bash find to look for basename match on disk
-
-            if '%20' in fileB.filenameAP:
-                #http://stackoverflow.com/questions/11768070/transform-url-string-into-normal-string-in-python-20-to-space-etc
-                aRetVal=linkB.attemptRepairViaBasenameMatchOnDisk(transform1=True)
-                fileB=linkB.targetObj
-                if aRetVal=="repaired": continue
-
-            aRetVal=linkB.attemptRepairViaBasenameMatchOnDisk()
-            fileB=linkB.targetObj
-            if aRetVal=="repaired": continue
-
-            try:
-                if pastInteractiveRepairs[fileB.filenameAP]=='UserChoseToSkipRepairingThis':
-                    logging.debug('Dictionary of past interactive repairs identifies %s as a link you skipped manually repairing in the past; skip repairing it' % fileB.filenameAP)
-                    linkB.giveUpOnRepairing()
-                    continue
-            except KeyError:
-                pass
-
-            aRetVal=linkB.attemptRepairViaPastUserRepairs()
-            fileB=linkB.targetObj
-            if aRetVal=="repaired": continue
-
-            if userFixesLinksManually and fileA.userManuallyFixesMyOutgoingLinks:
-                aRetVal=linkB.attemptRepairViaInteractingWithUser()
-                if aRetVal=='Quit':
-                    os.chdir(origFolder)
-                    logging.debug('Changed directory to %s' % origFolder)
-
-                    if deleteOldLogs:
-                        remove_old_logs('*OrgFixLinks.log')
-
-                    db1.conn.commit()
-                    # db1.cur.close()
-
-                    if (not isDryRun) and (__name__=="__main__"):
-                        shutil.copy2(dryRunDatabaseName,databaseName)
-                        logging.debug('Real run not dry run: Copied %s to %s' % (dryRunDatabaseName,databaseName))
-
-                    if showLog:
-                        display_log_file()
-
-                    return 'Quit'
-                fileB=linkB.targetObj
-                if aRetVal=="repaired": continue
-
-            linkB.giveUpOnRepairing()
-            continue
-
-        except Exception as err1:
-            linkB.giveUpOnRepairing()
-            logging.error('An exception occured while attempting to repair link %s in file %s: %s' % (linkB.targetObj.filenameAP,linkB.sourceFile.filenameAP,err1))
-            continue
-
+    fileA.processOutwardLinksToOrgFiles(userFixesLinksManually=userFixesLinksManually,isDryRun=isDryRun,showLog=showLog,repairLinks=repairLinks,deleteOldLogs=deleteOldLogs)
+    fileA.processOutwardLinksToNonOrgFiles(userFixesLinksManually=userFixesLinksManually,isDryRun=isDryRun,showLog=showLog,repairLinks=repairLinks,deleteOldLogs=deleteOldLogs)
 
     try:
-        # raise Exception("exception for test purposes")
-
         traverse_nodes_to_regen_after_link_updates(fileA.bodyMainlineNodes)
 
         fileA.makeListOfOrgFilesThatLinkToMe()
@@ -4575,6 +4684,8 @@ def spider_starting_w_fileA(filename,maxTime=None,maxN=None,hitReturnToStop=True
         assert fileA.exists, '\nInitial org file to begin spidering, %s, does not exist; quitting\n' % fileA.filenameAP 
         del fileA
 
+        #TODO warn user in log file if the file they specified as the file to start spidering would normally be blacklisted
+
         fileA=operate_on_fileA(filename=filename,userFixesLinksManually=userFixesLinksManually,runDebugger=runDebugger,debuggerAlreadyRunning=debuggerAlreadyRunning,isDryRun=isDryRun,showLog=showLog,repairLinks=repairLinks,keepBackup=keepBackup,deleteOldLogs=deleteOldLogs,doLessIfRecentlyFullyAnalyzed=skipIfRecentlySpidered,addHeader=addHeader)
         if fileA=='Quit':
             messg1='User quit during processing of %s; quitting spidering' % filename
@@ -4597,7 +4708,7 @@ def spider_starting_w_fileA(filename,maxTime=None,maxN=None,hitReturnToStop=True
 
     filesToSpiderBB=[a.targetObj for a in fileA.linksToOrgFilesList if (a.targetObj.exists and (a.targetObj not in filesSpidered))]  #BB=before blacklist
 
-    filesToSpider=[a for a in filesToSpiderBB if ((a.filenameAP not in orgFilesNotToSpider) and (get_folder_name_AP_given_filename(a.filenameAP) not in foldersNotToSpider) and (not is_blacklisted_based_on_a_foldername(a.filenameAP)))]  #apply blacklists
+    filesToSpider=[a for a in filesToSpiderBB if ((a.filenameAP not in orgFilesNotToSpider) and (get_folder_name_AP_given_filename(a.filenameAP) not in foldersNotToSpider) and (not file_is_blacklisted_based_on_a_single_folder_name_in_path(a.filenameAP,blacklistFolderBasenamesForSpidering)))]  #apply blacklists
 
     spiderTime=time.time()-globalStartTime
 
@@ -4682,100 +4793,12 @@ def spider_starting_w_fileA(filename,maxTime=None,maxN=None,hitReturnToStop=True
     clean_up_before_ending_spidering_run(isDryRun,messg1='Completed spidering run')
 
 #head
-def folder_is_blacklisted_based_on_single_folder_name_in_path(dirnameAP,blacklistOfSingleFolderNames):
-
-    if os.path.exists(dirnameAP):
-        assert os.path.isdir(dirnameAP),'Misuse of folder_is_blacklisted_based_on_single_folder_name_in_path: %s exists on disk but is not a folder' % dirnameAP
-
-    if dirnameAP.endswith('/'):
-        dirnameAP=dirnameAP.rstrip('/')
-
-    dirnameFolderNameList=get_list_of_folder_names_given_foldername(dirnameAP)
-
-    blacklisted=False
-    for folderBasename in blacklistOfSingleFolderNames:
-        if folderBasename in dirnameFolderNameList:
-            return True
-
-    return False
-
-def file_is_blacklisted_based_on_single_folder_name_in_path(filenameAP,blacklistOfSingleFolderNames):
-
-    if os.path.exists(filenameAP):
-        assert (not os.path.isdir(filenameAP)),'Misuse of file_is_blacklisted_based_on_single_folder_name_in_path: %s exists on disk and is a folder' % filenameAP
-
-    assert (not filenameAP.endswith('/')),'Misuse of file_is_blacklisted_based_on_single_folder_name_in_path: %s has trailing slash' % filenameAP
-
-    filenameFolderNameList=get_list_of_folder_names_given_filename(filenameAP)
-
-    blacklisted=False
-    for folderBasename in blacklistOfSingleFolderNames:
-        if folderBasename in filenameFolderNameList:
-            return True
-
-    return False
-
-#head
-def file_is_blacklisted_based_on_fileAP_and_folderAP_lists(filenameAP,filenameAPBlacklist,foldernameAPBlacklist):
-    if filenameAP in filenameAPBlacklist:
-        return True
-
-    folderListFile1=get_list_of_folder_names_given_filename(filenameAP)
-    for blacklistFolder in foldernameAPBlacklist:
-        folderListBlacklistFolder=get_list_of_folder_names_given_foldername(blacklistFolder)
-
-        if one_list_starts_with_another(folderListFile1,folderListBlacklistFolder):
-            return True
-
-    return False
-
-#head
-def get_list_of_files_in_glob_file(globFilename,workingDir):
-    '''read the file globFilename and return lists of files and directories referenced in it via glob.glob'''
-
-    #https://pymotw.com/2/glob/
-
-    orgFileMatches=[]
-    # nonOrgFileMatches=[]
-    folderMatches=[]
-
-    if os.path.exists(globFilename):
-        file1=open(globFilename,'r')
-        lines1=file1.readlines()
-        file1.close()
-
-        os.chdir(workingDir)
-
-        for line1 in lines1:
-            #TODO: the glob approach will reject anything that does not exist on disk, so cannot ignore something that is not on disk; this is not ideal
-
-            matches1=[a for a in glob.glob(line1.strip())]  # a list, no matter what
-
-            dirsInMatches1=[a for a in matches1 if os.path.isdir(a)]
-            dirsInMatches1_NTS=[a.rstrip('/') for a in dirsInMatches1]  #NTS=no trailing slash
-            dirsInMatches1_AP=[os.path.abspath(a) for a in dirsInMatches1_NTS]  #make sure all are absolute path
-            folderMatches.extend(dirsInMatches1_AP)
-        
-            matches2=[a for a in matches1 if (not (a in dirsInMatches1))]
-
-            orgFilenamesInMatches2=[a for a in matches2 if a.endswith('.org')]
-            orgFilenamesInMatches2_AP=[os.path.abspath(a) for a in orgFilenamesInMatches2]
-            orgFileMatches.extend(orgFilenamesInMatches2_AP)
-
-            # nonOrgFilenamesInMatches2=[a for a in matches2 if (not a.endswith('.org'))]
-            # nonOrgFileMatches.extend(nonOrgFilenamesInMatches2)
-
-        os.chdir(origFolder)
-
-        return orgFileMatches,folderMatches
-    else:
-        return [],[]
-
-#head
 def get_list_of_all_repairable_org_files(mainFolderAP):
     '''
-    walk files on disk starting at mainFolderAP.  return list of org files to operate on.  blacklist defined by blackListFolderBasenames is applied.
+    walk files on disk starting at mainFolderAP.  return list of org files to operate on.  blacklist defined by blackListFolderBasenamesForSpidering is applied.
     '''
+
+    #see https://docs.python.org/2/library/os.html; symlinks to folders are not followed by default
 
     assert os.path.exists(mainFolderAP), 'cannot get list of all org files in %s because it does not exist' % mainFolderAP
 
@@ -4787,8 +4810,21 @@ def get_list_of_all_repairable_org_files(mainFolderAP):
         '''blacklists are applied here'''
 
         #apply a first blacklist based on list of foldernames e.g. ['env','venv']
-        if folder_is_blacklisted_based_on_single_folder_name_in_path(dirname,blackListFolderBasenames):
+        if folder_is_blacklisted_based_on_single_folder_name_in_path(dirname,blackListFolderBasenamesForSpidering):
+            for dir in dirs:
+                dirs.remove(dir)  #the walk is influenced by in-place changes to dirs: https://docs.python.org/2/library/os.html
+                logging.debug('Not walking into folder %s due to blacklist blackListFolderBasenamesForSpidering' % dirname)
             continue
+
+        for dir in dirs:
+            if dir in blackListFolderBasenamesForSpidering:
+                logging.debug('Not walking into folder %s due to blacklist blackListFolderBasenamesForSpidering' % dir)
+                dirs.remove(dir)
+
+        for dir in dirs:
+            if os.path.join(dirname,dir) in foldersNotToSpider:
+                logging.debug('Not walking into folder %s due to blacklisted folder in config file .OFLDoNotSpider' % dir)
+                dirs.remove(dir)
 
         orgFilenameAPsInDir=[os.path.join(dirname,a) for a in files if a.endswith('.org')]
 
@@ -5111,15 +5147,29 @@ pastInteractiveRepairs=get_past_interactive_repairs_dict()  # a dictionary for s
 #head
 asteriskRegex=re.compile('(?P<asterisks>^\*+) ')
 #head
+#head
+#head blacklisting
+#head blacklisting based on a single folder in a path
+blackListFolderBasenamesForSpidering=['env','venv','PStuff']  #setting; it is not required that these folders exist on disk
+blackListFolderBasenamesForLinkRepair=['env','venv','PStuff']  #setting; it is not required that these folders exist on disk
+#head blacklisting based on glob patterns of existing files and folders
 if os.path.exists('.OFLDoNotSpider'):
     #because of glob.glob, it is required that these exist on disk
-    orgFilesNotToSpider,foldersNotToSpider=get_list_of_files_in_glob_file('.OFLDoNotSpider',origFolder)
+    orgFilesNotToSpider,foldersNotToSpider=get_list_of_files_in_glob_file('.OFLDoNotSpider',origFolder,fileType='org')
 else:
     orgFilesNotToSpider=[]
     foldersNotToSpider=[]
 #head
-#the preceding used get_list_of_files_in_glob_file, which is based on glob.glob.  I don't see how to use glob.glob to blacklist when the path contains a named folder.  so:
-blackListFolderBasenames=['env','venv','PStuff']  #setting; it is not required that these folders exist on disk
+#head
+if os.path.exists('.OFLDoNotRepairLink'):
+    #because of glob.glob, it is required that these exist on disk
+    orgFilesNotToRepairLinksTo,foldersWithFilesNotToRepairLinksTo=get_list_of_files_in_glob_file('.OFLDoNotRepairLink',origFolder,fileType='org')
+    nonOrgFilesNotToRepairLinksTo,foldersWithFilesNotToRepairLinksTo=get_list_of_files_in_glob_file('.OFLDoNotRepairLink',origFolder,fileType='nonOrg')
+else:
+    orgFilesNotToSpider=[]
+    foldersNotToSpider=[]
+#head
+#head
 #head
 #list of compiled regex for identifying class of link; has particular order for identifying link in [[link][description]]
 regexOrderedListBrackets,regexOrderedListNoBrackets=make_regex_ordered_lists()
