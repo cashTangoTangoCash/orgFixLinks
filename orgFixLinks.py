@@ -157,6 +157,8 @@ class DatabaseTable():
         return len(rowList)
 
 #head
+#head TODO it would be useful for database to record if a file is known to be a folder
+#head so as not to repair a broken link to a file with a folder, or vice versa
 class MyFilesTable(DatabaseTable):
     def __init__(self,tableName,listOfTimeFieldNames,listOfBooleanFieldNames):
         '''MyFilesTable Class; ancestor class for MyOrgFilesTable, MyNonOrgFilesTable
@@ -1273,7 +1275,7 @@ class PreviousFilenamesNonOrgTable(PreviousFilenamesTable):
 #head
 #head
 #head
-#head  Classes for links found in org files
+#head Classes for links found in org files
 class Link():
     '''
     a general link in an org file
@@ -1404,6 +1406,10 @@ class LinkToLocalFile(Link):
                 self.link=self.preFilename+self.filename+self.postFilename
 
                 self.regenTextFromLinkAndDescription()
+
+        self.isBlacklistedForRepair=False
+
+        self.filesNotToRepairLinksTo=[]  #blacklisting; overwrite in child classes
 
     def initTargetFile(self):
         '''
@@ -1537,12 +1543,42 @@ class LinkToLocalFile(Link):
         self.testIfWorking()
 
     #head
+    def testIfBlacklistedForRepair(self):
+        '''
+        LinkToLocalFile Class
+        only intended for use by child classes
+        '''
+
+        assert self.targetObj,'Need to associate link with target object before testing if blacklisted for repair'
+
+        DocumentsFoldernameAP=os.path.join(os.path.expanduser('~'),'Documents')
+
+        #do not want to repair a link to something outside of Documents folder
+        if (not self.targetObj.filenameAP.startswith(DocumentsFoldernameAP)):
+            self.isBlacklistedForRepair=True
+            return True
+
+        if file_is_blacklisted_based_on_single_folder_name_in_path(self.targetObj.filenameAP,blacklistFolderBasenamesForLinksToRepair):
+            self.isBlacklistedForRepair=True
+            logging.debug('Not repairing link to %s since a folder in its path is in blacklistFolderBasenamesForLinksToRepair' % self.targetObj.filenameAP)
+            return True
+
+        if file_is_blacklisted_based_on_fileAP_and_folderAP_lists(self.targetObj.filenameAP,self.filesNotToRepairLinksTo,foldersWithFilesNotToRepairLinksTo):
+            self.isBlacklistedForRepair=True
+            logging.debug('Not repairing links to %s since it is blacklisted in .OFLDoNotRepairLink' % self.targetObj.filenameAP)
+            return True
+
+        return False
+
+    #head
     def attemptRepairViaBasenameMatchOnDisk(self,basenameToUse=None,transform1=False):
         '''
         LinkToLocalFile Class
         simple repair attempt: assume file was moved but basename was unchanged
         choose the most recently-modified file with matching basename
         '''
+
+        #TODO this would be improved if a record was kept: is link to a folder or not
 
         assert not self.inHeader, 'unwanted operation for link in header'
 
@@ -1566,9 +1602,18 @@ class LinkToLocalFile(Link):
             logging.debug('attempting repair of %s by first transforming it to %s, and then looking for the basename %s via bash find' % (fileB.filenameAP,filenameAP2,basenameB))
 
         if os.path.splitext(basenameB)[-1]:  #file has a file extension e.g. .org
-            filenameAPMatchList=find_all_name_matches_via_bash(basenameB)  #requires linux and bash shell; this will not find directories
-        else:  #there is no file extension; assume fileB is a directory
-            filenameAPMatchList=find_all_name_matches_via_bash_for_directories(basenameB)  #requires linux and bash shell; this finds directories
+            filenameAPMatchListBB=find_all_name_matches_via_bash(basenameB)  #requires linux and bash shell; this will not find directories
+        else:  #there is no file extension; assume fileB is a directory; TODO this needs improvement
+            filenameAPMatchListBB=find_all_name_matches_via_bash_for_directories(basenameB)  #requires linux and bash shell; this finds directories
+
+        foundFileObjsBB=[]
+        for filenameAP1 in filenameAPMatchListBB:
+            if filenameAP1.endswith('.org'):
+                foundFileObjsBB.append(OrgFile(filenameAP1,inHeader=False,leaveAsSymlink=True))  #TODO should this be left as symlink?
+            else:
+                foundFileObjsBB.append(NonOrgFile(filenameAP1,inHeader=False,leaveAsSymlink=True))  #TODO should this be left as symlink?
+
+        filenameAPMatchList=[a.filenameAP for a in foundFileObjsBB if (not a.testIfBlacklistedToUseForRepair())]
 
         if filenameAPMatchList:
             if len(filenameAPMatchList)>1:
@@ -1597,6 +1642,8 @@ class LinkToLocalFile(Link):
         a dictionary is saved to csv file on disk
         it contains previous link repairs performed interactively with user
         '''
+
+        #TODO is there need for blacklisting here?
 
         assert not self.inHeader, 'unwanted operation for link in header'
 
@@ -1631,6 +1678,7 @@ class LinkToLocalFile(Link):
     #head
     def attemptRepairViaInteractingWithUser(self):
         '''
+        LinkToLocalFile Class
         as a last resort, interact with user in console
         to either attempt repair or leave link as-is
         '''
@@ -1659,24 +1707,26 @@ class LinkToLocalFile(Link):
         #20160912 pudb appears to still work; checked with 20160912ThreadingExample04.py
         with keyboardInputLock:
             menu1='''
-            Now in mode for interactively fixing links in org file %s.
+            Now in a mode for interactively fixing links inside the org file %s.
             Automatic routines have failed to fix these links.
-            There are %s broken links remaining in org file %s.
+            There are %s broken links remaining inside the org file %s.
 
-            Broken link is %s
+
+            The broken link we are trying to fix is: %s
             (last line ends with the verbatim broken link; no period is added at the end)
+
 
             Enter what to do next:
             1) skip manually fixing this link
-            2) skip manually fixing all links in org file %s
-            3) quit processing this file and make no changes to it.  if you are spidering, this will end spidering run.
+            2) skip manually fixing all links inside org file %s
+            3) quit processing org file %s and make no changes to it.  This will end a spidering run.
             
             Or try to fix the link:
-            Enter more than one character to provide a pattern to search for file on disk by name
-            example entry to repair a broken link to an org file: *unix*org
-            ''' % (fileA.filenameAP,numOfRemainingBrokenLinks,fileA.filenameAP,fileB.filenameAP,fileA.filenameAP)
+            Enter more than one character to provide a pattern to search for files on disk by name.
+            Example entry to repair a broken link to an org file: *unix*org
+            ''' % (fileA.filenameAP,numOfRemainingBrokenLinks,fileA.filenameAP,fileB.filenameAP,fileA.filenameAP,fileA.filenameAP)
 
-            maxNCandidates=25
+            maxNCandidates=25  #setting
 
             while True:
                 userChoice1=raw_input(menu1)
@@ -1698,7 +1748,7 @@ class LinkToLocalFile(Link):
 
                     if os.path.splitext(basenameB)[-1]:  #file has a file extension e.g. .org
                         repairCandidates=find_all_name_matches_via_bash(userChoice1)  #requires linux and bash shell; this will not find directories
-                    else:  #there is no file extension; assume fileB is a directory
+                    else:  #there is no file extension; assume fileB is a directory  #TODO this needs improvement
                         repairCandidates=find_all_name_matches_via_bash_for_directories(userChoice1)  #requires linux and bash shell; this finds directories
 
                     if not repairCandidates:
@@ -1747,20 +1797,26 @@ class LinkToLocalFile(Link):
                     # http://stackoverflow.com/questions/7961363/removing-duplicates-in-lists  answer by Richard Fredlund 20140605
                     repairCandidates5=[f1 for n,f1 in enumerate(repairCandidates4) if f1.filenameAP not in filenameAPs4[:n]]
 
-                    if len(repairCandidates5)>maxNCandidates:
-                        print 'Too many valid matches found for search term %s (%s found which exceeds allowable %s)' % (userChoice1,len(repairCandidates5),maxNCandidates)
+                    #blacklisting
+                    repairCandidates6=[a for a in repairCandidates5 if (not a.testIfBlacklistedToUseForRepair())]
+
+                    if len(repairCandidates6)<len(repairCandidates5):
+                        print 'Blacklisting reduced the number of matches by %s' % (len(repairCandidates5)-len(repairCandidates6))
+
+                    if len(repairCandidates6)>maxNCandidates:
+                        print 'Too many valid matches found for search term %s (%s found which exceeds allowable %s)' % (userChoice1,len(repairCandidates6),maxNCandidates)
                         logging.debug('Too many valid matches found for search term %s (%s found which exceeds allowable %s) in repair attempt of %s' % (userChoice1,len(repairCandidates),maxNCandidates,fileB.filenameAP))
                         continue  #show user menu1 again
 
                     print 'Now printing out the valid choices for repair of %s' % fileB.filenameAP
 
-                    ret=user_chooses_element_from_list_or_rejects_all([a.filenameAP for a in repairCandidates5],nameOfElementInList='repair',doubleSpaced=True)
+                    ret=user_chooses_element_from_list_or_rejects_all([a.filenameAP for a in repairCandidates6],nameOfElementInList='repair',doubleSpaced=True)
                     if 'None of the above' in ret[1]:
                         continue  #user did not like any repair choices; show user menu1 again
                     else:
                         print 'You chose %s\n' % ret[1]
 
-                        fileForRepair=repairCandidates5[ret[0]]
+                        fileForRepair=repairCandidates6[ret[0]]
 
                         #put successful user interactive repairs in a dictionary that is stored on disk with something other than sqlite database
                         pastInteractiveRepairs[fileB.filenameAP]=fileForRepair.filenameAP  #can assign a different value than already exists in dictionary; no problem
@@ -1800,6 +1856,11 @@ class LinkToLocalFile(Link):
             return "noDatabaseRecordFound"
 
         databaseMatchingFile=self.myFilesTable.constructFileFromTable(idB)
+
+        if databaseMatchingFile.testIfBlacklistedToUseForRepair():
+            logging.warning('Blacklisting settings have prevented repair of %s via attemptRepairUsingSymlinksTable' % fileB.filenameAP)
+            return "databaseRecordIsBlacklisted"
+
         return self.finishRepairViaDatabaseMatchingFile(databaseMatchingFile,'attemptRepairUsingSymlinksTable')
 
     def attemptRepairUsingTablePreviousFilenames(self):
@@ -1827,6 +1888,10 @@ class LinkToLocalFile(Link):
 
         databaseMatchingFile=self.myFilesTable.constructFileFromTable(idB)
 
+        if databaseMatchingFile.testIfBlacklistedToUseForRepair():
+            logging.warning('Blacklisting settings have prevented repair of %s via attemptRepairUsingTablePreviousFilenames' % fileB.filenameAP)
+            return "databaseRecordIsBlacklisted"
+
         return self.finishRepairViaDatabaseMatchingFile(databaseMatchingFile,'attemptRepairUsingTablePreviousFilenames')
 
     def attemptRepairViaCheckDatabaseForNameMatch(self):
@@ -1849,6 +1914,11 @@ class LinkToLocalFile(Link):
             return "noDatabaseRecordFound"
 
         databaseMatchingFile=self.myFilesTable.constructFileFromTable(idB)
+
+        if databaseMatchingFile.testIfBlacklistedToUseForRepair():
+            logging.warning('Blacklisting settings have prevented repair of %s via attemptRepairViaCheckDatabaseForNameMatch' % fileB.filenameAP)
+            return "databaseRecordIsBlacklisted"
+
         return self.finishRepairViaDatabaseMatchingFile(databaseMatchingFile,'attemptRepairViaCheckDatabaseForNameMatch')
 
     #head
@@ -1999,7 +2069,7 @@ class LinkToLocalFile(Link):
 
 class LinkToNonOrgFile(LinkToLocalFile):
     '''
-    a link in an org file, to another file (which is not org) on local disk
+    a link in an org file, to another file (which is not org) on local disk; could be a folder
     '''
 
     #TODO update for brackets vs no brackets as in LinkToOrgFile
@@ -2029,6 +2099,11 @@ class LinkToNonOrgFile(LinkToLocalFile):
         self.symlinksTable=db1.symlinksNonOrgTable
         self.linksTable=db1.linksToNonOrgTable
         self.previousFilenamesTable=db1.previousFilenamesNonOrgTable
+
+        #blacklisting
+        self.filesNotToRepairLinksTo=nonOrgFilesNotToRepairLinksTo
+
+        # self.isLinkToFolder=None  #TODO could take this approach
 
     #head
     def databaseHousekeepingForWorkingLink(self):
@@ -2100,6 +2175,11 @@ class LinkToOrgFile(LinkToLocalFile):
         self.linksTable=db1.linksToOrgTable
         self.previousFilenamesTable=db1.previousFilenamesOrgTable
 
+        #blacklisting
+        self.filesNotToRepairLinksTo=orgFilesNotToRepairLinksTo
+
+        # self.isLinkToFolder=False  #filename ends in .org: assume this cannot be a folder  TODO could take this approach
+
     #head
     def attemptRepairByAddingMain(self):
         '''
@@ -2134,6 +2214,10 @@ class LinkToOrgFile(LinkToLocalFile):
             return None
 
         foundFile=OrgFile(foundFilenameAP,False)
+
+        if foundFile.testIfBlacklistedToUseForRepair():
+            logging.warning('Blacklisting settings have prevented repair of %s via attemptRepairByAddingMain' % fileB.filenameAP)
+            return "foundFileIsBlacklisted"
 
         foundFile.uniqueIDFromHeader=fileB.uniqueIDFromHeader
         foundFile.inHeader=fileB.inHeader
@@ -2177,6 +2261,10 @@ class LinkToOrgFile(LinkToLocalFile):
 
         foundFile=OrgFile(foundFilenameAP,False)
 
+        if foundFile.testIfBlacklistedToUseForRepair():
+            logging.warning('Blacklisting settings have prevented repair of %s via attemptRepairByRemovingMain' % fileB.filenameAP)
+            return "foundFileIsBlacklisted"
+
         foundFile.uniqueIDFromHeader=fileB.uniqueIDFromHeader
         foundFile.inHeader=fileB.inHeader
 
@@ -2188,6 +2276,8 @@ class LinkToOrgFile(LinkToLocalFile):
         LinkToOrgFile Class
         with list of files with same basename returned by bash find command, look inside each one and check if unique ID matches expected unique ID
         '''
+
+        #TODO how could a missing file have a known uniqueID?  i.e. how could fileB.uniqueID be different from None?
 
         assert expectedUniqueIDAttr in ('uniqueID','uniqueIDFromHeader','uniqueIDFromDatabase'), 'unknown expectedUniqueIDAttr'
 
@@ -2214,7 +2304,10 @@ class LinkToOrgFile(LinkToLocalFile):
         for orgFile in fileObjList:
             orgFile.lookInsideForUniqueID()
             if orgFile.uniqueID and orgFile.uniqueID==expectedUniqueID:
-                return self.finishRepairViaFoundFile(orgFile,myName,db1.myOrgFilesTable.lookupID_UsingUniqueID)
+                if orgFile.testIfBlacklistedToUseForRepair():
+                    return 'foundFileIsBlacklisted'
+                else:
+                    return self.finishRepairViaFoundFile(orgFile,myName,db1.myOrgFilesTable.lookupID_UsingUniqueID)
 
         logging.debug('for %s, %s files were found on disk with same basename, but none contained expected unique ID %s (linkB.attemptRepairViaExpectedUniqueIDAndBashFind)' % (fileB.filenameAP,len(filenameAPMatchList),expectedUniqueID))
 
@@ -2253,13 +2346,16 @@ class LinkToOrgFile(LinkToLocalFile):
 
         idB=db1.myOrgFilesTable.lookupID_UsingUniqueIDFromHeader(fileB)
 
-        #this is too restrictive; if database is lost, script will error out here
+        #the following is too restrictive; if database is lost, script will error out here
         # assert idB, 'unique ID from header does not lead to record in table myOrgFiles (LinkToOrgFile.attemptRepairUsingUniqueIDFromHeaderAndDatabase)'
 
         if not idB:
             return "noDatabaseRecordFound"
 
         databaseMatchingFile=db1.myOrgFilesTable.constructFileFromTable(idB)
+
+        if databaseMatchingFile.testIfBlacklistedToUseForRepair():
+            return 'databaseMatchingFileIsBlacklisted'
 
         return self.finishRepairViaDatabaseMatchingFile(databaseMatchingFile,'attemptRepairUsingUniqueIDFromHeaderAndDatabase')
 
@@ -2287,6 +2383,10 @@ class LinkToOrgFile(LinkToLocalFile):
         if not newOrgFile:
             logging.debug('no replacement found for %s via walking files on disk and looking inside for unique ID (LinkToOrgFile.attemptRepairByLookingInsideFilesForUniqueID)' % fileB.filenameAP)
             return None
+
+        if newOrgFile.testIfBlacklistedToUseForRepair():
+            logging.warning('Blacklisting settings have prevented repair of %s via attemptRepairByLookingInsideFilesForUniqueID' % fileB.filenameAP)
+            return "foundFileIsBlacklisted"
 
         return self.finishRepairViaFoundFile(newOrgFile,'attemptRepairByLookingInsideFilesForUniqueID',db1.myOrgFilesTable.lookupID_UsingUniqueID)
 
@@ -2615,6 +2715,9 @@ class LocalFile():
         self.addedToDatabase=False  #did script just add this file to the database?
         self.myFilesTableID=None
 
+        self.isBlacklistedToUseForRepair=None
+        self.filesNotToUseForRepairingLinks=[]  #blacklisting; overwrite in child classes
+
     #head
     def testIfExists(self):
         '''LocalFile Class
@@ -2792,6 +2895,32 @@ class LocalFile():
         os.chdir(myDir)
         return myDir
 
+    #head
+    def testIfBlacklistedToUseForRepair(self):
+        '''
+        LocalFile Class
+        only intended for use by child classes
+        '''
+
+        DocumentsFoldernameAP=os.path.join(os.path.expanduser('~'),'Documents')
+
+        #do not want to repair a link to something outside of Documents folder
+        if (not self.filenameAP.startswith(DocumentsFoldernameAP)):
+            self.isBlacklistedToUseForRepair=True
+            return True
+
+        if file_is_blacklisted_based_on_single_folder_name_in_path(self.filenameAP,blacklistFolderBasenamesForLinksToRepair):
+            self.isBlacklistedToUseForRepair=True
+            logging.debug('Not using %s to repair a link since a folder in its path is in blacklistFolderBasenamesForLinksToRepair' % self.filenameAP)
+            return True
+
+        if file_is_blacklisted_based_on_fileAP_and_folderAP_lists(self.filenameAP,self.filesNotToUseForRepairingLinks,foldersWithFilesNotToRepairLinksTo):
+            self.isBlacklistedToUseForRepair=True
+            logging.debug('Not using %s to repair a link since it is blacklisted in .OFLDoNotRepairLink' % self.targetObj.filenameAP)
+            return True
+
+        return False
+
 class NonOrgFile(LocalFile):
     def __init__(self,filename1,inHeader,leaveAsSymlink=False):
         '''input leaveAsSymlink is for test purposes only'''
@@ -2801,6 +2930,11 @@ class NonOrgFile(LocalFile):
             db1.addFilenameToThreeNonOrgTables(self.filenameAP)
             db1.addFilenameToThreeNonOrgTables(self.originalFilenameAP)
             db1.addFilenameToThreeNonOrgTables(self.originalTargetFilenameAP)
+
+        #blacklisting
+        self.filesNotToUseForRepairingLinks=nonOrgFilesNotToRepairLinksTo  #setting
+
+        # self.isFolder=None  #TODO could take this approach
 
         #turn_logging_back_on_at_initial_level()
 
@@ -2856,10 +2990,41 @@ class OrgFile(LocalFile):
 
         self.hasNewHeader=False
 
+        self.isBlacklistedForSpidering=None
+
+        #blacklisting
+        self.filesNotToUseForRepairingLinks=orgFilesNotToRepairLinksTo  #setting
+
+        # self.isFolder=False  #TODO could take this approach
+
         #turn_logging_back_on_at_initial_level()
 
     def endsInDotOrg(self):
         return os.path.splitext(self.filenameAP)[-1] == '.org' 
+
+    #head
+    def testIfBlacklistedForSpidering(self):
+        '''OrgFile Class'''
+
+        #TODO LEFT OFF LEFTOFF put this function to use elsewhere; think the link repair methods are the only thing left to add blacklisting to?
+
+        DocumentsFoldernameAP=os.path.join(os.path.expanduser('~'),'Documents')
+
+        if (not self.filenameAP.startswith(DocumentsFoldernameAP)):
+            self.isBlacklistedForSpidering=True
+            return True  #blacklisted: only want to spider inside Documents folder
+
+        if file_is_blacklisted_based_on_single_folder_name_in_path(self.filenameAP,blacklistFolderBasenamesForFilesToSpider):
+            logging.debug('Not spidering %s since a folder in its path is in blacklistFolderBasenamesForFilesToSpider' % self.filenameAP)
+            self.isBlacklistedForSpidering=True
+            return True
+
+        if file_is_blacklisted_based_on_fileAP_and_folderAP_lists(self.filenameAP,orgFilesNotToSpider,foldersNotToSpider):
+            logging.debug('Not spidering %s since it is blacklisted in .OFLDoNotSpider' % self.filenameAP)
+            self.isBlacklistedForSpidering=True
+            return True
+
+        return False
 
     #head
     def createFullRepresentation(self):
@@ -3114,7 +3279,9 @@ class OrgFile(LocalFile):
         # logging.debug('three unique ID parameters for %s have been found to be mutually consistent',self.filenameAP)
 
     #head
-    def processOutwardLinksToOrgFiles(userFixesLinksManually=False,isDryRun=False,showLog=False,repairLinks=True,deleteOldLogs=True):
+    def processOutwardLinksToOrgFiles(self,userFixesLinksManually=False,isDryRun=False,showLog=False,repairLinks=True,deleteOldLogs=True):
+        '''OrgFile Class'''
+
         #don't want old outward links from fileA in linksto table: wipe them out
         db1.linksToOrgTable.removeEntriesMatchingFromFile(self)
 
@@ -3124,8 +3291,7 @@ class OrgFile(LocalFile):
 
         DocumentsFoldernameAP=os.path.join(os.path.expanduser('~'),'Documents')
 
-        #setting: only want to process links that point in Documents folder; a whitelist
-        linksToProcess=[a for a in self.linksToOrgFilesList if (a.targetObj.filenameAP.startswith(DocumentsFoldernameAP))]
+        linksToProcess=[a for a in self.linksToOrgFilesList if a.targetObj.filenameAP.startswith(DocumentsFoldernameAP)]
 
         for linkB in linksToProcess: #for each outgoing link to an org file
 
@@ -3143,13 +3309,8 @@ class OrgFile(LocalFile):
                 linkB.databaseHousekeepingForBrokenLink()
                 continue
 
-            if file_is_blacklisted_based_on_single_folder_name_in_path(fileB.filenameAP,blackListFolderBasenamesForLinkRepair):
-                logging.debug('Not repairing link to %s since a folder in its path is in blackListFolderBasenamesForLinkRepair' % fileB.filenameAP)
-                linkB.databaseHousekeepingForBrokenLink()
-                continue
-
-            if file_is_blacklisted_based_on_fileAP_and_folderAP_lists(fileB.filenameAP,orgFilesNotToRepairLinksTo,foldersWithFilesNotToRepairLinksTo):
-                logging.debug('Not repairing link to %s since it is blacklisted in .OFLDoNotRepairLink' % fileB.filenameAP)
+            linkB.testIfBlacklistedForRepair()
+            if linkB.isBlacklistedForRepair:
                 linkB.databaseHousekeepingForBrokenLink()
                 continue
 
@@ -3336,7 +3497,9 @@ class OrgFile(LocalFile):
                 continue
 
     #head
-    def processOutwardLinksToNonOrgFiles(userFixesLinksManually=False,isDryRun=False,showLog=False,repairLinks=True,deleteOldLogs=True):
+    def processOutwardLinksToNonOrgFiles(self,userFixesLinksManually=False,isDryRun=False,showLog=False,repairLinks=True,deleteOldLogs=True):
+        '''OrgFile Class'''
+
         #don't want old outward links from fileA in linksto table: wipe them out
 
         db1.linksToNonOrgTable.removeEntriesMatchingFromFile(self)
@@ -3345,8 +3508,7 @@ class OrgFile(LocalFile):
 
         DocumentsFoldernameAP=os.path.join(os.path.expanduser('~'),'Documents')
 
-        #setting: only want to process links that point in Documents folder; a whitelist
-        linksToProcess=[a for a in self.linksToNonOrgFilesList if (a.targetObj.filenameAP.startswith(DocumentsFoldernameAP))]
+        linksToProcess=[a for a in self.linksToNonOrgFilesList if a.targetObj.filenameAP.startswith(DocumentsFoldernameAP)]
 
         for linkB in linksToProcess: #for each outgoing link to a non org file
 
@@ -3364,13 +3526,8 @@ class OrgFile(LocalFile):
                 linkB.databaseHousekeepingForBrokenLink()
                 continue
 
-            if file_is_blacklisted_based_on_single_folder_name_in_path(fileB.filenameAP,blackListFolderBasenamesForLinkRepair):
-                logging.debug('Not repairing link to %s since a folder in its path is in blackListFolderBasenamesForLinkRepair' % fileB.filenameAP)
-                linkB.databaseHousekeepingForBrokenLink()
-                continue
-
-            if file_is_blacklisted_based_on_fileAP_and_folderAP_lists(fileB.filenameAP,nonOrgFilesNotToRepairLinksTo,foldersWithFilesNotToRepairLinksTo):
-                logging.debug('Not repairing link to %s since it is blacklisted in .OFLDoNotRepairLink' % fileB.filenameAP)
+            linkB.testIfBlacklistedForRepair()
+            if linkB.isBlacklistedForRepair:
                 linkB.databaseHousekeepingForBrokenLink()
                 continue
 
@@ -4016,10 +4173,10 @@ def walk_org_files_looking_for_unique_id_match(uniqueIDToMatch,oldNameAP):
         #last folder to walk should be Documents
         for (dirname, dirs, files) in os.walk(pathRemainder):
 
-            if folder_is_blacklisted_based_on_single_folder_name_in_path(dirname,blackListFolderBasenamesForLinkRepair):
+            if folder_is_blacklisted_based_on_single_folder_name_in_path(dirname,blacklistFolderBasenamesForLinksToRepair):
                 for dir in dirs:
                     dirs.remove(dir)  #the walk is influenced by in-place changes to dirs: https://docs.python.org/2/library/os.html
-                    # logging.debug('Not walking into folder %s due to blacklist blackListFolderBasenamesForLinkRepair' % dirname)
+                    # logging.debug('Not walking into folder %s due to blacklist blacklistFolderBasenamesForLinksToRepair' % dirname)
                 continue
 
             #remove directories visited before from walk
@@ -4029,7 +4186,7 @@ def walk_org_files_looking_for_unique_id_match(uniqueIDToMatch,oldNameAP):
                     dirs.remove(os.path.split(dir1)[1])
 
             for dir in dirs:
-                if dir in blackListFolderBasenamesForLinkRepair:
+                if dir in blacklistFolderBasenamesForLinksToRepair:
                     dirs.remove(dir)
 
             #TODO could add second mode of blacklisting as in get_list_of_all_repairable_org_files
@@ -4065,8 +4222,8 @@ def find_all_name_matches_via_bash(textToMatch):
 
     # assert basenameToMatch==os.path.basename(basenameToMatch), 'a basename was not entered; %s was entered' % basenameToMatch
 
-    startFolder=os.path.join(os.path.expanduser('~'),'Documents')
-    cmd1=['find',startFolder,'-not','-path','*/env/*','-not','-path','*/venv/*','-name',textToMatch,'-printf','%Ts\t%p\n']
+    startFolder=os.path.join(os.path.expanduser('~'),'Documents')  #setting: looking only in Documents folder
+    cmd1=['find',startFolder,'-not','-path','*/env/*','-not','-path','*/venv/*','-name',textToMatch,'-printf','%Ts\t%p\n']  #setting; does not look in paths containing env or venv
     # http://stackoverflow.com/questions/4514751/pipe-subprocess-standard-output-to-a-variable
     out1=subprocess.check_output(cmd1)
 
@@ -4096,7 +4253,7 @@ def find_all_name_matches_via_bash_for_directories(textToMatch):
     '''
 
     startFolder=os.path.join(os.path.expanduser('~'),'Documents')
-    cmd1=['find',startFolder,'-not','-path','*/env/*','-not','-path','*/venv/*','-type','d','-name',textToMatch,'-printf','%Ts\t%p\n']
+    cmd1=['find',startFolder,'-not','-path','*/env/*','-not','-path','*/venv/*','-type','d','-name',textToMatch,'-printf','%Ts\t%p\n']  #setting
     out1=subprocess.check_output(cmd1)
 
     if not out1:
@@ -4249,6 +4406,11 @@ def get_list_of_files_in_glob_file(globFilename,workingDir,fileType='org'):
         os.chdir(workingDir)
 
         for line1 in lines1:
+
+            #skip a line that starts with #; it's a comment
+            if line1.startswith('#'):
+                continue
+
             #TODO: the glob approach will reject anything that does not exist on disk, so cannot ignore something that is not on disk (or unencrypted); this is not ideal
 
             matches1=[a for a in glob.glob(line1.strip())]  # a list, no matter what
@@ -4276,19 +4438,7 @@ def get_list_of_files_in_glob_file(globFilename,workingDir,fileType='org'):
     else:
         return [],[]
 
-#head
-#head composite blacklist for a file to spider
-def file_to_be_spidered_is_blacklisted_composite(filenameAP1):
-    DocumentsFoldernameAP=os.path.join(os.path.expanduser('~'),'Documents')
-
-    if (not filenameAP1.startswith(DocumentsFoldernameAP)):
-        return True  #blacklisted: only want to spider inside Documents folder
-
-    #LEFT OFF LEFTOFF look at process links methods in OrgFile
-
-    return False
-
-#head
+#head for blacklisting, also see methods of LocalFile, OrgFile, LinkToLocalFile
 #head
 def set_up_database():
     global db1
@@ -4682,9 +4832,10 @@ def spider_starting_w_fileA(filename,maxTime=None,maxN=None,hitReturnToStop=True
 
         fileA=OrgFile(filename,inHeader=False)
         assert fileA.exists, '\nInitial org file to begin spidering, %s, does not exist; quitting\n' % fileA.filenameAP 
+        fileA.testIfBlacklistedForSpidering()
+        if fileA.isBlacklistedForSpidering:
+            logging.warning('User chose to begin spidering at %s, but that file is blacklisted; spidering anyway' % fileA.filenameAP)
         del fileA
-
-        #TODO warn user in log file if the file they specified as the file to start spidering would normally be blacklisted
 
         fileA=operate_on_fileA(filename=filename,userFixesLinksManually=userFixesLinksManually,runDebugger=runDebugger,debuggerAlreadyRunning=debuggerAlreadyRunning,isDryRun=isDryRun,showLog=showLog,repairLinks=repairLinks,keepBackup=keepBackup,deleteOldLogs=deleteOldLogs,doLessIfRecentlyFullyAnalyzed=skipIfRecentlySpidered,addHeader=addHeader)
         if fileA=='Quit':
@@ -4708,7 +4859,10 @@ def spider_starting_w_fileA(filename,maxTime=None,maxN=None,hitReturnToStop=True
 
     filesToSpiderBB=[a.targetObj for a in fileA.linksToOrgFilesList if (a.targetObj.exists and (a.targetObj not in filesSpidered))]  #BB=before blacklist
 
-    filesToSpider=[a for a in filesToSpiderBB if ((a.filenameAP not in orgFilesNotToSpider) and (get_folder_name_AP_given_filename(a.filenameAP) not in foldersNotToSpider) and (not file_is_blacklisted_based_on_a_single_folder_name_in_path(a.filenameAP,blacklistFolderBasenamesForSpidering)))]  #apply blacklists
+    for file1 in filesToSpiderBB:
+        file1.testIfBlacklistedForSpidering()
+
+    filesToSpider=[a for a in filesToSpiderBB if (not a.isBlacklistedForSpidering)]
 
     spiderTime=time.time()-globalStartTime
 
@@ -4795,7 +4949,7 @@ def spider_starting_w_fileA(filename,maxTime=None,maxN=None,hitReturnToStop=True
 #head
 def get_list_of_all_repairable_org_files(mainFolderAP):
     '''
-    walk files on disk starting at mainFolderAP.  return list of org files to operate on.  blacklist defined by blackListFolderBasenamesForSpidering is applied.
+    walk files on disk starting at mainFolderAP.  return list of org files to operate on.  blacklist defined by blacklistFolderBasenamesForFilesToSpider is applied.
     '''
 
     #see https://docs.python.org/2/library/os.html; symlinks to folders are not followed by default
@@ -4804,26 +4958,25 @@ def get_list_of_all_repairable_org_files(mainFolderAP):
 
     allOrgFilenamesAP=[]
 
-    #TODO count how many files blacklisted via each mode and record data in log file
+    #optional TODO count how many files blacklisted via each mode and record data in log file
 
     for (dirname, dirs, files) in os.walk(mainFolderAP):
         '''blacklists are applied here'''
 
-        #apply a first blacklist based on list of foldernames e.g. ['env','venv']
-        if folder_is_blacklisted_based_on_single_folder_name_in_path(dirname,blackListFolderBasenamesForSpidering):
+        if folder_is_blacklisted_based_on_single_folder_name_in_path(dirname,blacklistFolderBasenamesForFilesToSpider):
             for dir in dirs:
                 dirs.remove(dir)  #the walk is influenced by in-place changes to dirs: https://docs.python.org/2/library/os.html
-                logging.debug('Not walking into folder %s due to blacklist blackListFolderBasenamesForSpidering' % dirname)
+                logging.debug('Not walking into folder %s due to blacklist blacklistFolderBasenamesForFilesToSpider' % dirname)
             continue
 
         for dir in dirs:
-            if dir in blackListFolderBasenamesForSpidering:
-                logging.debug('Not walking into folder %s due to blacklist blackListFolderBasenamesForSpidering' % dir)
+            if dir in blacklistFolderBasenamesForFilesToSpider:
+                logging.debug('Not walking into folder %s due to blacklist blacklistFolderBasenamesForFilesToSpider' % dir)
                 dirs.remove(dir)
 
         for dir in dirs:
             if os.path.join(dirname,dir) in foldersNotToSpider:
-                logging.debug('Not walking into folder %s due to blacklisted folder in config file .OFLDoNotSpider' % dir)
+                logging.debug('Not walking into folder %s due to blacklisting in config file .OFLDoNotSpider' % dir)
                 dirs.remove(dir)
 
         orgFilenameAPsInDir=[os.path.join(dirname,a) for a in files if a.endswith('.org')]
@@ -4849,7 +5002,7 @@ def get_list_of_all_repairable_org_files(mainFolderAP):
 
 def operate_on_all_org_files(maxTime=None,maxN=None,hitReturnToStop=True,userFixesLinksManually=False,runDebugger=False,debuggerAlreadyRunning=False,isDryRun=False,showLog=False,repairLinks=True,keepBackup=True,deleteOldLogs=True,skipIfRecentlySpidered=False,addHeader=False):
     '''
-    this one does not spider; it just walks every org file.
+    this one does not spider; it just walks every org file, except those that are blacklisted.
     practically: skipIfRecentlySpidered input should be set to True.
     '''
 
@@ -5149,10 +5302,11 @@ asteriskRegex=re.compile('(?P<asterisks>^\*+) ')
 #head
 #head
 #head blacklisting
-#head blacklisting based on a single folder in a path
-blackListFolderBasenamesForSpidering=['env','venv','PStuff']  #setting; it is not required that these folders exist on disk
-blackListFolderBasenamesForLinkRepair=['env','venv','PStuff']  #setting; it is not required that these folders exist on disk
+#head blacklisting based on a single folder in a path; not required that these folders exist on disk
+blacklistFolderBasenamesForFilesToSpider=['env','venv','PStuff']
+blacklistFolderBasenamesForLinksToRepair=['env','venv','PStuff']  #also blacklisting for files to use for repairing broken links
 #head blacklisting based on glob patterns of existing files and folders
+#blacklisting: files not to spider
 if os.path.exists('.OFLDoNotSpider'):
     #because of glob.glob, it is required that these exist on disk
     orgFilesNotToSpider,foldersNotToSpider=get_list_of_files_in_glob_file('.OFLDoNotSpider',origFolder,fileType='org')
@@ -5161,13 +5315,15 @@ else:
     foldersNotToSpider=[]
 #head
 #head
+#head blacklisting:  files not to repair links to; also files not to use for repairing broken links
 if os.path.exists('.OFLDoNotRepairLink'):
     #because of glob.glob, it is required that these exist on disk
     orgFilesNotToRepairLinksTo,foldersWithFilesNotToRepairLinksTo=get_list_of_files_in_glob_file('.OFLDoNotRepairLink',origFolder,fileType='org')
     nonOrgFilesNotToRepairLinksTo,foldersWithFilesNotToRepairLinksTo=get_list_of_files_in_glob_file('.OFLDoNotRepairLink',origFolder,fileType='nonOrg')
 else:
-    orgFilesNotToSpider=[]
-    foldersNotToSpider=[]
+    orgFilesNotToRepairLinksTo=[]
+    nonOrgFilesNotToRepairLinksTo=[]
+    foldersWithFilesNotToRepairLinksTo=[]
 #head
 #head
 #head

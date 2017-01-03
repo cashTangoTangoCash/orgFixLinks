@@ -2094,6 +2094,7 @@ class Test_OFL_LinkToLocalFile(unittest.TestCase):
     #head skipping test of __regenOnChangedFilenameAP; see tests of regenDescription
     #head skipping test of changeTargetObj; see tests of regenDescription
     #head
+    #head TODO test testIfBlacklistedForRepair
     #head skipping test of attemptRepairViaBasenameMatchOnDisk
     #head skipping test of attemptRepairViaPastUserRepairs
     #head skipping test of attemptRepairViaInteractingWithUser
@@ -2532,6 +2533,7 @@ class Test_OFL_LocalFile(unittest.TestCase):
         os.chdir(origWorkingDir)
         self.assertEqual(os.getcwd(),origWorkingDir)
 
+    #head TODO testIfBlacklistedToUseForRepair
 #head skip test NonOrgFile
 class Test_OFL_OrgFile(unittest.TestCase):
     def setUp(self):
@@ -2924,8 +2926,8 @@ class Test_OFL_OrgFile(unittest.TestCase):
         self.failIf(outgoingOrgLinkTarget.uniqueIDFromHeader)
 
     #head skip test checkConsistencyOfThreeUniqueIDDataItems; appears non-obvious how to construct tests
-    #head skip test of processOutwardLinksToOrgFiles
-    #head skip test of processOutwardLinksToNonOrgFiles
+    #head skip test of processOutwardLinksToOrgFiles; seems complicated
+    #head skip test of processOutwardLinksToNonOrgFiles; seems complicated
     def test_1_makeListOfOrgFilesThatLinkToMe(self):
         '''test OrgFile.makeListOfOrgFilesThatLinkToMe'''
 
@@ -4151,6 +4153,7 @@ class TestFindAllNameMatchesViaBash(unittest.TestCase):
         self.assertEqual(os.getcwd(),origWorkingDir)
 
 #head skip test find_all_name_matches_via_bash_for_directories
+#head
 #head functions used for blacklisting
 class TestGetFolderNameAPGivenFilename(unittest.TestCase):
     def test_1(self):
@@ -4842,10 +4845,10 @@ class TestGetListOfAllRepairableOrgFiles(unittest.TestCase):
         self.assertEqual(set(expectedList),set(retList))
 
     def test_3(self):
-        '''test blacklist feature'''
+        '''test a blacklist feature'''
 
-        tempBackup1=OFL.blackListFolderBasenames
-        OFL.blackListFolderBasenames=['venv']
+        tempBackup1=OFL.blacklistFolderBasenamesForFilesToSpider
+        OFL.blacklistFolderBasenamesForFilesToSpider=['venv']
 
         os.makedirs(os.path.join(anotherFolder,'venv'))
         self.folder4AP=os.path.join(anotherFolder,'venv')
@@ -4860,7 +4863,7 @@ class TestGetListOfAllRepairableOrgFiles(unittest.TestCase):
 
         retList=OFL.get_list_of_all_repairable_org_files(testFile4AP)
 
-        OFL.blackListFolderBasenames=tempBackup1  #restore original
+        OFL.blacklistFolderBasenamesForFilesToSpider=tempBackup1  #restore original
 
         self.failIf(retList)
 
@@ -6598,6 +6601,32 @@ def empty_and_remove_temp_folders():
         shutil.rmtree(topFolderToRemove)
 
 #head
+# def backup_blacklisting_config_files():
+#     #does not work as intended; the blacklisting config has already taken place in orgFixLinks; takes place when module is imported here
+#     if os.path.exists('.OFLDoNotSpider'):
+#         os.rename('.OFLDoNotSpider','.OFLDoNotSpiderTempBackup')
+
+#     if os.path.exists('.OFLDoNotRepairLink'):
+#         os.rename('.OFLDoNotRepairLink','.OFLDoNotRepairLinkTempBackup')
+
+# def restore_blacklisting_config_files():
+
+#     if os.path.exists('.OFLDoNotSpiderTempBackup'):
+#         os.rename('.OFLDoNotSpiderTempBackup','.OFLDoNotSpider')
+
+#     if os.path.exists('.OFLDoNotRepairLinkTempBackup'):
+#         os.rename('.OFLDoNotRepairLinkTempBackup','.OFLDoNotRepairLink')
+
+def clear_out_blacklisting_vars_in_OFL():
+
+    OFL.orgFilesNotToSpider=[]
+    OFL.foldersNotToSpider=[]
+
+    OFL.orgFilesNotToRepairLinksTo=[]
+    OFL.nonOrgFilesNotToRepairLinksTo=[]
+    OFL.foldersWithFilesNotToRepairLinksTo=[]
+
+#head
 DocumentsFolderAP=os.path.join(os.path.expanduser('~'),'Documents')
 assert os.path.exists(DocumentsFolderAP), 'Cannot proceed since assuming the folder %s exists' % DocumentsFolderAP
 
@@ -6614,6 +6643,8 @@ assert os.path.exists(anotherFolder), 'Cannot proceed since assuming the folder 
 anotherFolder2=os.path.join(DocumentsFolderAP,'TemporaryOrgFixLinksTests1','TemporaryOrgFixLinksTests2')
 #head
 origWorkingDir=os.getcwd()
+
+clear_out_blacklisting_vars_in_OFL()
 #head
 if __name__ == "__main__":
     try:
