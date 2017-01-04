@@ -2533,7 +2533,79 @@ class Test_OFL_LocalFile(unittest.TestCase):
         os.chdir(origWorkingDir)
         self.assertEqual(os.getcwd(),origWorkingDir)
 
-    #head TODO testIfBlacklistedToUseForRepair
+    #head blacklisting: see next class
+class Test_OFL_LocalFile_Blacklisting(unittest.TestCase):
+    def setUp(self):
+        os.chdir(origWorkingDir)
+
+    def tearDown(self):
+        os.chdir(origWorkingDir)
+        try:
+            self.testFilename
+            if os.path.exists(self.testFilename):
+                os.remove(self.testFilename)
+        except:
+            pass
+
+        try:
+            self.symlinkFilename
+            if os.path.exists(self.symlinkFilename) or os.path.islink(self.symlinkFilename):
+                os.remove(self.symlinkFilename)
+        except:
+            pass
+
+        OFL.orgFilesNotToRepairLinksTo=[]
+        OFL.nonOrgFilesNotToRepairLinksTo=[]
+        OFL.foldersWithFilesNotToRepairLinksTo=[]
+
+        try:
+            self.tempBackup1
+
+            OFL.blacklistFolderBasenamesForLinksToRepair=self.tempBackup1  #restore original
+
+        except:
+            pass
+
+    def test_1_testIfBlacklistedToUseForRepair(self):
+
+        self.testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        touch_file(self.testFilename)
+
+        self.tempBackup1=OFL.blacklistFolderBasenamesForLinksToRepair
+        OFL.blacklistFolderBasenamesForLinksToRepair=[os.path.basename(anotherFolder)]
+
+        orgFile=OFL.OrgFile(self.testFilename,inHeader=False)
+
+        self.failUnless(orgFile.testIfBlacklistedToUseForRepair())
+
+        self.failUnless(orgFile.isBlacklistedToUseForRepair)
+
+    def test_2_testIfBlacklistedToUseForRepair(self):
+
+        self.testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        touch_file(self.testFilename)
+
+        OFL.orgFilesNotToRepairLinksTo=[self.testFilename]
+
+        orgFile=OFL.OrgFile(self.testFilename,inHeader=False)
+
+        self.failUnless(orgFile.testIfBlacklistedToUseForRepair())
+
+        self.failUnless(orgFile.isBlacklistedToUseForRepair)
+
+    def test_3_testIfBlacklistedToUseForRepair(self):
+
+        self.testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        touch_file(self.testFilename)
+
+        OFL.foldersWithFilesNotToRepairLinksTo=[anotherFolder2]
+
+        orgFile=OFL.OrgFile(self.testFilename,inHeader=False)
+
+        self.failUnless(orgFile.testIfBlacklistedToUseForRepair())
+
+        self.failUnless(orgFile.isBlacklistedToUseForRepair)
+
 #head skip test NonOrgFile
 class Test_OFL_OrgFile(unittest.TestCase):
     def setUp(self):
@@ -2619,6 +2691,11 @@ class Test_OFL_OrgFile(unittest.TestCase):
         filenameAP=os.path.join(DocumentsFolderAP,'fakeFile.txt')
         orgFile=OFL.OrgFile(filenameAP,inHeader=False)
         self.failIf(orgFile.endsInDotOrg())
+
+    #head
+    def test_1_testIfBlacklistedForSpidering(self):
+        pass
+        #TODO fill in
 
     #head skip test createFullRepresentation; broke it up into subroutines below, which can be tested individually
     def test_1_createNodeRepresentation(self):
@@ -3180,6 +3257,77 @@ class Test_OFL_OrgFile(unittest.TestCase):
         os.remove(filenameA)
         os.remove(filenameB)
         os.remove(symlinkToFileB_Name)
+
+class Test_OFL_OrgFile_Blacklisting(unittest.TestCase):
+    def setUp(self):
+        os.chdir(origWorkingDir)
+
+    def tearDown(self):
+        os.chdir(origWorkingDir)
+        try:
+            self.testFilename
+            if os.path.exists(self.testFilename):
+                os.remove(self.testFilename)
+        except:
+            pass
+
+        try:
+            self.symlinkFilename
+            if os.path.exists(self.symlinkFilename) or os.path.islink(self.symlinkFilename):
+                os.remove(self.symlinkFilename)
+        except:
+            pass
+
+        OFL.orgFilesNotToSpider=[]
+        OFL.foldersNotToSpider=[]
+
+        try:
+            self.tempBackup1
+
+            OFL.blacklistFolderBasenamesForFilesToSpider=self.tempBackup1  #restore original
+
+        except:
+            pass
+
+    def test_1_testIfBlacklistedForSpidering(self):
+
+        self.testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        touch_file(self.testFilename)
+
+        self.tempBackup1=OFL.blacklistFolderBasenamesForFilesToSpider
+        OFL.blacklistFolderBasenamesForFilesToSpider=[os.path.basename(anotherFolder)]
+
+        orgFile=OFL.OrgFile(self.testFilename,inHeader=False)
+
+        self.failUnless(orgFile.testIfBlacklistedForSpidering())
+
+        self.failUnless(orgFile.isBlacklistedForSpidering)
+
+    def test_2_testIfBlacklistedForSpidering(self):
+
+        self.testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        touch_file(self.testFilename)
+
+        OFL.orgFilesNotToSpider=[self.testFilename]
+
+        orgFile=OFL.OrgFile(self.testFilename,inHeader=False)
+
+        self.failUnless(orgFile.testIfBlacklistedForSpidering())
+
+        self.failUnless(orgFile.isBlacklistedForSpidering)
+
+    def test_3_testIfBlacklistedForSpidering(self):
+
+        self.testFilename=os.path.join(anotherFolder,datetime.datetime.now().strftime('%Y%m%d_%H%MTest.org'))
+        touch_file(self.testFilename)
+
+        OFL.foldersNotToSpider=[anotherFolder2]
+
+        orgFile=OFL.OrgFile(self.testFilename,inHeader=False)
+
+        self.failUnless(orgFile.testIfBlacklistedForSpidering())
+
+        self.failUnless(orgFile.isBlacklistedForSpidering)
 
 #head
 #head
@@ -4790,9 +4938,8 @@ class TestOperateOnFileA(unittest.TestCase):
 #head skip test user_says_stop_spidering
 #head skip test clean_up_before_ending_spidering_run
 #head skip test spider_starting_w_fileA
-#head skip test get_list_of_all_repairable_org_files
 #head
-class TestGetListOfAllRepairableOrgFiles(unittest.TestCase):
+class TestGetListOfOrgFilesToOperateOn(unittest.TestCase):
     def setUp(self):
         os.chdir(origWorkingDir)
 
@@ -4822,10 +4969,13 @@ class TestGetListOfAllRepairableOrgFiles(unittest.TestCase):
 
         os.chdir(origWorkingDir)
 
+        OFL.orgFilesNotToSpider=[]
+        OFL.foldersNotToSpider=[]
+
     def test_1(self):
         '''simple test: a folder with three existing files'''
 
-        retList=OFL.get_list_of_all_repairable_org_files(anotherFolder)
+        retList=OFL.get_list_of_org_files_to_operate_on(anotherFolder)
 
         expectedList=[self.filenameA_AP,self.filenameB_AP]  #do not want function under test to return symlinks, either broken or working
 
@@ -4837,7 +4987,7 @@ class TestGetListOfAllRepairableOrgFiles(unittest.TestCase):
 
         os.remove(self.filenameB_AP)  #turn symlinkToFileB into a broken symlink
 
-        retList=OFL.get_list_of_all_repairable_org_files(anotherFolder)
+        retList=OFL.get_list_of_org_files_to_operate_on(anotherFolder)
 
         expectedList=[self.filenameA_AP]
 
@@ -4845,13 +4995,14 @@ class TestGetListOfAllRepairableOrgFiles(unittest.TestCase):
         self.assertEqual(set(expectedList),set(retList))
 
     def test_3(self):
-        '''test a blacklist feature'''
+        '''test a blacklist feature: blacklisting via a folder name in path'''
 
         tempBackup1=OFL.blacklistFolderBasenamesForFilesToSpider
         OFL.blacklistFolderBasenamesForFilesToSpider=['venv']
 
         os.makedirs(os.path.join(anotherFolder,'venv'))
         self.folder4AP=os.path.join(anotherFolder,'venv')
+
         folder5AP=os.path.join(self.folder4AP,'folder5Name')
         os.makedirs(folder5AP)
 
@@ -4861,11 +5012,89 @@ class TestGetListOfAllRepairableOrgFiles(unittest.TestCase):
         testFile5AP=os.path.join(folder5AP,'testFile5.org')
         touch_file(testFile5AP)
 
-        retList=OFL.get_list_of_all_repairable_org_files(testFile4AP)
+        retList=OFL.get_list_of_org_files_to_operate_on(self.folder4AP)
 
         OFL.blacklistFolderBasenamesForFilesToSpider=tempBackup1  #restore original
 
         self.failIf(retList)
+
+    def test_4(self):
+        '''test a blacklist feature: blacklisting via an abs path filename'''
+
+        tempBackup1=OFL.blacklistFolderBasenamesForFilesToSpider
+        OFL.blacklistFolderBasenamesForFilesToSpider=[]
+
+        os.makedirs(os.path.join(anotherFolder,'venv'))
+        self.folder4AP=os.path.join(anotherFolder,'venv')
+
+        folder5AP=os.path.join(self.folder4AP,'folder5Name')
+        os.makedirs(folder5AP)
+
+        testFile4AP=os.path.join(self.folder4AP,'testFile4.org')
+        touch_file(testFile4AP)
+
+        testFile5AP=os.path.join(folder5AP,'testFile5.org')
+        touch_file(testFile5AP)
+
+        OFL.orgFilesNotToSpider=[testFile4AP]
+
+        retList=OFL.get_list_of_org_files_to_operate_on(self.folder4AP)
+
+        OFL.blacklistFolderBasenamesForFilesToSpider=tempBackup1  #restore original
+
+        self.assertEqual(retList,[testFile5AP])
+
+    def test_5(self):
+        '''test a blacklist feature: blacklisting via an abs path foldername'''
+
+        tempBackup1=OFL.blacklistFolderBasenamesForFilesToSpider
+        OFL.blacklistFolderBasenamesForFilesToSpider=[]
+
+        os.makedirs(os.path.join(anotherFolder,'venv'))
+        self.folder4AP=os.path.join(anotherFolder,'venv')
+
+        folder5AP=os.path.join(self.folder4AP,'folder5Name')
+        os.makedirs(folder5AP)
+
+        testFile4AP=os.path.join(self.folder4AP,'testFile4.org')
+        touch_file(testFile4AP)
+
+        testFile5AP=os.path.join(folder5AP,'testFile5.org')
+        touch_file(testFile5AP)
+
+        OFL.foldersNotToSpider=[self.folder4AP]
+
+        retList=OFL.get_list_of_org_files_to_operate_on(self.folder4AP)
+
+        OFL.blacklistFolderBasenamesForFilesToSpider=tempBackup1  #restore original
+
+        self.failIf(retList)
+
+    def test_6(self):
+        '''test a blacklist feature: blacklisting via an abs path foldername'''
+
+        tempBackup1=OFL.blacklistFolderBasenamesForFilesToSpider
+        OFL.blacklistFolderBasenamesForFilesToSpider=[]
+
+        os.makedirs(os.path.join(anotherFolder,'venv'))
+        self.folder4AP=os.path.join(anotherFolder,'venv')
+
+        folder5AP=os.path.join(self.folder4AP,'folder5Name')
+        os.makedirs(folder5AP)
+
+        testFile4AP=os.path.join(self.folder4AP,'testFile4.org')
+        touch_file(testFile4AP)
+
+        testFile5AP=os.path.join(folder5AP,'testFile5.org')
+        touch_file(testFile5AP)
+
+        OFL.foldersNotToSpider=[folder5AP]
+
+        retList=OFL.get_list_of_org_files_to_operate_on(self.folder4AP)
+
+        OFL.blacklistFolderBasenamesForFilesToSpider=tempBackup1  #restore original
+
+        self.assertEqual(retList,[testFile4AP])
 
 #head skip test operate_on_all_org_files
 #head skip test make_regex_dicts
@@ -6089,8 +6318,11 @@ class TestsOfRepairingLinksToOrgFilesPunc(unittest.TestCase):
         os.remove(self.newNameB)
         os.remove(symlinkToFileB_Name)
 
+#head
 class TestsOfRepairingLinksToNonOrgFiles(unittest.TestCase):
     def setUp(self):
+
+        os.chdir(origWorkingDir)
 
         reset_database()
 
@@ -6100,7 +6332,12 @@ class TestsOfRepairingLinksToNonOrgFiles(unittest.TestCase):
 
         self.filenameA,self.filenameB,self.symlinkToFileB_Name=set_up_fileA_fileB_linkToFileB_non_org()
 
+        self.tempBackup1=OFL.blacklistFolderBasenamesForLinksToRepair
+        OFL.blacklistFolderBasenamesForLinksToRepair=['env','venv']  #setting
+
     def tearDown(self):
+
+        os.chdir(origWorkingDir)
 
         if os.path.exists(self.filenameA):
             os.remove(self.filenameA)
@@ -6120,10 +6357,10 @@ class TestsOfRepairingLinksToNonOrgFiles(unittest.TestCase):
         except:
             pass
 
+        OFL.blacklistFolderBasenamesForLinksToRepair=self.tempBackup1
+
     def test_1(self):
         '''fileA links to fileB; fileB is a non org file; move fileB while keeping its basename the same'''
-
-        self.assertEqual(os.getcwd(),origWorkingDir)
 
         if self.runWithPauses:
             blurbList=['fileB is a non org file']
@@ -6181,14 +6418,67 @@ class TestsOfRepairingLinksToNonOrgFiles(unittest.TestCase):
         if self.runWithPauses and (not showLog1):
             print 'Finally, restoring files on disk to original configuration\n'
 
-        self.assertEqual(os.getcwd(),origWorkingDir)
+    def test_1_Blacklisting(self):
+        '''fileA links to fileB; fileB is a non org file; move fileB while keeping its basename the same'''
+
+        OFL.blacklistFolderBasenamesForLinksToRepair.append(os.path.basename(origWorkingDir))  #blacklist the current working directory for repairing links 
+
+        if self.runWithPauses:
+            blurbList=['fileB is a non org file']
+            blurbList.extend(['fileB is moved to another folder','basename of fileB is kept the same','an attempt is made to repair broken link to fileB in fileA'])
+            blurb1="\n".join(blurbList)
+            print blurb1
+
+            print 'fileA is %s and fileB is %s' % (self.filenameA,self.filenameB)
+
+            wait_on_user_input('Now pausing to review nature of test')
+
+        #####################################################
+    
+        showLog1=False
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=self.runDebuggerInEveryStep,isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
+
+        self.assertEqual(len(fileA.linksToNonOrgFilesList),1) # 'fileA has a single link to a non org file'
+        self.assertEqual(fileA.linksToNonOrgFilesList[0].targetObj.filenameAP,os.path.join(os.getcwd(),self.filenameB)) # a link to fileB is found in fileA
+        self.failUnless(fileA.linksToNonOrgFilesList[0].targetObj.changedFromSymlinkToNonSymlink)
+
+        if self.runWithPauses and (not showLog1):
+            print 'Analyzed fileA %s; unique ID was inserted' % self.filenameA
+
+            wait_on_user_input()
+
+        #####################################################
+    
+        origFolder=os.path.split(fileA.filenameAP)[0]
+    
+        #move fileB but keep basename the same
+        self.newNameB=os.path.join(anotherFolder,self.filenameB)
+        os.rename(self.filenameB,self.newNameB)
+        # print 'Just Moved fileB %s to folder %s while keeping basenameB the same' % (self.filenameB,anotherFolder)
+
+        #####################################################
+
+        # print 'Now analyzing fileA %s a second time after moving fileB without changing basenameB; blacklisting should prevent repair of broken link
+
+        showLog1=False
+        fileA=operate_on_fileA_w(self.filenameA,runDebugger=(self.runDebuggerOnlyInRepairStep or self.runDebuggerInEveryStep),isDryRun=False,showLog=(showLog1 and self.runWithPauses),runWPauses=self.runWithPauses)
+
+        self.failIf(fileA.linksToNonOrgFilesList[0].targetObj.repaired)
+        self.failUnless(fileA.linksToNonOrgFilesList[0].isBlacklistedForRepair)
+
+        if self.runWithPauses and (not showLog1):
+            print 'Just moved fileB %s to folder %s while keeping basenameB the same\n' % (self.filenameB,anotherFolder)
+            print 'Analyzed fileA %s a second time after moving fileB without changing basenameB; repair of link to fileB should not take place due to blacklisting\n' % (self.filenameA,expectedRepairMethod)
+            wait_on_user_input()
+    
+        #####################################################
+        if self.runWithPauses and (not showLog1):
+            print 'Finally, restoring files on disk to original configuration\n'
 
     #head
     #head skip test2
     def test_3(self):
         '''fileA links to fileB; fileB is a non org file; move and rename fileB; repair of link to fileB should not be possible'''
-
-        self.assertEqual(os.getcwd(),origWorkingDir)
 
         if self.runWithPauses:
             blurbList=['fileB is a non org file']
@@ -6244,8 +6534,6 @@ class TestsOfRepairingLinksToNonOrgFiles(unittest.TestCase):
         #####################################################
         if self.runWithPauses and (not showLog1):
             print 'Finally, restoring files on disk to original configuration\n'
-
-        self.assertEqual(os.getcwd(),origWorkingDir)
 
     #head
     def test_4(self):

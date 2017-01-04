@@ -1551,8 +1551,6 @@ class LinkToLocalFile(Link):
 
         assert self.targetObj,'Need to associate link with target object before testing if blacklisted for repair'
 
-        DocumentsFoldernameAP=os.path.join(os.path.expanduser('~'),'Documents')
-
         #do not want to repair a link to something outside of Documents folder
         if (not self.targetObj.filenameAP.startswith(DocumentsFoldernameAP)):
             self.isBlacklistedForRepair=True
@@ -1605,6 +1603,10 @@ class LinkToLocalFile(Link):
             filenameAPMatchListBB=find_all_name_matches_via_bash(basenameB)  #requires linux and bash shell; this will not find directories
         else:  #there is no file extension; assume fileB is a directory; TODO this needs improvement
             filenameAPMatchListBB=find_all_name_matches_via_bash_for_directories(basenameB)  #requires linux and bash shell; this finds directories
+
+        if not filenameAPMatchListBB:
+            logging.debug('no replacement found for %s via looking for %s with bash find' % (fileB.filenameAP,basenameB))
+            return None
 
         foundFileObjsBB=[]
         for filenameAP1 in filenameAPMatchListBB:
@@ -2901,9 +2903,6 @@ class LocalFile():
         LocalFile Class
         only intended for use by child classes
         '''
-
-        DocumentsFoldernameAP=os.path.join(os.path.expanduser('~'),'Documents')
-
         #do not want to repair a link to something outside of Documents folder
         if (not self.filenameAP.startswith(DocumentsFoldernameAP)):
             self.isBlacklistedToUseForRepair=True
@@ -2916,7 +2915,7 @@ class LocalFile():
 
         if file_is_blacklisted_based_on_fileAP_and_folderAP_lists(self.filenameAP,self.filesNotToUseForRepairingLinks,foldersWithFilesNotToRepairLinksTo):
             self.isBlacklistedToUseForRepair=True
-            logging.debug('Not using %s to repair a link since it is blacklisted in .OFLDoNotRepairLink' % self.targetObj.filenameAP)
+            logging.debug('Not using %s to repair a link since it is blacklisted in .OFLDoNotRepairLink' % self.filenameAP)
             return True
 
         return False
@@ -3005,10 +3004,6 @@ class OrgFile(LocalFile):
     #head
     def testIfBlacklistedForSpidering(self):
         '''OrgFile Class'''
-
-        #TODO LEFT OFF LEFTOFF put this function to use elsewhere; think the link repair methods are the only thing left to add blacklisting to?
-
-        DocumentsFoldernameAP=os.path.join(os.path.expanduser('~'),'Documents')
 
         if (not self.filenameAP.startswith(DocumentsFoldernameAP)):
             self.isBlacklistedForSpidering=True
@@ -3273,7 +3268,7 @@ class OrgFile(LocalFile):
             if not self.uniqueID:
                 logging.warning('there is a unique ID in database, but no unique ID inside file %s' % self.filenameAP)
             # assert self.uniqueID==self.uniqueIDFromDatabase, 'mismatch: unique ID from database and unique ID inside file'
-            if self.uniqueID != self.uniqueIDFromDatabase:
+            if self.uniqueID and (self.uniqueID != self.uniqueIDFromDatabase):
                 logging.warning('mismatch: unique ID from database and unique ID inside file %s' % self.filenameAP)
 
         # logging.debug('three unique ID parameters for %s have been found to be mutually consistent',self.filenameAP)
@@ -3288,8 +3283,6 @@ class OrgFile(LocalFile):
         self.addUniqueIDsFromHeaderToOutgoingOrgLinkTargets() #this adds unique ID from header node of self to target files of links
 
         logging.debug('Now analyzing outward links to org files in %s' % self.filenameAP)
-
-        DocumentsFoldernameAP=os.path.join(os.path.expanduser('~'),'Documents')
 
         linksToProcess=[a for a in self.linksToOrgFilesList if a.targetObj.filenameAP.startswith(DocumentsFoldernameAP)]
 
@@ -3505,8 +3498,6 @@ class OrgFile(LocalFile):
         db1.linksToNonOrgTable.removeEntriesMatchingFromFile(self)
 
         logging.debug('Now analyzing outward links to non org files in %s' % self.filenameAP)
-
-        DocumentsFoldernameAP=os.path.join(os.path.expanduser('~'),'Documents')
 
         linksToProcess=[a for a in self.linksToNonOrgFilesList if a.targetObj.filenameAP.startswith(DocumentsFoldernameAP)]
 
@@ -4189,7 +4180,7 @@ def walk_org_files_looking_for_unique_id_match(uniqueIDToMatch,oldNameAP):
                 if dir in blacklistFolderBasenamesForLinksToRepair:
                     dirs.remove(dir)
 
-            #TODO could add second mode of blacklisting as in get_list_of_all_repairable_org_files
+            #TODO could add second mode of blacklisting as in get_list_of_org_files_to_operate_on
 
             #select list of files that do not appear in database
             knownBasenamesInDirname=db1.myOrgFilesTable.lookupBasenamesInFolder(pathRemainder)  # a list; TODO could also get known symlink names and known previous filenames
@@ -4375,16 +4366,36 @@ def one_list_starts_with_another(list1,list2):
             return False
     return True
 
-def file_is_blacklisted_based_on_fileAP_and_folderAP_lists(filenameAP,filenameAPBlacklist,foldernameAPBlacklist):
-    if filenameAP in filenameAPBlacklist:
-        return True
+def folder_is_blacklisted_based_on_folderAP_list(foldernameAP,foldernameAPBlacklist):
+
+    folderList1=get_list_of_folder_names_given_foldername(foldernameAP)
+
+    for blacklistFolder in foldernameAPBlacklist:
+        folderListBlacklistFolder=get_list_of_folder_names_given_foldername(blacklistFolder)
+
+        if one_list_starts_with_another(folderList1,folderListBlacklistFolder):
+            return True
+
+    return False
+
+def file_is_blacklisted_based_on_folderAP_list(filenameAP,foldernameAPBlacklist):
 
     folderListFile1=get_list_of_folder_names_given_filename(filenameAP)
+
     for blacklistFolder in foldernameAPBlacklist:
         folderListBlacklistFolder=get_list_of_folder_names_given_foldername(blacklistFolder)
 
         if one_list_starts_with_another(folderListFile1,folderListBlacklistFolder):
             return True
+
+    return False
+
+def file_is_blacklisted_based_on_fileAP_and_folderAP_lists(filenameAP,filenameAPBlacklist,foldernameAPBlacklist):
+    if filenameAP in filenameAPBlacklist:
+        return True
+
+    if file_is_blacklisted_based_on_folderAP_list(filenameAP,foldernameAPBlacklist):
+        return True
 
     return False
 
@@ -4438,7 +4449,7 @@ def get_list_of_files_in_glob_file(globFilename,workingDir,fileType='org'):
     else:
         return [],[]
 
-#head for blacklisting, also see methods of LocalFile, OrgFile, LinkToLocalFile
+#head blacklisting: see also methods of LocalFile, OrgFile, LinkToLocalFile
 #head
 def set_up_database():
     global db1
@@ -4947,14 +4958,16 @@ def spider_starting_w_fileA(filename,maxTime=None,maxN=None,hitReturnToStop=True
     clean_up_before_ending_spidering_run(isDryRun,messg1='Completed spidering run')
 
 #head
-def get_list_of_all_repairable_org_files(mainFolderAP):
+def get_list_of_org_files_to_operate_on(mainFolderAP):
     '''
-    walk files on disk starting at mainFolderAP.  return list of org files to operate on.  blacklist defined by blacklistFolderBasenamesForFilesToSpider is applied.
+    walk files on disk starting at mainFolderAP.  return list of org files to operate on.  blacklisting defined by blacklistFolderBasenamesForFilesToSpider is performed.
     '''
 
     #see https://docs.python.org/2/library/os.html; symlinks to folders are not followed by default
 
     assert os.path.exists(mainFolderAP), 'cannot get list of all org files in %s because it does not exist' % mainFolderAP
+
+    assert os.path.isdir(mainFolderAP), 'argument %s of get_list_of_org_files_to_operate_on is not a folder on local disk' % mainFolderAP
 
     allOrgFilenamesAP=[]
 
@@ -4975,7 +4988,7 @@ def get_list_of_all_repairable_org_files(mainFolderAP):
                 dirs.remove(dir)
 
         for dir in dirs:
-            if os.path.join(dirname,dir) in foldersNotToSpider:
+            if folder_is_blacklisted_based_on_folderAP_list(os.path.join(dirname,dir),foldersNotToSpider):
                 logging.debug('Not walking into folder %s due to blacklisting in config file .OFLDoNotSpider' % dir)
                 dirs.remove(dir)
 
@@ -5000,7 +5013,7 @@ def get_list_of_all_repairable_org_files(mainFolderAP):
 
     return allOrgFilenamesAP_List
 
-def operate_on_all_org_files(maxTime=None,maxN=None,hitReturnToStop=True,userFixesLinksManually=False,runDebugger=False,debuggerAlreadyRunning=False,isDryRun=False,showLog=False,repairLinks=True,keepBackup=True,deleteOldLogs=True,skipIfRecentlySpidered=False,addHeader=False):
+def operate_on_all_org_files(rootFolder,maxTime=None,maxN=None,hitReturnToStop=True,userFixesLinksManually=False,runDebugger=False,debuggerAlreadyRunning=False,isDryRun=False,showLog=False,repairLinks=True,keepBackup=True,deleteOldLogs=True,skipIfRecentlySpidered=False,addHeader=False):
     '''
     this one does not spider; it just walks every org file, except those that are blacklisted.
     practically: skipIfRecentlySpidered input should be set to True.
@@ -5015,9 +5028,7 @@ def operate_on_all_org_files(maxTime=None,maxN=None,hitReturnToStop=True,userFix
         runDebugger=False
         logging.warning('In spidering, you have enabled feature: hit return to stop spidering.  You also turned on debugger.  Debugger pudb cannot handle multithreading, so it cannot be turned on')
 
-    DocumentsFoldernameAP=os.path.join(os.path.expanduser('~'),'Documents')
-
-    filesToWalk=get_list_of_all_repairable_org_files(DocumentsFoldernameAP)  #all blacklists are applied insider here
+    filesToWalk=get_list_of_org_files_to_operate_on(rootFolder)  #all blacklists are applied insider here
 
     NFilesToWalk=len(filesToWalk)
 
@@ -5154,11 +5165,11 @@ def usage():
     -q, --quickMode: when a file has been recently spidered, just look up outward links in database and move to next file to spider, rather than making full representation, repairing links, etc;  intention is to speed things up
 
     flags that require input argument:
-    -f, --inputFile:  supply a file to begin spidering; if no -f, all org files in /home/username/Documents are walked
+    -f, --inputFile:  supply a file to begin spidering; if no -f, all org files in /home/username/Documents (default) are walked; see also -F, --folderToSpider
     -L, --loggingLevel:  logging to take place above this level.  valid inputs: None, debug, info, warning, error, critical;  default value None
     -N, --maxFilesToSpider:  max number of files to spider, an integer
     -t, --maxTimeToSpider: max time to spend spidering (seconds)
-
+    -F, --folderToSpider: specify a folder to spider in (will spider in this folder and subfolders recursively); default is /home/username/Documents
     useful python flags:
     python -O:  -O flag turns off assert statements in the script orgFixLinks.py.  Assert statements identify associated preconfigured error conditions.  Suppressing them via -O flag speeds up script execution.
 
@@ -5188,11 +5199,13 @@ def main():
     keepBackup=True
     skipIfRecentlySpidered=False
     addHeader=False
+    folderToSpider=DocumentsFoldernameAP
+
     # ---------------------------------------------------------
     #process command line inputs
     #dive into python 10.6
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hHundDlbqf:L:N:t:", ["help","addHeader","userFixesLinks","noSpideringStopViaKeystroke","debug","dryRun","showLog","noBackup","quickMode","file=","loggingLevel=","maxFilesToSpider=","maxTimeToSpider="])
+        opts, args = getopt.getopt(sys.argv[1:], "hHundDlbqf:L:N:t:F:", ["help","addHeader","userFixesLinks","noSpideringStopViaKeystroke","debug","dryRun","showLog","noBackup","quickMode","file=","loggingLevel=","maxFilesToSpider=","maxTimeToSpider=","folderToSpider="])
     except getopt.GetoptError:
         usage()
         sys.exit(2)
@@ -5266,6 +5279,14 @@ def main():
                 print 'Quitting: command line input %s for maxTimeToSpider is not a positive number.\n' % arg
                 sys.exit()
 
+        elif opt in ("-F","--folderToSpider"):
+
+            if os.path.exists(arg) and os.path.isdir(arg):
+                folderToSpider=arg
+            else:
+                print 'Quitting: command line input %s for folderToSpider either does not exist on disk, or is not a directory.\n' % arg
+                sys.exit()
+
     # ---------------------------------------------------------
 
     if runDebugger:
@@ -5280,15 +5301,16 @@ def main():
         spider_starting_w_fileA(filename=fileA1,maxTime=maxTime,maxN=maxN,hitReturnToStop=hitReturnToStop,userFixesLinksManually=userFixesLinksManually,runDebugger=runDebugger,debuggerAlreadyRunning=debuggerAlreadyRunning,isDryRun=isDryRun,showLog=showLog,keepBackup=keepBackup,skipIfRecentlySpidered=skipIfRecentlySpidered,addHeader=addHeader)
 
     else: #user did not specify a file to start with; just walk all org files
-        operate_on_all_org_files(maxTime=maxTime,maxN=maxN,hitReturnToStop=hitReturnToStop,userFixesLinksManually=userFixesLinksManually,runDebugger=runDebugger,debuggerAlreadyRunning=debuggerAlreadyRunning,isDryRun=isDryRun,showLog=showLog,keepBackup=keepBackup,skipIfRecentlySpidered=skipIfRecentlySpidered,addHeader=addHeader)
+        operate_on_all_org_files(folderToSpider,maxTime=maxTime,maxN=maxN,hitReturnToStop=hitReturnToStop,userFixesLinksManually=userFixesLinksManually,runDebugger=runDebugger,debuggerAlreadyRunning=debuggerAlreadyRunning,isDryRun=isDryRun,showLog=showLog,keepBackup=keepBackup,skipIfRecentlySpidered=skipIfRecentlySpidered,addHeader=addHeader)
 
     print 'Run completed: log file %s contains %s errors and %s warnings\n' % (logFilename,logging.error.counter,logging.warning.counter)
     db1.cur.close()
 
 #head
 #head module-level stuff that will always execute even when this module is imported by another script/module
-databaseName=os.path.join(os.getcwd(),'orgFiles.sqlite')  #'real run' database
-dryRunDatabaseName=os.path.join(os.getcwd(),'orgFilesDryRunCopy.sqlite') #dry run database
+DocumentsFoldernameAP=os.path.join(os.path.expanduser('~'),'Documents')
+databaseName=os.path.join(os.getcwd(),'orgFiles.sqlite')  #setting; 'real run' database
+dryRunDatabaseName=os.path.join(os.getcwd(),'orgFilesDryRunCopy.sqlite') #setting; dry run database
 #head
 globalStartTime=time.time()
 #head
@@ -5303,20 +5325,19 @@ asteriskRegex=re.compile('(?P<asterisks>^\*+) ')
 #head
 #head blacklisting
 #head blacklisting based on a single folder in a path; not required that these folders exist on disk
-blacklistFolderBasenamesForFilesToSpider=['env','venv','PStuff']
-blacklistFolderBasenamesForLinksToRepair=['env','venv','PStuff']  #also blacklisting for files to use for repairing broken links
+blacklistFolderBasenamesForFilesToSpider=['env','venv','PStuff']  #setting
+blacklistFolderBasenamesForLinksToRepair=['env','venv','PStuff']  #setting; also blacklisting for files to use for repairing broken links
 #head blacklisting based on glob patterns of existing files and folders
 #blacklisting: files not to spider
-if os.path.exists('.OFLDoNotSpider'):
+if os.path.exists('.OFLDoNotSpider'):  #setting
     #because of glob.glob, it is required that these exist on disk
     orgFilesNotToSpider,foldersNotToSpider=get_list_of_files_in_glob_file('.OFLDoNotSpider',origFolder,fileType='org')
 else:
     orgFilesNotToSpider=[]
     foldersNotToSpider=[]
 #head
-#head
 #head blacklisting:  files not to repair links to; also files not to use for repairing broken links
-if os.path.exists('.OFLDoNotRepairLink'):
+if os.path.exists('.OFLDoNotRepairLink'):  #setting
     #because of glob.glob, it is required that these exist on disk
     orgFilesNotToRepairLinksTo,foldersWithFilesNotToRepairLinksTo=get_list_of_files_in_glob_file('.OFLDoNotRepairLink',origFolder,fileType='org')
     nonOrgFilesNotToRepairLinksTo,foldersWithFilesNotToRepairLinksTo=get_list_of_files_in_glob_file('.OFLDoNotRepairLink',origFolder,fileType='nonOrg')

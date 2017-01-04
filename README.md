@@ -1,8 +1,7 @@
 # orgFixLinks.py, a Python Command-Line Utility
 
-**WARNING** many users will not want a header added to their org files.  The
-script can/will be modified to accomodate this, but at this time adds headers to
-all org files.
+2016/01/03: Latest commit has several features not covered in this README or in
+the GitHub wiki.  Documentation will catch up.
 
 Be sure to check out
 the [wiki](https://github.com/cashTangoTangoCash/orgFixLinks/wiki).  There is a
