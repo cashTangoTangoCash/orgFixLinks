@@ -2586,6 +2586,7 @@ class Node():
     #head
     def makeTagList(self):
         '''
+        Node Class
         form list of tags
         list of tags, which can only be found on self.myLines[0]
         because a blurb cannot have tags in org mode
@@ -2596,15 +2597,17 @@ class Node():
             #self.tags is list of strings
             self.tags=self.myLines[0].split()[-1].split(':')[1:-1]
 
-        if self.tags:
-            if [a for a in self.tags if a.isupper()]:  #if any tags are all uppercase
-                #change tags that are all uppercase to all lowercase
-                tags2=[all_upper_to_all_lowercase(a) for a in self.tags]
-                self.tags=tags2
+        #20170104: this code mostly works, but needs revision since it may add unwanted extra spaces
+        #it is commented out since many users might not want tags which are uppercase changed to all lowercase
+        # if self.tags:
+        #     if [a for a in self.tags if a.isupper()]:  #if any tags are all uppercase
+        #         #change tags that are all uppercase to all lowercase
+        #         tags2=[all_upper_to_all_lowercase(a) for a in self.tags]
+        #         self.tags=tags2
 
-                b=self.myLines[0].split()
-                c=':'+':'.join(tags2)+':'
-                self.myLines[0]=' '.join(b[:-1]+[c,'\n'])
+        #         b=self.myLines[0].split()
+        #         c=':'+':'.join(tags2)+':'
+        #         self.myLines[0]=' '.join(b[:-1]+[c,'\n'])
 
     #head
     def findUniqueID(self,uniqueIDRegexObj):
@@ -5155,7 +5158,7 @@ def usage():
 
     flags with no input argument:
     -h, --help: show this help blurb
-    -H, --addHeader: add a header to org files that are not excluded via a file .orgFixLinksNoHeader
+    -H, --addHeader: add a header to org files; default is to not add a header to any org file
     -u, --userFixesLinks: when automatic link repair fails and it makes sense to do so, prompt user to fix broken links manually (menu-driven)
     -n, --noSpideringStopViaKeystroke: normally spidering can be stopped via typing anything then hitting enter key; -n disables this.  also set by -d.
     -d, --debug:  run script in pudb.  additionally sets -n.
@@ -5170,14 +5173,20 @@ def usage():
     -N, --maxFilesToSpider:  max number of files to spider, an integer
     -t, --maxTimeToSpider: max time to spend spidering (seconds)
     -F, --folderToSpider: specify a folder to spider in (will spider in this folder and subfolders recursively); default is /home/username/Documents
+
     useful python flags:
     python -O:  -O flag turns off assert statements in the script orgFixLinks.py.  Assert statements identify associated preconfigured error conditions.  Suppressing them via -O flag speeds up script execution.
+    At current state of development of orgFixLinks.py, it is recommended to not use the -O flag.
 
     files that affect the behavior of orgFixLinks.py:
     pastInteractiveRepairs.csv: contains data from past runs of orgFixLinks.py in which a user interactively repaired broken links
+
     orgFilesDryRunCopy.sqlite, orgFiles.sqlite: sqlite database used by orgFixLinks.py
-    .orgFixLinksNoHeader: list of org files that should not get a header added by orgFixLinks.py; similar behavior to .gitignore in git
-    .orgFixLinksIgnore: list of org files that should not be ignored by orgFixLinks.py; similar behavior to .gitignore in git  
+
+    .OFLDoNotSpider: each line is a pattern corresponding to files or folders that will not be spidered.  Each line is interpreted to match files/folders on disk using the Python module glob.glob.
+    Any folder will blacklist all files whose path contains that folder.
+
+    .OFLDoNotRepairLinks:  same as .OFLDoNotSpider, but broken links to matching files/folders will not be repaired.  Also, the matches will not be used to repair broken links.
     '''
     print messg1
 
@@ -5339,6 +5348,7 @@ else:
 #head blacklisting:  files not to repair links to; also files not to use for repairing broken links
 if os.path.exists('.OFLDoNotRepairLink'):  #setting
     #because of glob.glob, it is required that these exist on disk
+    #TODO this seems illogical for the org files: if an org file exists on disk (visible to glob.glob), a link to it cannot be broken?
     orgFilesNotToRepairLinksTo,foldersWithFilesNotToRepairLinksTo=get_list_of_files_in_glob_file('.OFLDoNotRepairLink',origFolder,fileType='org')
     nonOrgFilesNotToRepairLinksTo,foldersWithFilesNotToRepairLinksTo=get_list_of_files_in_glob_file('.OFLDoNotRepairLink',origFolder,fileType='nonOrg')
 else:
