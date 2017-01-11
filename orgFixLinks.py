@@ -1551,15 +1551,28 @@ class LinkToLocalFile(Link):
 
         assert self.targetObj,'Need to associate link with target object before testing if blacklisted for repair'
 
-        #do not want to repair a link to something outside of Documents folder
+        #setting do not want to repair a link to something outside of Documents folder
         if (not self.targetObj.filenameAP.startswith(DocumentsFoldernameAP)):
             self.isBlacklistedForRepair=True
             return True
 
-        if file_is_blacklisted_based_on_single_folder_name_in_path(self.targetObj.filenameAP,blacklistFolderBasenamesForLinksToRepair):
-            self.isBlacklistedForRepair=True
-            logging.debug('Not repairing link to %s since a folder in its path is in blacklistFolderBasenamesForLinksToRepair' % self.targetObj.filenameAP)
-            return True
+        if os.path.exists(self.targetObj.filenameAP):
+            if os.path.isdir(self.targetObj.filenameAP):
+                if folder_is_blacklisted_based_on_single_folder_name_in_path(self.targetObj.filenameAP,blacklistFolderBasenamesForLinksToRepair):
+                    self.isBlacklistedForRepair=True
+                    logging.debug('Not repairing link to %s since a folder in its path is in blacklistFolderBasenamesForLinksToRepair' % self.targetObj.filenameAP)
+                    return True
+            else:  #target exists but is not a directory
+                if file_is_blacklisted_based_on_single_folder_name_in_path(self.targetObj.filenameAP,blacklistFolderBasenamesForLinksToRepair):
+                    self.isBlacklistedForRepair=True
+                    logging.debug('Not repairing link to %s since a folder in its path is in blacklistFolderBasenamesForLinksToRepair' % self.targetObj.filenameAP)
+                    return True
+        else:  #target does not exist; do not know if folder or not; assume it is not a folder
+
+            if file_is_blacklisted_based_on_single_folder_name_in_path(self.targetObj.filenameAP,blacklistFolderBasenamesForLinksToRepair):
+                self.isBlacklistedForRepair=True
+                logging.debug('Not repairing link to %s since a folder in its path is in blacklistFolderBasenamesForLinksToRepair' % self.targetObj.filenameAP)
+                return True
 
         if file_is_blacklisted_based_on_fileAP_and_folderAP_lists(self.targetObj.filenameAP,self.filesNotToRepairLinksTo,foldersWithFilesNotToRepairLinksTo):
             self.isBlacklistedForRepair=True
@@ -2911,10 +2924,22 @@ class LocalFile():
             self.isBlacklistedToUseForRepair=True
             return True
 
-        if file_is_blacklisted_based_on_single_folder_name_in_path(self.filenameAP,blacklistFolderBasenamesForLinksToRepair):
-            self.isBlacklistedToUseForRepair=True
-            logging.debug('Not using %s to repair a link since a folder in its path is in blacklistFolderBasenamesForLinksToRepair' % self.filenameAP)
-            return True
+        if os.path.exists(self.filenameAP):
+            if os.path.isdir(self.filenameAP):
+                if folder_is_blacklisted_based_on_single_folder_name_in_path(self.filenameAP,blacklistFolderBasenamesForLinksToRepair):
+                    self.isBlacklistedToUseForRepair=True
+                    logging.debug('Not using %s to repair a link since a folder in its path is in blacklistFolderBasenamesForLinksToRepair' % self.filenameAP)
+                    return True
+            else:
+                if file_is_blacklisted_based_on_single_folder_name_in_path(self.filenameAP,blacklistFolderBasenamesForLinksToRepair):
+                    self.isBlacklistedToUseForRepair=True
+                    logging.debug('Not using %s to repair a link since a folder in its path is in blacklistFolderBasenamesForLinksToRepair' % self.filenameAP)
+                    return True
+        else: #does not exist on disk so do not know if a folder or not; assume it is not a folder
+            if file_is_blacklisted_based_on_single_folder_name_in_path(self.filenameAP,blacklistFolderBasenamesForLinksToRepair):
+                self.isBlacklistedToUseForRepair=True
+                logging.debug('Not using %s to repair a link since a folder in its path is in blacklistFolderBasenamesForLinksToRepair' % self.filenameAP)
+                return True
 
         if file_is_blacklisted_based_on_fileAP_and_folderAP_lists(self.filenameAP,self.filesNotToUseForRepairingLinks,foldersWithFilesNotToRepairLinksTo):
             self.isBlacklistedToUseForRepair=True
@@ -4658,8 +4683,8 @@ def operate_on_fileA(filename,userFixesLinksManually=False,runDebugger=False,deb
 
         dirNow=os.getcwd()
 
-        if dirNow<>origFolder:
-            logging.warning('Current working directory %s is not the expected %s' % (dirNow,origFolder))
+        # if dirNow<>origFolder:
+        #     logging.warning('Current working directory %s is not the expected %s' % (dirNow,origFolder))
 
         #need to change directory for relative links in org file to make sense
         fileADir=fileA.changeToMyDirectory()
