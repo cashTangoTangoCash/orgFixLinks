@@ -4579,6 +4579,8 @@ def store_past_interactive_repairs():
     OOPS shelve module is crashing
     change to csv file data storage
     '''
+    os.chdir(origFolder)
+
     # shelfFile=shelve.open('pastInteractiveRepairs.shelve')
 
     # shelfFile['pastInteractiveRepairs']=pastInteractiveRepairs
